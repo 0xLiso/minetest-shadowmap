@@ -3,6 +3,14 @@ uniform mat4 mWorld;
 uniform vec3 eyePosition;
 uniform float animationTimer;
 
+
+#ifdef ENABLE_DYNAMIC_SHADOWS
+// shadow matrix
+	uniform mat4 m_worldView;
+	varying vec3 P;
+	varying vec3 N;
+#endif
+
 varying vec3 vNormal;
 varying vec3 vPosition;
 varying vec3 worldPosition;
@@ -50,4 +58,12 @@ void main(void)
 #endif
 
 	varColor = inVertexColor;
+
+	
+	#ifdef ENABLE_DYNAMIC_SHADOWS
+
+		gl_TexCoord[3] = m_worldView*vec4(gl_Vertex.xyz,1.0);
+		P = vec3(gl_Vertex.xyz);
+		N =  vec3(gl_Normal.xyz);
+	#endif
 }

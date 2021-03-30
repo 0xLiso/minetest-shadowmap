@@ -120,7 +120,15 @@ public:
 	void getBlocksInViewRange(v3s16 cam_pos_nodes,
 		v3s16 *p_blocks_min, v3s16 *p_blocks_max);
 	void updateDrawList();
+	void updateDrawListShadow(
+			v3f shadow_light_pos, v3f shadow_light_dir, float shadow_range);
 	void renderMap(video::IVideoDriver* driver, s32 pass);
+
+	void renderMapShadows(video::IVideoDriver *driver,
+			irr::video::SMaterial &material,
+			s32 pass, irr::core::vector3df position,
+			irr::core::vector3df direction, 
+			float max_distance, bool replace_material = false);
 
 	int getBackgroundBrightness(float max_d, u32 daylight_factor,
 			int oldvalue, bool *sunlight_seen_result);
@@ -131,7 +139,11 @@ public:
 	virtual void PrintInfo(std::ostream &out);
 
 	const MapDrawControl & getControl() const { return m_control; }
+	f32 getWantedRange() const { return m_control.wanted_range; }
 	f32 getCameraFov() const { return m_camera_fov; }
+
+	void clean_mblock_shadows();
+
 private:
 	Client *m_client;
 
@@ -146,10 +158,12 @@ private:
 	v3s16 m_camera_offset;
 
 	std::map<v3s16, MapBlock*> m_drawlist;
+	std::map<v3s16, MapBlock *> m_drawlist_shadow;
 
 	std::set<v2s16> m_last_drawn_sectors;
 
 	bool m_cache_trilinear_filter;
 	bool m_cache_bilinear_filter;
 	bool m_cache_anistropic_filter;
+	bool m_added_to_shadow_renderer{false};
 };

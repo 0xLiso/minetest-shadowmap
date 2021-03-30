@@ -8,6 +8,13 @@ uniform vec3 eyePosition;
 uniform vec3 cameraOffset;
 uniform float animationTimer;
 
+#ifdef ENABLE_DYNAMIC_SHADOWS
+// shadow matrix
+	uniform mat4 m_worldView;
+	varying vec3 P;
+	varying vec3 N;
+#endif
+
 varying vec3 vPosition;
 // World position in the visible world (i.e. relative to the cameraOffset.)
 // This can be used for many shader effects without loss of precision.

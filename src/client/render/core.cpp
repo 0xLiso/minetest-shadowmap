@@ -32,17 +32,24 @@ RenderingCore::RenderingCore(IrrlichtDevice *_device, Client *_client, Hud *_hud
 {
 	screensize = driver->getScreenSize();
 	virtual_size = screensize;
+
+	shadow_renderer = new ShadowRenderer(device, client);
 }
 
 RenderingCore::~RenderingCore()
 {
 	clearTextures();
+	if (shadow_renderer) {
+		delete shadow_renderer;
+		shadow_renderer = nullptr;
+	};
 }
 
 void RenderingCore::initialize()
 {
 	// have to be called late as the VMT is not ready in the constructor:
 	initTextures();
+	shadow_renderer->initialize();
 }
 
 void RenderingCore::updateScreenSize()
@@ -72,7 +79,11 @@ void RenderingCore::draw(video::SColor _skycolor, bool _show_hud, bool _show_min
 
 void RenderingCore::draw3D()
 {
-	smgr->drawAll();
+	shadow_renderer->setClearColor(skycolor);
+	shadow_renderer->update();
+
+	// we handle the draw stage
+	// smgr->drawAll();
 	driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
 	if (!show_hud)
 		return;

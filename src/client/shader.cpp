@@ -225,6 +225,12 @@ class MainShaderConstantSetter : public IShaderConstantSetter
 {
 	CachedVertexShaderSetting<float, 16> m_world_view_proj;
 	CachedVertexShaderSetting<float, 16> m_world;
+	CachedVertexShaderSetting<float, 16> m_shadow_world_view_proj0;
+	CachedVertexShaderSetting<float, 16> m_shadow_world_view_proj1;
+	CachedVertexShaderSetting<float, 16> m_shadow_world_view_proj2;
+	CachedVertexShaderSetting<float, 4> m_shadow_csm_splits;
+	CachedPixelShaderSetting<s32> m_shadow_texture;
+	f32 brightness{0.0f};
 #if ENABLE_GLES
 	// Modelview matrix
 	CachedVertexShaderSetting<float, 16> m_world_view;
@@ -238,6 +244,13 @@ public:
 	MainShaderConstantSetter() :
 		  m_world_view_proj("mWorldViewProj")
 		, m_world("mWorld")
+		, m_shadow_texture("ShadowMapSampler")
+		, m_shadow_csm_splits("mShadowCsmSplits")
+		// @Liso: IDK how to pass a matrix array to the shader in
+		// irrlitch:(
+		,m_shadow_world_view_proj0("mShadowWorldViewProj0")
+		, m_shadow_world_view_proj1("mShadowWorldViewProj1")
+		, m_shadow_world_view_proj2("mShadowWorldViewProj2")
 #if ENABLE_GLES
 		, m_world_view("mWorldView")
 		, m_texture("mTexture")
@@ -280,6 +293,94 @@ public:
 		};
 		m_normal.set(m, services);
 #endif
+
+
+		// Set Shadow shader uniform
+		if (g_settings->getBool("enable_dynamic_shadows") &&
+				RenderingEngine::get_instance()
+						->is_renderingcore_ready()) {
+
+			ShadowRenderer *shadow = RenderingEngine::get_instance()
+								 ->get_shadow_renderer();
+
+			irr::core::matrix4 shadowMVP0 =
+					shadow->getDirectionalLight().getProjectionMatrix(
+							0);
+			shadowMVP0 *= shadow->getDirectionalLight().getViewMatrix(0);
+			shadowMVP0 *= world;
+
+			services->setVertexShaderConstant("mShadowWorldViewProj0",
+					*reinterpret_cast<float(*)[16]>(
+							shadowMVP0.pointer()),
+					16);
+
+			irr::core::matrix4 shadowMVP1 =
+					shadow->getDirectionalLight()
+							.getProjectionMatrix(1);
+			shadowMVP1 *= shadow->getDirectionalLight().getViewMatrix(1);
+			shadowMVP1 *= world;
+
+			services->setVertexShaderConstant("mShadowWorldViewProj1",
+					*reinterpret_cast<float(*)[16]>(
+							shadowMVP1.pointer()),
+					16);
+
+			irr::core::matrix4 shadowMVP2 =
+					shadow->getDirectionalLight().getProjectionMatrix(
+							2);
+			shadowMVP2 *= shadow->getDirectionalLight().getViewMatrix(2);
+			shadowMVP2 *= world;
+
+			services->setVertexShaderConstant("mShadowWorldViewProj2",
+					*reinterpret_cast<float(*)[16]>(
+							shadowMVP2.pointer()),
+					16);
+
+			float split_distances[4];
+			shadow->getDirectionalLight().getSplitDistances(split_distances);
+
+			services->setVertexShaderConstant("mShadowCsmSplits",
+					*reinterpret_cast<float(*)[4]>(
+							split_distances ),
+					4);
+
+			float v_LightDirection[3];
+
+			shadow->getDirectionalLight()
+					.getDirection()
+					.getAs3Values(v_LightDirection);
+			services->setVertexShaderConstant("v_LightDirection",
+					*reinterpret_cast<float(*)[3]>(v_LightDirection),
+					3);
+
+			float v_LightPosition[3];
+
+			shadow->getDirectionalLight().getDirection().getAs3Values(
+					v_LightPosition);
+			services->setVertexShaderConstant("v_LightPosition",
+					*reinterpret_cast<float(*)[3]>(v_LightDirection),
+					3);
+			auto sworldView = driver->getTransform(video::ETS_VIEW);
+			sworldView *= world; 
+			services->setVertexShaderConstant("m_worldView",
+					*reinterpret_cast<float(*)[16]>(sworldView.pointer()),
+					16);
+
+
+			float TextureResolution=(float)shadow->getDirectionalLight().getMapResolution();
+			services->setVertexShaderConstant("f_textureresolution",
+					&TextureResolution,
+					1);
+
+			services->setVertexShaderConstant("f_brightness",
+							  &brightness,
+							  1);
+
+			
+		}
+		s32 TextureLayerID = 3;
+		m_shadow_texture.set(&TextureLayerID, services);
+
 	}
 };
 
@@ -679,6 +780,17 @@ ShaderInfo ShaderSource::generateShader(const std::string &name,
 	shaders_header << "#define ENABLE_TONE_MAPPING " << g_settings->getBool("tone_mapping") << "\n";
 
 	shaders_header << "#define FOG_START " << core::clamp(g_settings->getFloat("fog_start"), 0.0f, 0.99f) << "\n";
+
+
+	if (g_settings->getBool("enable_dynamic_shadows")) {
+			shaders_header << "#define ENABLE_DYNAMIC_SHADOWS 1\n";
+			if (g_settings->getBool("shadow_map_use_VMS")) {
+				shaders_header << "#define DYNAMIC_SHADOWS_VMS 1\n";
+			}
+			if (g_settings->getBool("enable_csm")) {
+				shaders_header << "#define DYNAMIC_SHADOWS_CMS 1\n";
+			}
+		}
 
 	std::string common_header = shaders_header.str();
 

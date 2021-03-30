@@ -26,6 +26,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "irrlichttypes_extrabloated.h"
 #include "debug.h"
 
+//we need the full definition of RenderingCore
+#include "client/render/core.h"
+
+//ShadowMaping stuff
+#include "client/shadows/dynamicshadowsrender.h"
+
+
 class ITextureSource;
 class Camera;
 class Client;
@@ -136,6 +143,19 @@ public:
 		return s_singleton->m_device->run();
 	}
 
+	static bool is_renderingcore_ready()
+	{
+		sanity_check(s_singleton);
+		if (s_singleton->core)
+			return true;
+		return false;
+	}
+
+	static ShadowRenderer *get_shadow_renderer()
+	{
+		sanity_check(s_singleton && s_singleton->core);
+		return s_singleton->core.get()->get_shadow_renderer();
+	};
 	static std::vector<core::vector3d<u32>> getSupportedVideoModes();
 	static std::vector<irr::video::E_DRIVER_TYPE> getSupportedVideoDrivers();
 

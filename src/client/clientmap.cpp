@@ -73,6 +73,11 @@ ClientMap::ClientMap(
 	m_client(client),
 	m_control(control)
 {
+/*
+	 * @Liso: Sadly C++ doesn't have introspection, so the only way we have to know
+	 * the class is whith a name ;) Name property cames from ISceneNode base class.
+	 */
+	Name = "ClientMap";
 	m_box = aabb3f(-BS*1000000,-BS*1000000,-BS*1000000,
 			BS*1000000,BS*1000000,BS*1000000);
 
@@ -114,6 +119,18 @@ void ClientMap::OnRegisterSceneNode()
 	}
 
 	ISceneNode::OnRegisterSceneNode();
+
+	/*
+	 * @Liso We need to add the ClientMap to the Shadow List here.
+	 * Just to allow ShadowRenderer to know that it is a new node
+	 */
+	if (!m_added_to_shadow_renderer &&
+			RenderingEngine::get_instance()->is_renderingcore_ready()) {
+		m_added_to_shadow_renderer = true;
+		RenderingEngine::get_instance()
+				->get_shadow_renderer()
+				->addNodeToShadowList(this);
+	}
 }
 
 void ClientMap::getBlocksInViewRange(v3s16 cam_pos_nodes,
@@ -393,6 +410,28 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 						"returning." << std::endl;
 				return;
 			}
+			if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
+
+				ShadowRenderer *shadow =
+						RenderingEngine::get_instance()
+								->get_shadow_renderer();
+				if (shadow->is_active()) {
+					// list.m.setTexture(3, shadow->get_texture());
+					list.m.TextureLayer[3].Texture =
+							shadow->get_texture();
+					list.m.TextureLayer[3].TextureWrapU =
+							irr::video::E_TEXTURE_CLAMP::
+									ETC_CLAMP_TO_EDGE;
+					list.m.TextureLayer[3].TextureWrapV =
+							irr::video::E_TEXTURE_CLAMP::
+									ETC_CLAMP_TO_EDGE;
+					// Liso: param not used in irrlicht.
+					// We can use it to get the level of illumination
+					// of this mesh
+					list.m.MaterialTypeParam2 = 0.25;
+					 
+				}
+			}
 			driver->setMaterial(list.m);
 
 			drawcall_count += list.bufs.size();
@@ -607,4 +646,253 @@ void ClientMap::renderPostFx(CameraMode cam_mode)
 void ClientMap::PrintInfo(std::ostream &out)
 {
 	out<<"ClientMap: ";
+}
+
+void ClientMap::clean_mblock_shadows()
+{
+	for (auto &i : m_drawlist_shadow) {
+		MapBlock *block = i.second;
+		block->refDrop();
+	}
+	m_drawlist_shadow.clear();
+}
+
+void ClientMap::renderMapShadows(video::IVideoDriver *driver,
+		irr::video::SMaterial &material, s32 pass, irr::core::vector3df position,
+		irr::core::vector3df direction, float max_distance, bool replace_material)
+{
+	
+	const std::string prefix = "renderMap(SHADOW): ";
+	const u32 daynight_ratio = m_client->getEnv().getDayNightRatio();
+	const v3f camera_position = position;
+	const v3f camera_direction = direction;
+
+	// ultraugly hack
+	const f32 camera_fov = 3.141593 ;
+
+	/*
+		Get all blocks and draw all visible ones
+	*/
+
+	u32 vertex_count = 0;
+
+	/*
+		Draw the selected MapBlocks
+	*/
+
+	MeshBufListList drawbufs;
+
+	for (auto &i : m_drawlist_shadow) {
+		v3s16 block_pos = i.first;
+		MapBlock *block = i.second;
+
+		// If the mesh of the block happened to get deleted, ignore it
+		if (!block->mesh)
+			continue;
+
+		float d = 0.0;
+		if (!isBlockInSight(block->getPos(), position - direction * 2, direction,
+				    camera_fov, max_distance, &d))
+			continue;
+		/*
+		* Liso: Ok, with that isug->param1 we can know if is illuminated by torch,
+		sun or nothing.
+		*
+		* If we can pass this to the shader, we can handle underground
+		illumination. Misc parameter. Initialized to 0.
+			- For light_propagates() blocks, this is light intensity,
+			  stored logarithmically from 0 to LIGHT_MAX.
+			  Sunlight is LIGHT_SUN, which is LIGHT_MAX+1.
+			  - Contains 2 values, day- and night lighting. Each takes 4 bits.
+			- Uhh... well, most blocks have light or nothing in here.
+		*/
+		auto isug = block->getData();
+		/*
+			Get the meshbuffers of the block
+		*/
+		{
+			// MutexAutoLock lock(block->mesh_mutex);
+
+			MapBlockMesh *mapBlockMesh = block->mesh;
+			assert(mapBlockMesh);
+
+			for (int layer = 0; layer < MAX_TILE_LAYERS; layer++) {
+				scene::IMesh *mesh = mapBlockMesh->getMesh(layer);
+				assert(mesh);
+
+				u32 c = mesh->getMeshBufferCount();
+				for (u32 i = 0; i < c; i++) {
+					drawbufs.add(mesh->getMeshBuffer(i), block_pos,
+							layer);
+				}
+			}
+		}
+	}
+
+	TimeTaker draw("Drawing Shadows mesh buffers");
+
+	core::matrix4 m; // Model matrix
+	v3f offset = intToFloat(m_camera_offset, BS);
+
+	// Render all layers in order
+	for (auto &lists : drawbufs.lists) {
+		for (MeshBufList &list : lists) {
+			// Check and abort if the machine is swapping a lot
+			if (draw.getTimerTime() > 2000) {
+				infostream << "ClientMap::renderMapShadows(): Rendering "
+					      "took "
+					      ">2s, "
+					   << "returning." << std::endl;
+				return;
+			}
+
+			if (replace_material) {
+				driver->setMaterial(material);
+			} else {
+				auto m = list.m;
+				m.MaterialType = material.MaterialType;
+				m.BackfaceCulling = material.BackfaceCulling;
+				m.FrontfaceCulling = material.FrontfaceCulling;
+				m.Lighting = false;
+				driver->setMaterial(m);
+			}
+
+			for (auto &pair : list.bufs) {
+				scene::IMeshBuffer *buf = pair.second;
+
+				v3f block_wpos = intToFloat(
+						pair.first * MAP_BLOCKSIZE, BS);
+				m.setTranslation(block_wpos - offset);
+
+				driver->setTransform(video::ETS_WORLD, m);
+				driver->drawMeshBuffer(buf);
+				vertex_count += buf->getVertexCount();
+			}
+		}
+	}
+
+	g_profiler->avg(prefix + "draw Shadow meshes [ms]", draw.stop(true));
+ 
+	g_profiler->avg(prefix + "vertices drawn [#]", vertex_count);
+}
+
+
+/*
+Custom update draw list for the pov of shadow light.
+@Liso double or triple check this fn and optimize it.
+*/
+void ClientMap::updateDrawListShadow(
+		v3f shadow_light_pos, v3f shadow_light_dir, float shadow_range)
+{
+	ScopeProfiler sp(g_profiler, "CM::updateDrawListShadow()", SPT_AVG);
+
+	v3f camera_position = shadow_light_pos;
+	v3f camera_direction = shadow_light_dir;
+	// I "fake" fov just to avoid creating a new function to handle orthografic
+	// projection.
+	f32 camera_fov = m_camera_fov * 1.3f;
+
+	v3s16 cam_pos_nodes = floatToInt(camera_position, BS);
+	v3s16 p_blocks_min;
+	v3s16 p_blocks_max;
+	getBlocksInViewRange(cam_pos_nodes, &p_blocks_min, &p_blocks_max);
+
+
+	std::vector<v2s16> blocks_in_range;
+	 
+	clean_mblock_shadows();
+
+	if (m_drawlist_shadow.empty())
+		m_drawlist_shadow=m_drawlist;
+	// Number of blocks currently loaded by the client
+	u32 blocks_loaded = 0;
+	// Number of blocks with mesh in rendering range
+	u32 blocks_in_range_with_mesh = 0;
+	// Number of blocks occlusion culled
+	u32 blocks_occlusion_culled = 0;
+
+	// allways occlusion
+	const bool occlusion_culling_enabled = true; //dedicado a @trontxu
+
+	for (auto i = p_blocks_min.X; i < p_blocks_max.X; i++) {
+		for (auto j = p_blocks_min.Z; j < p_blocks_max.Z; j++) {
+			v2s16 to_draw(i, j);
+			const auto sector_it = m_sectors.find(to_draw);
+			if (sector_it == m_sectors.end())
+				continue;
+			MapSector *sector = sector_it->second;
+			if (!sector)
+				continue;
+			v2s16 sp = sector->getPos();
+
+			blocks_loaded += sector->size();
+			
+			MapBlockVect sectorblocks;
+			sector->getBlocks(sectorblocks);
+
+			/*
+				Loop through blocks in sector
+			*/
+
+			u32 sector_blocks_drawn = 0;
+
+			for (MapBlock *block : sectorblocks) {
+				// if the block is already in the draw_list, just continue
+				// with other.
+				if (m_drawlist_shadow.find(block->getPos()) !=
+						m_drawlist_shadow.end())
+					continue;
+
+				/*
+					Compare block position to camera position, skip
+					if not seen on display
+				*/
+				if (!block->mesh) {
+					// Ignore if mesh doesn't exist
+					continue;
+				}
+
+				float range = shadow_range;
+
+				float d = 0.0;
+				if (!isBlockInSight(block->getPos(),
+						    camera_position -
+								    camera_direction * 4,
+						    camera_direction, camera_fov, range,
+						    &d))
+					continue;
+				
+						       blocks_in_range_with_mesh++;
+				/*
+					Occlusion culling
+				*/
+				if ((!m_control.range_all &&
+						    d > m_control.wanted_range * BS) ||
+						(occlusion_culling_enabled &&
+								isBlockOccluded(block,
+										cam_pos_nodes))) {
+					blocks_occlusion_culled++;
+					continue;
+				}
+
+				// This block is in range. Reset usage timer.
+				block->resetUsageTimer();
+
+				// Add to set
+				block->refGrab();
+				m_drawlist_shadow[block->getPos()] = block;
+
+				sector_blocks_drawn++;
+			} // foreach sectorblocks
+		
+		if (sector_blocks_drawn != 0)
+			m_last_drawn_sectors.insert(sp);
+
+		}
+	}
+	//@Liso check this measurements
+	g_profiler->avg("MapBlock meshes in range [#]", blocks_in_range_with_mesh);
+	g_profiler->avg("MapBlocks occlusion culled [#]", blocks_occlusion_culled);
+	g_profiler->avg("MapBlocks drawn [#]", m_drawlist.size());
+	g_profiler->avg("MapBlocks loaded [#]", blocks_loaded);
 }
