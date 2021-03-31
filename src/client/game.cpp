@@ -763,6 +763,7 @@ protected:
 	void updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 			const CameraOrientation &cam);
 
+	void updateShadows(float _timeoftheday);
 	// Misc
 	void limitFps(FpsControl *fps_timings, f32 *dtime);
 
@@ -3841,6 +3842,13 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 		runData.update_draw_list_timer = 0;
 		client->getEnv().getClientMap().updateDrawList();
 		runData.update_draw_list_last_cam_dir = camera_direction;
+
+		/*
+		 * Update Shadows
+		 */
+		updateShadows(time_of_day_smooth);
+
+
 	}
 
 	m_game_ui->update(*stats, client, draw_control, cam, runData.pointed_old, gui_chat_console, dtime);
@@ -3971,7 +3979,38 @@ inline void Game::updateProfilerGraphs(ProfilerGraph *graph)
 	graph->put(values);
 }
 
+/****************************************************************************
+ * Shadows
+ *****************************************************************************/
+void Game::updateShadows(float _timeoftheday)
+{
+	ShadowRenderer *shadow;
+	if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
+		shadow = RenderingEngine::get_instance()->get_shadow_renderer();
+		if (shadow->getDirectionalLightCount() == 0) {
+			shadow->addDirectionalLight();
+		}
 
+		float timeoftheday = _timeoftheday - 0.2f;
+
+		//@Liso: can we  add a z offset in the confgiuration??
+		// this calculation was made with a scientific method, try and error xD
+		float offsety = sin(timeoftheday * 5.0f) * 10000.0f;
+		float offsetx = cos(timeoftheday * 5.0f) * 10000.0f;
+		// small offset in z to avoid perspective shadow glitch
+		float offsetz =  -1500.0f; 
+					 
+		irr::core::vector3df sun_pos = irr::core::vector3df(std::ceil(offsetx),
+				std::ceil(offsety), std::ceil(offsetz));
+		
+
+		shadow->getDirectionalLight().setPosition(sun_pos);
+
+		shadow->getDirectionalLight().update_frustum(camera, client);
+
+		
+	}
+}
 
 /****************************************************************************
  Misc

@@ -1,5 +1,3 @@
-#define ENABLE_DYNAMIC_SHADOWS_VMS 1
-
 uniform sampler2D ColorMapSampler;
 uniform int idx;
 uniform float MapResolution;

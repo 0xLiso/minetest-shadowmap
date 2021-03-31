@@ -167,4 +167,11 @@ void main(void)
 		0.07 * brightness);
 
 	varColor = clamp(color, 0.0, 1.0);
+
+	#ifdef ENABLE_DYNAMIC_SHADOWS
+
+		gl_TexCoord[3] = m_worldView*vec4(gl_Vertex.xyz,1.0);
+		P = vec3(gl_Vertex.xyz);
+		N =  vec3(gl_Normal.xyz);
+	#endif
 }

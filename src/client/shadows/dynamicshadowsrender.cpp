@@ -226,7 +226,7 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget)
 		_driver->setRenderTarget(outputTarget, true, true, _clear_color);
 		_smgr->drawAll();
 
-		/*
+		/**/
 
 		//this is debug, ignore for now.
 		_driver->draw2DImage(shadowMapTextureFinal,
@@ -245,7 +245,7 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget)
 							renderTargets[0]->getSize()
 									.Height));
 
-			/*_driver->draw2DImage(renderTargets[1],
+			 _driver->draw2DImage(renderTargets[1],
 					irr::core::rect<s32>(
 							0, 50 + 256, 128, 128 + 50 + 256),
 					irr::core::rect<s32>(0, 0,
@@ -270,7 +270,7 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget)
 							shadowMapTextureDynamicObjects
 									->getSize()
 									.Height));
-		}*/
+		}
 		_driver->setRenderTarget(0, false, false);
 	}
 }

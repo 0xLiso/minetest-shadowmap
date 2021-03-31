@@ -226,7 +226,7 @@ void main(void)
 
 		 
 		//shadow_int -= brightness;
-		shadow_int *= 0.15;
+		shadow_int *= 0.25;
 		
 		//ccol[cIdx]=0.15;
 		diffuseLight=1.0;
