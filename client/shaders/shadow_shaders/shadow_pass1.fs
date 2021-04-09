@@ -8,7 +8,7 @@ varying vec4 tPos;
 void main() {
 	float alpha = texture2D(ColorMapSampler, gl_TexCoord[0].xy).a;
 
-	if(alpha <0.9){
+	if(alpha <0.5){
 	    discard;
 	}   
 	float depth = 0.5+(tPos.z/MapResolution)*0.5; 

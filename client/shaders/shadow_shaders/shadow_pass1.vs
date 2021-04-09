@@ -4,18 +4,19 @@ varying vec4 tPos;
 
 
 vec4 getDistortFactor(in vec4 shadowPosition) {
-  const float bias0 = 0.89f;
+  const float bias0 = 0.95f;
   const float bias1 = 1.0f - bias0;
 
-  //float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x + shadowPosition.y * shadowPosition.y);
-  float factorDistance =  length(shadowPosition.xy);
+  float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
+  							   shadowPosition.y * shadowPosition.y +
+  							   shadowPosition.z * shadowPosition.z);
+  //float factorDistance =  length(shadowPosition.xy);
   float distortFactor = factorDistance * bias0 + bias1;
 
-  shadowPosition.xyz *=  vec3(vec2(1.0f / distortFactor), 1.f);
+    shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), 1.25);
 
   return shadowPosition;
 }
-
  
 void main() {
  
