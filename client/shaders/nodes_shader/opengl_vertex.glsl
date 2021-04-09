@@ -1,5 +1,6 @@
 uniform mat4 mWorld;
-
+uniform mat4 mShadowProj;
+uniform mat4 mShadowView;
 // Color of the light emitted by the sun.
 uniform vec3 dayLight;
 uniform vec3 eyePosition;
@@ -93,6 +94,19 @@ float snoise(vec3 p)
 
 #endif
 
+vec4 getDistortFactor(in vec4 shadowPosition) {
+  const float bias0 = 0.89f;
+  const float bias1 = 1.0f - bias0;
+
+  //float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x + shadowPosition.y * shadowPosition.y);
+  float factorDistance =  length(shadowPosition.xy);
+  float distortFactor = factorDistance * bias0 + bias1;
+
+  shadowPosition.xyz *=  vec3(vec2(1.0f / distortFactor), 1.f);
+
+  return shadowPosition;
+}
+
 void main(void)
 {
 	varTexCoord = inTexCoord0.st;
@@ -143,7 +157,7 @@ void main(void)
 	gl_Position = mWorldViewProj * inVertexPosition;
 #endif
 
-
+	
 	vPosition = gl_Position.xyz;
 
 	eyeVec = -(mWorldView * inVertexPosition).xyz;
@@ -168,9 +182,12 @@ void main(void)
 
 	varColor = clamp(color, 0.0, 1.0);
 
+
+
+
 	#ifdef ENABLE_DYNAMIC_SHADOWS
 
-		gl_TexCoord[3] = m_worldView*vec4(gl_Vertex.xyz,1.0);
+		gl_TexCoord[3] = mWorld*vec4(gl_Vertex.xyz,1.0);//m_worldView*vec4(gl_Vertex.xyz,1.0);
 		P = vec3(gl_Vertex.xyz);
 		N =  vec3(gl_Normal.xyz);
 	#endif

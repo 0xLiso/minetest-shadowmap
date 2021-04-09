@@ -225,10 +225,15 @@ class MainShaderConstantSetter : public IShaderConstantSetter
 {
 	CachedVertexShaderSetting<float, 16> m_world_view_proj;
 	CachedVertexShaderSetting<float, 16> m_world;
+	CachedVertexShaderSetting<float, 16> m_worldview;
 	CachedVertexShaderSetting<float, 16> m_shadow_world_view_proj0;
 	CachedVertexShaderSetting<float, 16> m_shadow_world_view_proj1;
 	CachedVertexShaderSetting<float, 16> m_shadow_world_view_proj2;
+	CachedVertexShaderSetting<float, 16> m_shadow_proj;
+	CachedVertexShaderSetting<float, 16> m_shadow_view;
 	CachedVertexShaderSetting<float, 4> m_shadow_csm_splits;
+	CachedVertexShaderSetting<float, 3> m_campos;
+	
 	CachedPixelShaderSetting<s32> m_shadow_texture;
 	f32 brightness{0.0f};
 #if ENABLE_GLES
@@ -244,6 +249,8 @@ public:
 	MainShaderConstantSetter() :
 		  m_world_view_proj("mWorldViewProj")
 		, m_world("mWorld")
+		, m_worldview("mWorldView")
+		, m_campos("vCamPos")
 		, m_shadow_texture("ShadowMapSampler")
 		, m_shadow_csm_splits("mShadowCsmSplits")
 		// @Liso: IDK how to pass a matrix array to the shader in
@@ -251,6 +258,8 @@ public:
 		,m_shadow_world_view_proj0("mShadowWorldViewProj0")
 		, m_shadow_world_view_proj1("mShadowWorldViewProj1")
 		, m_shadow_world_view_proj2("mShadowWorldViewProj2")
+		,m_shadow_proj("mShadowProj")
+		,m_shadow_view("mShadowView")
 #if ENABLE_GLES
 		, m_world_view("mWorldView")
 		, m_texture("mTexture")
@@ -273,10 +282,22 @@ public:
 		worldView = driver->getTransform(video::ETS_VIEW);
 		worldView *= world;
 
+		m_worldview.set(*reinterpret_cast<float(*)[16]>(worldView.pointer()),
+				services);
+
 		core::matrix4 worldViewProj;
 		worldViewProj = driver->getTransform(video::ETS_PROJECTION);
 		worldViewProj *= worldView;
 		m_world_view_proj.set(*reinterpret_cast<float(*)[16]>(worldViewProj.pointer()), services);
+
+		irr::core::vector3df cpos =RenderingEngine::get_instance()->get_scene_manager()->getActiveCamera()->getAbsolutePosition();
+		float camval[3];
+		cpos.getAs3Values(camval);
+		m_campos.set(*reinterpret_cast<float(*)[4]>(camval),
+				services);
+
+
+
 
 #if ENABLE_GLES
 		core::matrix4 texture = driver->getTransform(video::ETS_TEXTURE_0);
@@ -312,6 +333,23 @@ public:
 			services->setVertexShaderConstant("mShadowWorldViewProj0",
 					*reinterpret_cast<float(*)[16]>(
 							shadowMVP0.pointer()),
+					16);
+
+
+			irr::core::matrix4 shadowProj =
+					shadow->getDirectionalLight().getProjectionMatrix(
+							0);
+			services->setVertexShaderConstant("mShadowProj",
+					*reinterpret_cast<float(*)[16]>(
+							shadowProj.pointer()),
+					16);
+
+			irr::core::matrix4 shadowView =
+					shadow->getDirectionalLight().getViewMatrix(
+							0);
+			services->setVertexShaderConstant("mShadowView",
+					*reinterpret_cast<float(*)[16]>(
+							shadowView.pointer()),
 					16);
 
 			irr::core::matrix4 shadowMVP1 =

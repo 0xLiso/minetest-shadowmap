@@ -341,8 +341,12 @@ void ShadowRenderer::renderShadowSplit(irr::video::ITexture *target,
 				// IDK if we need the back face
 				// culling...
 				material.BackfaceCulling = false;
-				material.FrontfaceCulling = false;
-				material.PolygonOffsetFactor = 1;
+				material.FrontfaceCulling = true;
+				//material.PolygonOffsetFactor = -1;
+				//material.PolygonOffsetDirection = video::EPO_BACK;
+				// material.PolygonOffsetDepthBias =   2.0 * 4.8e-7;
+				// material.PolygonOffsetSlopeScale = -1.f;
+
 				map_node->OnAnimate(_device->getTimer()->getTime());
 
 				_driver->setTransform(irr::video::ETS_WORLD,
@@ -496,7 +500,7 @@ void ShadowRenderer::createShaders()
 		_driver->getMaterialRenderer(depth_shader)->grab();
 	}
 
-	if (_enable_csm && mixcsm_shader == -1) {
+	if (true){//_enable_csm && mixcsm_shader == -1) {
 		std::string depth_shader_vs =
 				getShaderPath("shadow_shaders", "shadow_pass2.vs");
 		if (depth_shader_vs.empty()) {
