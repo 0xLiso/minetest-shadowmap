@@ -177,7 +177,7 @@ void main(void)
 
 	#ifdef ENABLE_DYNAMIC_SHADOWS
 
-		gl_TexCoord[3] = mWorld*vec4(gl_Vertex.xyz,1.0) ;//m_worldView*vec4(gl_Vertex.xyz,1.0);
+		gl_TexCoord[3] = gl_Position;//m_worldView*vec4(gl_Vertex.xyz,1.0);
 		P =  mWorld*vec4(gl_Vertex.xyz,1.0);
 		N =  vec3(gl_Normal.xyz);
 	#endif

@@ -5,6 +5,8 @@ uniform vec4 skyBgColor;
 uniform float fogDistance;
 uniform vec3 eyePosition;
 
+uniform mat4 mInvWorldViewProj;
+
 // The cameraOffset is the current center of the visible world.
 uniform vec3 cameraOffset;
 uniform float animationTimer;
@@ -26,6 +28,8 @@ uniform mat4 mWorld;
 
 uniform mat4 mShadowProj;
 uniform mat4 mShadowView;
+uniform mat4 mInvProj;
+uniform mat4 mInvWorldView;
 
 
 uniform vec3 vCamPos;
@@ -202,21 +206,41 @@ vec4 getDistortFactor(in vec4 shadowPosition) {
   const float bias1 = 1.0f - bias0;
 
   float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
-  							   shadowPosition.y * shadowPosition.y +
-  							   shadowPosition.z * shadowPosition.z);
+  							   shadowPosition.y * shadowPosition.y  );
   //float factorDistance =  length(shadowPosition.xy);
   float distortFactor = factorDistance * bias0 + bias1;
 
-    shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), 1.25);
+    shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), .75);
 
   return shadowPosition;
 }
 vec3 getShadowSpacePosition(in vec4 pos,in mat4 shadowMVP) {
 
-  vec4 positionShadowSpace = mShadowProj* mShadowView * pos; 
+  vec4 positionShadowSpace = mShadowProj* mShadowView * mWorld * pos; 
   positionShadowSpace = getDistortFactor(positionShadowSpace);
   positionShadowSpace.z/=f_textureresolution;
   return positionShadowSpace.xyz *0.5 +0.5;
+}
+
+vec4 getWorldPosition(){
+	vec4 positionNDCSpace = vec4(2.0f * gl_FragCoord.xy - 1.0f,
+								 2.0f * gl_FragCoord.z - 1.0f,
+								 1.0f);
+
+	positionNDCSpace = vec4(
+        (gl_FragCoord.x / 640. - 0.5) * 2.0,
+        (gl_FragCoord.y / 480 - 0.5) * 2.0,
+        (gl_FragCoord.z - 0.5) * 2.0,
+        1.0);
+
+  vec4 positionCameraSpace = mInvProj * positionNDCSpace;
+
+  positionCameraSpace = positionCameraSpace / positionCameraSpace.w;
+
+  vec4 positionWorldSpace = mInvWorldView * positionCameraSpace;
+
+  return positionWorldSpace;
+
 }
 
 
@@ -260,19 +284,20 @@ void main(void)
 
 		//float brightness = rgb2hsl(col).b;//(col.r+col.g+col.b)/3.0;
 		
-		vec4 posInWorld = vec4(gl_TexCoord[3].xyz ,1.0);
+		
 
    		bias =  0.0000000015 ;
- 		//bias=0.0f;
+ 		bias=0.0f;
         
         if(dot(normalize(-v_LightDirection),normalize(N))  < 0){
         	shadow_int0=1.0f;
         }
 		else {
-			vec3 posInShadow=getShadowSpacePosition(posInWorld ,mShadowWorldViewProj0);
+			vec4 posInWorld = getWorldPosition() ;
+			vec3 posInShadow=getShadowSpacePosition( posInWorld ,mShadowWorldViewProj0);
 			if(posInShadow.x>0.0&&posInShadow.x<1.0&&posInShadow.y>0.0&&posInShadow.y<1.0)
 			{
-				shadow_int0=getShadow(ShadowMapSampler, posInShadow.xy,
+				shadow_int0=getShadow2(ShadowMapSampler, posInShadow.xy,
 										posInShadow.z  + bias ,0);
 			}
 		}
