@@ -189,7 +189,8 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget)
 			_shadow_depth_cb->MapRes = (f32)_shadow_map_texture_size;
 			_shadow_depth_cb->MaxFar = (f32)_shadow_map_max_distance * BS;
 		
-			if (light.should_update_shadow) {
+			if (light.should_update_shadow) 
+			{
 				light.should_update_shadow = false;
 				for (irr::s32 nSplit = 0; nSplit < light.getNumberSplits();
 						nSplit++) {
@@ -404,7 +405,8 @@ void ShadowRenderer::renderShadowObjects(
 					shadow_node.node->getMaterial(m).MaterialType);
 
 			auto &current_mat = shadow_node.node->getMaterial(m);
-
+			current_mat.setTexture(3, shadowMapTextureFinal);
+			
 			current_mat.MaterialType =
 					(irr::video::E_MATERIAL_TYPE)depth_shader;
 			BufferMaterialCullingList.push_back(std::make_pair<bool, bool>(

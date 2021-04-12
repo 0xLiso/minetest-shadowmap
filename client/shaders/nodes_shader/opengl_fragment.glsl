@@ -89,51 +89,154 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 	}
 
 	 
+const vec2[128] poissonDisk = vec2[128](
+    vec2(0. , 0.),
+    vec2(0.2538637f, -0.589553f),
+    vec2(0.6399639f, -0.6070346f),
+    vec2(0.1431894f, -0.8152663f),
+    vec2(0.5930731f, -0.7948953f),
+    vec2(0.6914624f, -0.3480401f),
+    vec2(0.4279022f, -0.4768359f),
+    vec2(0.8242062f, -0.508942f),
+    vec2(0.01053669f, -0.4866286f),
+    vec2(-0.1108985f, -0.7414401f),
+    vec2(0.03328848f, -0.9812139f),
+    vec2(-0.2678958f, -0.3206359f),
+    vec2(0.25712f, -0.229964f),
+    vec2(-0.02783006f, -0.2600488f),
+    vec2(-0.2917352f, -0.6411636f),
+    vec2(-0.4032183f, -0.8573055f),
+    vec2(-0.6612689f, -0.7354062f),
+    vec2(-0.5676314f, -0.5411444f),
+    vec2(-0.2168807f, -0.9072415f),
+    vec2(-0.5580572f, -0.09704394f),
+    vec2(-0.5138885f, -0.3027371f),
+    vec2(-0.1932104f, -0.09702744f),
+    vec2(-0.3822881f, -0.01384046f),
+    vec2(0.8748599f, -0.1630837f),
+    vec2(-0.522255f, 0.2585554f),
+    vec2(-0.749154f, -0.08459146f),
+    vec2(-0.749154f, -0.08459146f),
+    vec2(-0.6647733f, 0.129063f),
+    vec2(-0.8998289f, -0.2349087f),
+    vec2(-0.8098084f, -0.5461301f),
+    vec2(0.5121568f, 0.00675085f),
+    vec2(0.1070659f, -0.05260961f),
+    vec2(0.3009415f, 0.1365128f),
+    vec2(0.5151741f, -0.1867349f),
+    vec2(-0.9284627f, -0.007728597f),
+    vec2(-0.2198475f, 0.3018067f),
+    vec2(-0.07589716f, 0.09244914f),
+    vec2(0.721417f, 0.01370876f),
+    vec2(0.6517887f, 0.1998482f),
+    vec2(0.4209776f, 0.3226621f),
+    vec2(0.9295521f, 0.1595292f),
+    vec2(0.8101555f, 0.3356059f),
+    vec2(0.6216043f, 0.4737987f),
+    vec2(-0.7957394f, 0.4460461f),
+    vec2(-0.578917f, 0.5065681f),
+    vec2(-0.3760341f, 0.4722787f),
+    vec2(0.1558616f, 0.3765588f),
+    vec2(0.4568439f, 0.655364f),
+    vec2(0.08923677f, 0.1941438f),
+    vec2(0.1930917f, 0.5782562f),
+    vec2(-0.07713082f, 0.5275764f),
+    vec2(0.4766026f, 0.8639814f),
+    vec2(-0.7173501f, 0.6784452f),
+    vec2(-0.8751968f, 0.2121847f),
+    vec2(0.8041916f, 0.5765353f),
+    vec2(0.2870654f, 0.9436792f),
+    vec2(0.6502987f, 0.7152798f),
+    vec2(-0.2637711f, 0.7050315f),
+    vec2(-0.03864802f, 0.7925433f),
+    vec2(-0.1051485f, 0.9776039f),
+    vec2(-0.3079708f, 0.9433341f),
+    vec2(-0.5206522f, 0.6986488f),
+    vec2(0.08988898f, 0.9506541f),
+    vec2(0.2821491f, 0.7465457f),
+     vec2(-0.613392, 0.617481),
+     vec2(0.170019, -0.040254),
+     vec2(-0.299417, 0.791925),
+     vec2(0.645680, 0.493210),
+     vec2(-0.651784, 0.717887),
+     vec2(0.421003, 0.027070),
+     vec2(-0.817194, -0.271096),
+     vec2(-0.705374, -0.668203),
+     vec2(0.977050, -0.108615),
+     vec2(0.063326, 0.142369),
+     vec2(0.203528, 0.214331),
+     vec2(-0.667531, 0.326090),
+     vec2(-0.098422, -0.295755),
+     vec2(-0.885922, 0.215369),
+     vec2(0.566637, 0.605213),
+     vec2(0.039766, -0.396100),
+     vec2(0.751946, 0.453352),
+     vec2(0.078707, -0.715323),
+     vec2(-0.075838, -0.529344),
+     vec2(0.724479, -0.580798),
+     vec2(0.222999, -0.215125),
+     vec2(-0.467574, -0.405438),
+     vec2(-0.248268, -0.814753),
+     vec2(0.354411, -0.887570),
+     vec2(0.175817, 0.382366),
+     vec2(0.487472, -0.063082),
+     vec2(-0.084078, 0.898312),
+     vec2(0.488876, -0.783441),
+     vec2(0.470016, 0.217933),
+     vec2(-0.696890, -0.549791),
+     vec2(-0.149693, 0.605762),
+     vec2(0.034211, 0.979980),
+     vec2(0.503098, -0.308878),
+     vec2(-0.016205, -0.872921),
+     vec2(0.385784, -0.393902),
+     vec2(-0.146886, -0.859249),
+     vec2(0.643361, 0.164098),
+     vec2(0.634388, -0.049471),
+     vec2(-0.688894, 0.007843),
+     vec2(0.464034, -0.188818),
+     vec2(-0.440840, 0.137486),
+     vec2(0.364483, 0.511704),
+     vec2(0.034028, 0.325968),
+     vec2(0.099094, -0.308023),
+     vec2(0.693960, -0.366253),
+     vec2(0.678884, -0.204688),
+     vec2(0.001801, 0.780328),
+     vec2(0.145177, -0.898984),
+     vec2(0.062655, -0.611866),
+     vec2(0.315226, -0.604297),
+     vec2(-0.780145, 0.486251),
+     vec2(-0.371868, 0.882138),
+     vec2(0.200476, 0.494430),
+     vec2(-0.494552, -0.711051),
+     vec2(0.612476, 0.705252),
+     vec2(-0.578845, -0.768792),
+     vec2(-0.772454, -0.090976),
+     vec2(0.504440, 0.372295),
+     vec2(0.155736, 0.065157),
+     vec2(0.391522, 0.849605),
+     vec2(-0.620106, -0.328104),
+     vec2(0.789239, -0.419965),
+     vec2(-0.545396, 0.538133),
+     vec2(-0.178564, -0.596057));
+
+	float getShadowv2(sampler2D shadowsampler, vec2 smTexCoord, float realDistance ,int cIdx) {
+	    float texDepth = texture2D(shadowsampler, smTexCoord.xy )[cIdx];
+		return ( realDistance  >  texDepth  ) ?  1.0  :0.0 ;
+	}
 
 
-	vec2 poissonDisk[4] = vec2[](
-	  vec2( -0.94201624, -0.39906216 ),
-	  vec2( 0.94558609, -0.76890725 ),
-	  vec2( -0.094184101, -0.92938870 ),
-	  vec2( 0.34495938, 0.29387760 )
-	);
-	vec2 offsetArray[16]=vec2[](
-		 vec2(0.0, 0.0),
-	     vec2(0.0, 1.0),
-	     vec2(1.0, 0.0),
-	     vec2(1.0, 1.0),
-	     vec2(-2.0, 0.0),
-	     vec2(0.0, -2.0),
-	     vec2(2.0, -2.0),
-	     vec2(-2.0, 2.0),
-	     vec2(3.0, 0.0),
-	     vec2(0.0, 3.0),
-	     vec2(3.0, 3.0),
-	     vec2(-3.0, -3.0),
-	     vec2(-4.0, 0.0),
-	     vec2(0.0, -4.0),
-	     vec2(4.0, -4.0),
-	     vec2(-4.0, 4.0));
-	
-	float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance ,int cIdx) {
-	     
-		float nsamples=16.0;
-	    float visibility=0.0;
-
-	    
-	    
-	    for (int i = 0; i < nsamples; i++){
-	        vec2 clampedpos = smTexCoord.xy + (offsetArray[i] /vec2(f_textureresolution));
-
-	        //clampedpos=clamp(clampedpos.xy, vec2(0.0, 0.0), vec2(1.0, 1.0));   
-	        float texDepth = texture2D( shadowsampler, clampedpos.xy )[cIdx];      
-	        if (   realDistance   >  texDepth  ){
-	            visibility += 1.0 ;
-	        }        
-	        
+ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance ,int cIdx) {
+		float nsamples=128.0;
+	    vec2 clampedpos;
+		
+		float visibility= getShadowv2(shadowsampler, smTexCoord.xy, realDistance ,  cIdx);
+		
+	    for (int i = 1; i <  nsamples ; i++){
+	        clampedpos = smTexCoord.xy + ( poissonDisk[i]/f_textureresolution);
+            visibility += getShadowv2(shadowsampler, clampedpos.xy, realDistance ,  cIdx) ;
 	    }
 	    
-	    return  visibility / nsamples ;
+	    return  visibility/ nsamples  ;
 	}
 
 
@@ -201,14 +304,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
 
 
-
-	float getShadowv2(sampler2D shadowsampler, vec2 smTexCoord, float realDistance ,int cIdx) {
-	    float texDepth = texture2D(shadowsampler, smTexCoord.xy )[cIdx];
-		  //return step(texDepth-realDistance, 0.000005f * getLinearDepth(realDistance) + 0.00005f);
-
-	    return ( realDistance  >  texDepth  ) ?  1.0  :0.0 ;
-	}
-	 
+ 
 
 #endif
 
@@ -307,14 +403,14 @@ void main(void)
 		}
 
 		 
-		shadow_int = shadow_int0;
+		//shadow_int = shadow_int0;
 		//shadow_int -= brightness;
-		shadow_int *= 0.125;
+		shadow_int  = 1.0 - shadow_int0*0.35;
 		
 		
 		//ccol[cIdx]=0.15;
 		 diffuseLight=1.0;
-		col = clamp(vec4((col.rgb-shadow_int),col.a),0.0,1.0);
+		//col = clamp(vec4((col.rgb-shadow_int),col.a),0.0,1.0);
 	#endif
 
 
@@ -337,7 +433,10 @@ void main(void)
 	float clarity = clamp(fogShadingParameter
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
 	col = mix(skyBgColor, col, clarity);
-	col = vec4(col.rgb, base.a);
-
+	#if ENABLE_DYNAMIC_SHADOWS && DRAW_TYPE!=NDT_TORCHLIKE
+	col = vec4(col.rgb * shadow_int, base.a);
+	#else
+	col = vec4(col.rgb , base.a);
+	#endif
 	gl_FragColor = col;
 }

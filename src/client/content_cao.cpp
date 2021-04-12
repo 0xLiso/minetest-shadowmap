@@ -760,6 +760,7 @@ void GenericCAO::addToScene(ITextureSource *tsrc)
 			RenderingEngine::get_instance()
 					->get_shadow_renderer()
 					->addNodeToShadowList(m_meshnode);
+
 		}
 
 		m_meshnode->grab();
