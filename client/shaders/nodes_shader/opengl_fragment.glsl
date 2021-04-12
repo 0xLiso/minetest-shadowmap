@@ -4,6 +4,7 @@ uniform sampler2D baseTexture;
 uniform vec4 skyBgColor;
 uniform float fogDistance;
 uniform vec3 eyePosition;
+uniform vec2 vScreen;
 
 uniform mat4 mInvWorldViewProj;
 
@@ -11,31 +12,31 @@ uniform mat4 mInvWorldViewProj;
 uniform vec3 cameraOffset;
 uniform float animationTimer;
 #ifdef ENABLE_DYNAMIC_SHADOWS
-// shadow texture
-uniform sampler2D ShadowMapSampler;
-//shadow uniforms
-uniform mat4 mShadowWorldViewProj0;
-uniform mat4 mShadowWorldViewProj1;
-uniform mat4 mShadowWorldViewProj2;
-uniform vec4 mShadowCsmSplits;
-uniform vec3 v_LightDirection;
-uniform float f_textureresolution;
-uniform float f_brightness;
-uniform mat4 mWorldView;
-uniform mat4 mWorldViewProj;
-uniform mat4 m_worldView;
-uniform mat4 mWorld;
+	// shadow texture
+	uniform sampler2D ShadowMapSampler;
+	//shadow uniforms
+	uniform mat4 mShadowWorldViewProj0;
+	uniform mat4 mShadowWorldViewProj1;
+	uniform mat4 mShadowWorldViewProj2;
+	uniform vec4 mShadowCsmSplits;
+	uniform vec3 v_LightDirection;
+	uniform float f_textureresolution;
+	uniform float f_brightness;
+	uniform mat4 mWorldView;
+	uniform mat4 mWorldViewProj;
+	uniform mat4 m_worldView;
+	uniform mat4 mWorld;
 
-uniform mat4 mShadowProj;
-uniform mat4 mShadowView;
-uniform mat4 mInvProj;
-uniform mat4 mInvWorldView;
+	uniform mat4 mShadowProj;
+	uniform mat4 mShadowView;
+	uniform mat4 mInvProj;
+	uniform mat4 mInvWorldView;
 
 
-uniform vec3 vCamPos;
+	uniform vec3 vCamPos;
 
-varying vec4 P;
-varying vec3 N;
+	varying vec4 P;
+	varying vec3 N;
 #endif
 
 varying vec3 vPosition;
@@ -61,52 +62,33 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
 
 
-vec3 rgb2hsl( in vec4 c )
-{
-    const float epsilon = 0.00000001;
-    float cmin = min( c.r, min( c.g, c.b ) );
-    float cmax = max( c.r, max( c.g, c.b ) );
-    float cd   = cmax - cmin;
-    vec3 hsl = vec3(0.0);
-    hsl.z = (cmax + cmin) / 2.0;
-    hsl.y = mix(cd / (cmax + cmin + epsilon), cd / (epsilon + 2.0 - (cmax + cmin)), step(0.5, hsl.z));
+	vec3 rgb2hsl( in vec4 c )
+	{
+	    const float epsilon = 0.00000001;
+	    float cmin = min( c.r, min( c.g, c.b ) );
+	    float cmax = max( c.r, max( c.g, c.b ) );
+	    float cd   = cmax - cmin;
+	    vec3 hsl = vec3(0.0);
+	    hsl.z = (cmax + cmin) / 2.0;
+	    hsl.y = mix(cd / (cmax + cmin + epsilon), cd / (epsilon + 2.0 - (cmax + cmin)), step(0.5, hsl.z));
 
-    vec3 a = vec3(1.0 - step(epsilon, abs(cmax - c)));
-    a = mix(vec3(a.x, 0.0, a.z), a, step(0.5, 2.0 - a.x - a.y));
-    a = mix(vec3(a.x, a.y, 0.0), a, step(0.5, 2.0 - a.x - a.z));
-    a = mix(vec3(a.x, a.y, 0.0), a, step(0.5, 2.0 - a.y - a.z));
-    
-    hsl.x = dot( vec3(0.0, 2.0, 4.0) + ((c.gbr - c.brg) / (epsilon + cd)), a );
-    hsl.x = (hsl.x + (1.0 - step(0.0, hsl.x) ) * 6.0 ) / 6.0;
-    return hsl;
-}
+	    vec3 a = vec3(1.0 - step(epsilon, abs(cmax - c)));
+	    a = mix(vec3(a.x, 0.0, a.z), a, step(0.5, 2.0 - a.x - a.y));
+	    a = mix(vec3(a.x, a.y, 0.0), a, step(0.5, 2.0 - a.x - a.z));
+	    a = mix(vec3(a.x, a.y, 0.0), a, step(0.5, 2.0 - a.y - a.z));
+	    
+	    hsl.x = dot( vec3(0.0, 2.0, 4.0) + ((c.gbr - c.brg) / (epsilon + cd)), a );
+	    hsl.x = (hsl.x + (1.0 - step(0.0, hsl.x) ) * 6.0 ) / 6.0;
+	    return hsl;
+	}
 
-float getLinearDepth(in float depth) {
-  float near=0.1;
-  float far =20000.0;
-  return 2.0f * near * far / (far + near - (2.0f * depth - 1.0f) * (far - near));
-}
+	float getLinearDepth(in float depth) {
+	  float near=0.1;
+	  float far =20000.0;
+	  return 2.0f * near * far / (far + near - (2.0f * depth - 1.0f) * (far - near));
+	}
 
-#ifdef DYNAMIC_SHADOWS_VMS
-
-float linstep(float low,float high,float v){
-    return clamp((v-low)/(high-low),0.0,1.0);
-
- }
-
- float getShadow(sampler2D shadowsampler,vec2 texCoords, float RealDist ,int cIdx) {
-    vec2 shadTexCol = texture2D(shadowsampler, texCoords.xy ).ra;
-
-    float p= step(RealDist,shadTexCol.x);
-    float variance = min(max(shadTexCol.y - shadTexCol.x*shadTexCol.x,0.00002),1.0);
-    float d = RealDist - shadTexCol.x;
-    float pMax = linstep(0.9,1.0,variance / (variance +  d * d));
-
-    return 1-min(max(p,pMax),1.0);
-}
-
-
-#else 
+	 
 
 
 	vec2 poissonDisk[4] = vec2[](
@@ -132,6 +114,7 @@ float linstep(float low,float high,float v){
 	     vec2(0.0, -4.0),
 	     vec2(4.0, -4.0),
 	     vec2(-4.0, 4.0));
+	
 	float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance ,int cIdx) {
 	     
 		float nsamples=16.0;
@@ -144,24 +127,86 @@ float linstep(float low,float high,float v){
 
 	        //clampedpos=clamp(clampedpos.xy, vec2(0.0, 0.0), vec2(1.0, 1.0));   
 	        float texDepth = texture2D( shadowsampler, clampedpos.xy )[cIdx];      
-	        if (  getLinearDepth(realDistance)  > getLinearDepth(texDepth) ){
-	            visibility += 1.0 / nsamples;
+	        if (   realDistance   >  texDepth  ){
+	            visibility += 1.0 ;
 	        }        
 	        
 	    }
 	    
-	    return  visibility  ;
+	    return  visibility / nsamples ;
 	}
 
-#endif
 
 
 
-	float getShadow2(sampler2D shadowsampler, vec2 smTexCoord, float realDistance ,int cIdx) {
+	vec4 getDistortFactor(in vec4 shadowPosition) {
+		
+	  const float bias0 = 0.9f;
+	  const float bias1 = 1.0f - bias0;
+
+	  float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
+	  							   shadowPosition.y * shadowPosition.y );
+	  //float factorDistance =  length(shadowPosition.xy);
+	  float distortFactor = factorDistance * bias0 + bias1;
+
+	    shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), .75);
+
+	  return shadowPosition;
+	}
+
+	vec4 getDistortFactorv2(in vec4 shadowPosition) {
+	  const float DistortPower = 7.0f;
+	  const float SHADOW_MAP_BIAS = 0.9f;
+	  vec2 p=shadowPosition.xy;
+	  p = abs(p);
+	  p = p * p * p;
+	  float distordLengh=pow(p.x + p.y, 1.0f / 3.0f);
+	  float len = 1e-6 + distordLengh;
+	  distordLengh =  (1.0f - SHADOW_MAP_BIAS) + len * SHADOW_MAP_BIAS;
+	  vec2 distortedcoords =  shadowPosition.xy / min(distordLengh, 1.0f);
+
+	  return vec4(distortedcoords.xy,shadowPosition.z * 0.2,1.0);
+	}
+
+	vec3 getShadowSpacePosition(in vec4 pos,in mat4 shadowMVP) {
+
+	  vec4 positionShadowSpace = mShadowProj* mShadowView * mWorld * pos; 
+	  positionShadowSpace = getDistortFactor(positionShadowSpace);
+	  positionShadowSpace.xy = positionShadowSpace.xy*0.5 +0.5;
+	  positionShadowSpace.z = getLinearDepth(positionShadowSpace.z);
+	  positionShadowSpace.z = positionShadowSpace.z*0.5 + 0.5;
+	  return positionShadowSpace.xyz;
+	}
+
+	vec4 getWorldPosition(){
+		vec4 positionNDCSpace = vec4(2.0f * gl_FragCoord.xy - 1.0f,
+									 2.0f * gl_FragCoord.z - 1.0f,
+									 1.0f);
+
+		positionNDCSpace = vec4(
+	        (gl_FragCoord.x / vScreen[0] - 0.5) * 2.0,
+	        (gl_FragCoord.y / vScreen[1] - 0.5) * 2.0,
+	        (gl_FragCoord.z - 0.5) * 2.0,
+	        1.0);
+
+	  vec4 positionCameraSpace = mInvProj * positionNDCSpace;
+
+	  positionCameraSpace = positionCameraSpace / positionCameraSpace.w;
+
+	  vec4 positionWorldSpace = mInvWorldView * positionCameraSpace;
+
+	  return positionWorldSpace;
+
+	}
+
+
+
+
+	float getShadowv2(sampler2D shadowsampler, vec2 smTexCoord, float realDistance ,int cIdx) {
 	    float texDepth = texture2D(shadowsampler, smTexCoord.xy )[cIdx];
 		  //return step(texDepth-realDistance, 0.000005f * getLinearDepth(realDistance) + 0.00005f);
 
-	    return (getLinearDepth(realDistance)  > getLinearDepth(texDepth) ) ?  1.0  :0.0 ;
+	    return ( realDistance  >  texDepth  ) ?  1.0  :0.0 ;
 	}
 	 
 
@@ -199,49 +244,6 @@ vec4 applyToneMapping(vec4 color)
 	return vec4(pow(color.rgb, vec3(1.0 / gamma)), color.a);
 }
 #endif
-
-
-vec4 getDistortFactor(in vec4 shadowPosition) {
-  const float bias0 = 0.95f;
-  const float bias1 = 1.0f - bias0;
-
-  float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
-  							   shadowPosition.y * shadowPosition.y  );
-  //float factorDistance =  length(shadowPosition.xy);
-  float distortFactor = factorDistance * bias0 + bias1;
-
-    shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), .75);
-
-  return shadowPosition;
-}
-vec3 getShadowSpacePosition(in vec4 pos,in mat4 shadowMVP) {
-
-  vec4 positionShadowSpace = mShadowProj* mShadowView * mWorld * pos; 
-  positionShadowSpace = getDistortFactor(positionShadowSpace);
-  positionShadowSpace.z/=f_textureresolution;
-  return positionShadowSpace.xyz *0.5 +0.5;
-}
-
-vec4 getWorldPosition(){
-	vec4 positionNDCSpace = vec4(2.0f * gl_FragCoord.xy - 1.0f,
-								 2.0f * gl_FragCoord.z - 1.0f,
-								 1.0f);
-
-	positionNDCSpace = vec4(
-        (gl_FragCoord.x / 640. - 0.5) * 2.0,
-        (gl_FragCoord.y / 480 - 0.5) * 2.0,
-        (gl_FragCoord.z - 0.5) * 2.0,
-        1.0);
-
-  vec4 positionCameraSpace = mInvProj * positionNDCSpace;
-
-  positionCameraSpace = positionCameraSpace / positionCameraSpace.w;
-
-  vec4 positionWorldSpace = mInvWorldView * positionCameraSpace;
-
-  return positionWorldSpace;
-
-}
 
 
 void main(void)
@@ -286,10 +288,10 @@ void main(void)
 		
 		
 
-   		bias =  0.0000000015 ;
- 		bias=0.0f;
+   		bias =  0.0000005 ;
+ 		//bias=0.0f;
         
-        if(dot(normalize(-v_LightDirection),normalize(N))  < 0){
+        if(dot(normalize(-v_LightDirection),normalize(N))  <= 0){
         	shadow_int0=1.0f;
         }
 		else {
@@ -297,7 +299,9 @@ void main(void)
 			vec3 posInShadow=getShadowSpacePosition( posInWorld ,mShadowWorldViewProj0);
 			if(posInShadow.x>0.0&&posInShadow.x<1.0&&posInShadow.y>0.0&&posInShadow.y<1.0)
 			{
-				shadow_int0=getShadow2(ShadowMapSampler, posInShadow.xy,
+				bias = 1.0 - clamp(dot(normalize(N), posInShadow.xyz), 0.0, 1.0);
+				bias = 0.0000000200 + 0.00000002 * bias;
+				shadow_int0=getShadow(ShadowMapSampler, posInShadow.xy,
 										posInShadow.z  + bias ,0);
 			}
 		}

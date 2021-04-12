@@ -112,7 +112,7 @@ public:
 
 	bool _shadows_enabled{false};
 	float _shadow_strength{0.65f};
-	float _shadow_map_max_distance{4096.0f};
+	float _shadow_map_max_distance{4096.0f}; //arbitrary 4096 blocks
 	float _shadow_map_texture_size{2048.0f};
 	bool _shadow_map_texture_32bit{true};
 	bool _enable_csm{false};

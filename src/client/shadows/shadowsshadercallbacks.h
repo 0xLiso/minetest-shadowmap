@@ -6,6 +6,7 @@
 #include <cassert>
 
 
+
 class ShadowDepthShaderCB : public irr::video::IShaderConstantSetCallBack
 {
 public:

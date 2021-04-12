@@ -77,7 +77,7 @@ DirectionalLight::DirectionalLight(const irr::u32 shadowMapResolution,
                                    irr::f32 farValue, irr::u8 nSplits) :
     diffuseColor(lightColor),
     pos(position),
-    farPlane(farValue ),
+    farPlane(farValue *BS ),
     mapRes(shadowMapResolution), nsplits(nSplits) {
     for (int i = 0; i < csm_frustum.size(); i++) {
         csm_frustum[i].id = i;
@@ -91,7 +91,7 @@ void DirectionalLight::update_frustum(const Camera *cam, Client *client) {
     			     : cam->getCameraNode()->getFarValue();
     				 */
     float wanted_range =
-        client->getEnv().getClientMap().getWantedRange() * MAP_BLOCKSIZE;
+        client->getEnv().getClientMap().getWantedRange() * BS;
 
     float zFar = getMaxFarValue() > wanted_range ? wanted_range : getMaxFarValue();
     ///////////////////////////////////

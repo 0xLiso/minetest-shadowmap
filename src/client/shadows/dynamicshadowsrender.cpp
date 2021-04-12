@@ -344,8 +344,8 @@ void ShadowRenderer::renderShadowSplit(irr::video::ITexture *target,
 				material.FrontfaceCulling = true;
 				//material.PolygonOffsetFactor = -1;
 				//material.PolygonOffsetDirection = video::EPO_BACK;
-				// material.PolygonOffsetDepthBias =   2.0 * 4.8e-7;
-				// material.PolygonOffsetSlopeScale = -1.f;
+				 material.PolygonOffsetDepthBias =   1.0 * 4.8e-7;
+				 material.PolygonOffsetSlopeScale = 1.f;
 
 				map_node->OnAnimate(_device->getTimer()->getTime());
 

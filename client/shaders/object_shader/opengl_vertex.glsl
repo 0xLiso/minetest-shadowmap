@@ -3,14 +3,6 @@ uniform mat4 mWorld;
 uniform vec3 eyePosition;
 uniform float animationTimer;
 
-
-#ifdef ENABLE_DYNAMIC_SHADOWS
-// shadow matrix
-	uniform mat4 m_worldView;
-	varying vec3 P;
-	varying vec3 N;
-#endif
-
 varying vec3 vNormal;
 varying vec3 vPosition;
 varying vec3 worldPosition;
@@ -26,6 +18,11 @@ varying float vIDiff;
 
 const float e = 2.718281828459;
 const float BS = 10.0;
+
+#ifdef ENABLE_DYNAMIC_SHADOWS
+	varying vec4 P;
+	varying vec3 N;
+#endif
 
 float directional_ambient(vec3 normal)
 {
@@ -59,11 +56,12 @@ void main(void)
 
 	varColor = inVertexColor;
 
-	
+
+
+
 	#ifdef ENABLE_DYNAMIC_SHADOWS
 
-		gl_TexCoord[3] = m_worldView*vec4(gl_Vertex.xyz,1.0);
-		P = vec3(gl_Vertex.xyz);
+		P =  mWorld*vec4(gl_Vertex.xyz,1.0);
 		N =  vec3(gl_Normal.xyz);
 	#endif
 }

@@ -224,6 +224,7 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
     CachedVertexShaderSetting<float, 16> m_shadow_view;
     CachedVertexShaderSetting<float, 4> m_shadow_csm_splits;
     CachedVertexShaderSetting<float, 3> m_campos;
+    CachedVertexShaderSetting<float, 2> m_screen_size;
 
     CachedPixelShaderSetting<s32> m_shadow_texture;
     f32 brightness{0.0f};
@@ -246,6 +247,7 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
         , m_campos("vCamPos")
         , m_shadow_texture("ShadowMapSampler")
         , m_shadow_csm_splits("mShadowCsmSplits")
+        , m_screen_size("vScreen")
         // @Liso: IDK how to pass a matrix array to the shader in
         // irrlitch:(
         , m_shadow_world_view_proj0("mShadowWorldViewProj0")
@@ -264,6 +266,10 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
     virtual void onSetConstants(video::IMaterialRendererServices *services) override {
         video::IVideoDriver *driver = services->getVideoDriver();
         sanity_check(driver);
+	    
+        const irr::core::dimension2du &screen_info = driver->getScreenSize();
+	    float screen[2] = {screen_info.Width, screen_info.Height};
+	    m_screen_size.set(*reinterpret_cast<float(*)[2]>(screen), services);
 
         // Set world matrix
         core::matrix4 world = driver->getTransform(video::ETS_WORLD);

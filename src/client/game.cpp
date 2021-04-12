@@ -3843,13 +3843,13 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 		client->getEnv().getClientMap().updateDrawList();
 		runData.update_draw_list_last_cam_dir = camera_direction;
 
-		/*
-		 * Update Shadows
-		 */
-		updateShadows(time_of_day_smooth);
-
+		
 
 	}
+	/*
+	 * Update Shadows
+	 */
+	updateShadows(time_of_day_smooth);
 
 	m_game_ui->update(*stats, client, draw_control, cam, runData.pointed_old, gui_chat_console, dtime);
 
@@ -3998,7 +3998,7 @@ void Game::updateShadows(float _timeoftheday)
 		float offsety = sin(timeoftheday * 5.0f) * 10000.0f;
 		float offsetx = cos(timeoftheday * 5.0f) * 10000.0f;
 		// small offset in z to avoid perspective shadow glitch
-		float offsetz =   0.0f; 
+		float offsetz =   -150.0f; 
 					 
 		irr::core::vector3df sun_pos = irr::core::vector3df(std::ceil(offsetx),
 				std::ceil(offsety), std::ceil(offsetz));

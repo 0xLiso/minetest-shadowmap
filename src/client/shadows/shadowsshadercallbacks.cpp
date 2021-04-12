@@ -1,5 +1,6 @@
 #include "client/shadows/shadowsshadercallbacks.h"
 
+#include "porting.h"
 void ShadowDepthShaderCB::OnSetConstants(
 		irr::video::IMaterialRendererServices *services, irr::s32 userData)
 {
@@ -14,6 +15,9 @@ void ShadowDepthShaderCB::OnSetConstants(
 	services->setVertexShaderConstant("CascadeIdx", &idx, 1);
 	services->setVertexShaderConstant("MapResolution", &MapRes, 1);
 	services->setVertexShaderConstant("MaxFar", &MaxFar, 1);
+	float time = porting::getTimeMs() % 1000000;
+	
+	services->setVertexShaderConstant("animationTimer", &time, 1);
 	
 }
  
