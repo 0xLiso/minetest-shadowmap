@@ -49,18 +49,12 @@ void main(void)
 #else
 	// This is intentional comparison with zero without any margin.
 	// If normal is not equal to zero exactly, then we assume it's a valid, just not normalized vector
-	vIDiff = length(inVertexNormal) == 0.0
-		? 1.0
-		: directional_ambient(normalize(inVertexNormal));
+	vIDiff = length(inVertexNormal) == 0.0 ? 1.0 : directional_ambient(normalize(inVertexNormal));
 #endif
 
 	varColor = inVertexColor;
-
-
-
-
+	
 	#ifdef ENABLE_DYNAMIC_SHADOWS
-
 		P =  mWorld*vec4(gl_Vertex.xyz,1.0);
 		N =  vec3(gl_Normal.xyz);
 	#endif

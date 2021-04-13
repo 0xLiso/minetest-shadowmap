@@ -1,4 +1,3 @@
-#extension GL_ARB_gpu_shader5 : enable
 uniform sampler2D baseTexture;
 
 uniform vec4 skyBgColor;
@@ -12,31 +11,30 @@ uniform mat4 mInvWorldViewProj;
 uniform vec3 cameraOffset;
 uniform float animationTimer;
 #ifdef ENABLE_DYNAMIC_SHADOWS
-	// shadow texture
-	uniform sampler2D ShadowMapSampler;
-	//shadow uniforms
-	uniform mat4 mShadowWorldViewProj0;
-	uniform mat4 mShadowWorldViewProj1;
-	uniform mat4 mShadowWorldViewProj2;
-	uniform vec4 mShadowCsmSplits;
-	uniform vec3 v_LightDirection;
-	uniform float f_textureresolution;
-	uniform float f_brightness;
-	uniform mat4 mWorldView;
-	uniform mat4 mWorldViewProj;
-	uniform mat4 m_worldView;
-	uniform mat4 mWorld;
+// shadow texture
+uniform sampler2D ShadowMapSampler;
+//shadow uniforms
+uniform mat4 mShadowWorldViewProj0;
+uniform mat4 mShadowWorldViewProj1;
+uniform mat4 mShadowWorldViewProj2;
+uniform vec4 mShadowCsmSplits;
+uniform vec3 v_LightDirection;
+uniform float f_textureresolution;
+uniform float f_brightness;
+uniform mat4 mWorldView;
+uniform mat4 mWorldViewProj;
+uniform mat4 m_worldView;
+uniform mat4 mWorld;
 
-	uniform mat4 mShadowProj;
-	uniform mat4 mShadowView;
-	uniform mat4 mInvProj;
-	uniform mat4 mInvWorldView;
+uniform mat4 mShadowProj;
+uniform mat4 mShadowView;
+uniform mat4 mInvProj;
+uniform mat4 mInvWorldView;
 
+uniform vec3 vCamPos;
 
-	uniform vec3 vCamPos;
-
-	varying vec4 P;
-	varying vec3 N;
+varying vec4 P;
+varying vec3 N;
 #endif
 
 varying vec3 vPosition;
@@ -57,257 +55,244 @@ varying vec3 eyeVec;
 const float fogStart = FOG_START;
 const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
-
 #ifdef ENABLE_DYNAMIC_SHADOWS
+vec3 rgb2hsl(in vec4 c)
+{
+	const float epsilon = 0.00000001;
+	float cmin = min(c.r, min(c.g, c.b));
+	float cmax = max(c.r, max(c.g, c.b));
+	float cd   = cmax - cmin;
+	vec3 hsl = vec3(0.0);
+	hsl.z = (cmax + cmin) / 2.0;
+	hsl.y = mix(cd / (cmax + cmin + epsilon), cd / (epsilon + 2.0 - (cmax + cmin)), step(0.5, hsl.z));
 
+	vec3 a = vec3(1.0 - step(epsilon, abs(cmax - c)));
+	a = mix(vec3(a.x, 0.0, a.z), a, step(0.5, 2.0 - a.x - a.y));
+	a = mix(vec3(a.x, a.y, 0.0), a, step(0.5, 2.0 - a.x - a.z));
+	a = mix(vec3(a.x, a.y, 0.0), a, step(0.5, 2.0 - a.y - a.z));
+	
+	hsl.x = dot(vec3(0.0, 2.0, 4.0) + ((c.gbr - c.brg) / (epsilon + cd)), a);
+	hsl.x = (hsl.x + (1.0 - step(0.0, hsl.x) ) * 6.0 ) / 6.0;
+	return hsl;
+}
 
-
-	vec3 rgb2hsl( in vec4 c )
-	{
-	    const float epsilon = 0.00000001;
-	    float cmin = min( c.r, min( c.g, c.b ) );
-	    float cmax = max( c.r, max( c.g, c.b ) );
-	    float cd   = cmax - cmin;
-	    vec3 hsl = vec3(0.0);
-	    hsl.z = (cmax + cmin) / 2.0;
-	    hsl.y = mix(cd / (cmax + cmin + epsilon), cd / (epsilon + 2.0 - (cmax + cmin)), step(0.5, hsl.z));
-
-	    vec3 a = vec3(1.0 - step(epsilon, abs(cmax - c)));
-	    a = mix(vec3(a.x, 0.0, a.z), a, step(0.5, 2.0 - a.x - a.y));
-	    a = mix(vec3(a.x, a.y, 0.0), a, step(0.5, 2.0 - a.x - a.z));
-	    a = mix(vec3(a.x, a.y, 0.0), a, step(0.5, 2.0 - a.y - a.z));
-	    
-	    hsl.x = dot( vec3(0.0, 2.0, 4.0) + ((c.gbr - c.brg) / (epsilon + cd)), a );
-	    hsl.x = (hsl.x + (1.0 - step(0.0, hsl.x) ) * 6.0 ) / 6.0;
-	    return hsl;
-	}
-
-	float getLinearDepth(in float depth) {
-	  float near=0.1;
-	  float far =20000.0;
-	  return 2.0f * near * far / (far + near - (2.0f * depth - 1.0f) * (far - near));
-	}
-
+float getLinearDepth(in float depth) {
+	float near=0.1;
+	float far =20000.0;
+	return 2.0f * near * far / (far + near - (2.0f * depth - 1.0f) * (far - near));
+}
 	 
-const vec2[128] poissonDisk = vec2[128](
-    vec2(0. , 0.),
-    vec2(0.2538637f, -0.589553f),
-    vec2(0.6399639f, -0.6070346f),
-    vec2(0.1431894f, -0.8152663f),
-    vec2(0.5930731f, -0.7948953f),
-    vec2(0.6914624f, -0.3480401f),
-    vec2(0.4279022f, -0.4768359f),
-    vec2(0.8242062f, -0.508942f),
-    vec2(0.01053669f, -0.4866286f),
-    vec2(-0.1108985f, -0.7414401f),
-    vec2(0.03328848f, -0.9812139f),
-    vec2(-0.2678958f, -0.3206359f),
-    vec2(0.25712f, -0.229964f),
-    vec2(-0.02783006f, -0.2600488f),
-    vec2(-0.2917352f, -0.6411636f),
-    vec2(-0.4032183f, -0.8573055f),
-    vec2(-0.6612689f, -0.7354062f),
-    vec2(-0.5676314f, -0.5411444f),
-    vec2(-0.2168807f, -0.9072415f),
-    vec2(-0.5580572f, -0.09704394f),
-    vec2(-0.5138885f, -0.3027371f),
-    vec2(-0.1932104f, -0.09702744f),
-    vec2(-0.3822881f, -0.01384046f),
-    vec2(0.8748599f, -0.1630837f),
-    vec2(-0.522255f, 0.2585554f),
-    vec2(-0.749154f, -0.08459146f),
-    vec2(-0.749154f, -0.08459146f),
-    vec2(-0.6647733f, 0.129063f),
-    vec2(-0.8998289f, -0.2349087f),
-    vec2(-0.8098084f, -0.5461301f),
-    vec2(0.5121568f, 0.00675085f),
-    vec2(0.1070659f, -0.05260961f),
-    vec2(0.3009415f, 0.1365128f),
-    vec2(0.5151741f, -0.1867349f),
-    vec2(-0.9284627f, -0.007728597f),
-    vec2(-0.2198475f, 0.3018067f),
-    vec2(-0.07589716f, 0.09244914f),
-    vec2(0.721417f, 0.01370876f),
-    vec2(0.6517887f, 0.1998482f),
-    vec2(0.4209776f, 0.3226621f),
-    vec2(0.9295521f, 0.1595292f),
-    vec2(0.8101555f, 0.3356059f),
-    vec2(0.6216043f, 0.4737987f),
-    vec2(-0.7957394f, 0.4460461f),
-    vec2(-0.578917f, 0.5065681f),
-    vec2(-0.3760341f, 0.4722787f),
-    vec2(0.1558616f, 0.3765588f),
-    vec2(0.4568439f, 0.655364f),
-    vec2(0.08923677f, 0.1941438f),
-    vec2(0.1930917f, 0.5782562f),
-    vec2(-0.07713082f, 0.5275764f),
-    vec2(0.4766026f, 0.8639814f),
-    vec2(-0.7173501f, 0.6784452f),
-    vec2(-0.8751968f, 0.2121847f),
-    vec2(0.8041916f, 0.5765353f),
-    vec2(0.2870654f, 0.9436792f),
-    vec2(0.6502987f, 0.7152798f),
-    vec2(-0.2637711f, 0.7050315f),
-    vec2(-0.03864802f, 0.7925433f),
-    vec2(-0.1051485f, 0.9776039f),
-    vec2(-0.3079708f, 0.9433341f),
-    vec2(-0.5206522f, 0.6986488f),
-    vec2(0.08988898f, 0.9506541f),
-    vec2(0.2821491f, 0.7465457f),
-     vec2(-0.613392, 0.617481),
-     vec2(0.170019, -0.040254),
-     vec2(-0.299417, 0.791925),
-     vec2(0.645680, 0.493210),
-     vec2(-0.651784, 0.717887),
-     vec2(0.421003, 0.027070),
-     vec2(-0.817194, -0.271096),
-     vec2(-0.705374, -0.668203),
-     vec2(0.977050, -0.108615),
-     vec2(0.063326, 0.142369),
-     vec2(0.203528, 0.214331),
-     vec2(-0.667531, 0.326090),
-     vec2(-0.098422, -0.295755),
-     vec2(-0.885922, 0.215369),
-     vec2(0.566637, 0.605213),
-     vec2(0.039766, -0.396100),
-     vec2(0.751946, 0.453352),
-     vec2(0.078707, -0.715323),
-     vec2(-0.075838, -0.529344),
-     vec2(0.724479, -0.580798),
-     vec2(0.222999, -0.215125),
-     vec2(-0.467574, -0.405438),
-     vec2(-0.248268, -0.814753),
-     vec2(0.354411, -0.887570),
-     vec2(0.175817, 0.382366),
-     vec2(0.487472, -0.063082),
-     vec2(-0.084078, 0.898312),
-     vec2(0.488876, -0.783441),
-     vec2(0.470016, 0.217933),
-     vec2(-0.696890, -0.549791),
-     vec2(-0.149693, 0.605762),
-     vec2(0.034211, 0.979980),
-     vec2(0.503098, -0.308878),
-     vec2(-0.016205, -0.872921),
-     vec2(0.385784, -0.393902),
-     vec2(-0.146886, -0.859249),
-     vec2(0.643361, 0.164098),
-     vec2(0.634388, -0.049471),
-     vec2(-0.688894, 0.007843),
-     vec2(0.464034, -0.188818),
-     vec2(-0.440840, 0.137486),
-     vec2(0.364483, 0.511704),
-     vec2(0.034028, 0.325968),
-     vec2(0.099094, -0.308023),
-     vec2(0.693960, -0.366253),
-     vec2(0.678884, -0.204688),
-     vec2(0.001801, 0.780328),
-     vec2(0.145177, -0.898984),
-     vec2(0.062655, -0.611866),
-     vec2(0.315226, -0.604297),
-     vec2(-0.780145, 0.486251),
-     vec2(-0.371868, 0.882138),
-     vec2(0.200476, 0.494430),
-     vec2(-0.494552, -0.711051),
-     vec2(0.612476, 0.705252),
-     vec2(-0.578845, -0.768792),
-     vec2(-0.772454, -0.090976),
-     vec2(0.504440, 0.372295),
-     vec2(0.155736, 0.065157),
-     vec2(0.391522, 0.849605),
-     vec2(-0.620106, -0.328104),
-     vec2(0.789239, -0.419965),
-     vec2(-0.545396, 0.538133),
-     vec2(-0.178564, -0.596057));
+const vec2[128] poissonDisk = vec2[128]
+(
+    vec2(0.0, 0.0),
+    vec2(0.2538637, -0.589553),
+    vec2(0.6399639, -0.6070346),
+    vec2(0.1431894, -0.8152663),
+    vec2(0.5930731, -0.7948953),
+    vec2(0.6914624, -0.3480401),
+    vec2(0.4279022, -0.4768359),
+    vec2(0.8242062, -0.508942),
+    vec2(0.01053669, -0.4866286),
+    vec2(-0.1108985, -0.7414401),
+    vec2(0.03328848, -0.9812139),
+    vec2(-0.2678958, -0.3206359),
+    vec2(0.25712, -0.229964),
+    vec2(-0.02783006, -0.2600488),
+    vec2(-0.2917352, -0.6411636),
+    vec2(-0.4032183, -0.8573055),
+    vec2(-0.6612689, -0.7354062),
+    vec2(-0.5676314, -0.5411444),
+    vec2(-0.2168807, -0.9072415),
+    vec2(-0.5580572, -0.09704394),
+    vec2(-0.5138885, -0.3027371),
+    vec2(-0.1932104, -0.09702744),
+    vec2(-0.3822881, -0.01384046),
+    vec2(0.8748599, -0.1630837),
+    vec2(-0.522255, 0.2585554),
+    vec2(-0.749154, -0.08459146),
+    vec2(-0.749154, -0.08459146),
+    vec2(-0.6647733, 0.129063),
+    vec2(-0.8998289, -0.2349087),
+    vec2(-0.8098084, -0.5461301),
+    vec2(0.5121568, 0.00675085),
+    vec2(0.1070659, -0.05260961),
+    vec2(0.3009415, 0.1365128),
+    vec2(0.5151741, -0.1867349),
+    vec2(-0.9284627, -0.007728597),
+    vec2(-0.2198475, 0.3018067),
+    vec2(-0.07589716, 0.09244914),
+    vec2(0.721417, 0.01370876),
+    vec2(0.6517887, 0.1998482),
+    vec2(0.4209776, 0.3226621),
+    vec2(0.9295521, 0.1595292),
+    vec2(0.8101555, 0.3356059),
+    vec2(0.6216043, 0.4737987),
+    vec2(-0.7957394, 0.4460461),
+    vec2(-0.578917, 0.5065681),
+    vec2(-0.3760341, 0.4722787),
+    vec2(0.1558616, 0.3765588),
+    vec2(0.4568439, 0.655364),
+    vec2(0.08923677, 0.1941438),
+    vec2(0.1930917, 0.5782562),
+    vec2(-0.07713082, 0.5275764),
+    vec2(0.4766026, 0.8639814),
+    vec2(-0.7173501, 0.6784452),
+    vec2(-0.8751968, 0.2121847),
+    vec2(0.8041916, 0.5765353),
+    vec2(0.2870654, 0.9436792),
+    vec2(0.6502987, 0.7152798),
+    vec2(-0.2637711, 0.7050315),
+    vec2(-0.03864802, 0.7925433),
+    vec2(-0.1051485, 0.9776039),
+    vec2(-0.3079708, 0.9433341),
+    vec2(-0.5206522, 0.6986488),
+    vec2(0.08988898, 0.9506541),
+    vec2(0.2821491, 0.7465457),
+	vec2(-0.613392, 0.617481),
+	vec2(0.170019, -0.040254),
+	vec2(-0.299417, 0.791925),
+	vec2(0.645680, 0.493210),
+	vec2(-0.651784, 0.717887),
+	vec2(0.421003, 0.027070),
+	vec2(-0.817194, -0.271096),
+	vec2(-0.705374, -0.668203),
+	vec2(0.977050, -0.108615),
+	vec2(0.063326, 0.142369),
+	vec2(0.203528, 0.214331),
+	vec2(-0.667531, 0.326090),
+	vec2(-0.098422, -0.295755),
+	vec2(-0.885922, 0.215369),
+	vec2(0.566637, 0.605213),
+	vec2(0.039766, -0.396100),
+	vec2(0.751946, 0.453352),
+	vec2(0.078707, -0.715323),
+	vec2(-0.075838, -0.529344),
+	vec2(0.724479, -0.580798),
+	vec2(0.222999, -0.215125),
+	vec2(-0.467574, -0.405438),
+	vec2(-0.248268, -0.814753),
+	vec2(0.354411, -0.887570),
+	vec2(0.175817, 0.382366),
+	vec2(0.487472, -0.063082),
+	vec2(-0.084078, 0.898312),
+	vec2(0.488876, -0.783441),
+	vec2(0.470016, 0.217933),
+	vec2(-0.696890, -0.549791),
+	vec2(-0.149693, 0.605762),
+	vec2(0.034211, 0.979980),
+	vec2(0.503098, -0.308878),
+	vec2(-0.016205, -0.872921),
+	vec2(0.385784, -0.393902),
+	vec2(-0.146886, -0.859249),
+	vec2(0.643361, 0.164098),
+	vec2(0.634388, -0.049471),
+	vec2(-0.688894, 0.007843),
+	vec2(0.464034, -0.188818),
+	vec2(-0.440840, 0.137486),
+	vec2(0.364483, 0.511704),
+	vec2(0.034028, 0.325968),
+	vec2(0.099094, -0.308023),
+	vec2(0.693960, -0.366253),
+	vec2(0.678884, -0.204688),
+	vec2(0.001801, 0.780328),
+	vec2(0.145177, -0.898984),
+	vec2(0.062655, -0.611866),
+	vec2(0.315226, -0.604297),
+	vec2(-0.780145, 0.486251),
+	vec2(-0.371868, 0.882138),
+	vec2(0.200476, 0.494430),
+	vec2(-0.494552, -0.711051),
+	vec2(0.612476, 0.705252),
+	vec2(-0.578845, -0.768792),
+	vec2(-0.772454, -0.090976),
+	vec2(0.504440, 0.372295),
+	vec2(0.155736, 0.065157),
+	vec2(0.391522, 0.849605),
+	vec2(-0.620106, -0.328104),
+	vec2(0.789239, -0.419965),
+	vec2(-0.545396, 0.538133),
+	vec2(-0.178564, -0.596057)
+);
 
-	float getShadowv2(sampler2D shadowsampler, vec2 smTexCoord, float realDistance ,int cIdx) {
-	    float texDepth = texture2D(shadowsampler, smTexCoord.xy )[cIdx];
-		return ( realDistance  >  texDepth  ) ?  1.0  :0.0 ;
+float getShadowv2(sampler2D shadowsampler, vec2 smTexCoord, float realDistance, int cIdx)
+{
+	float texDepth = texture2D(shadowsampler, smTexCoord.xy)[cIdx];
+	return (realDistance > texDepth) ? 1.0 : 0.0;
+}
+
+
+float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance, int cIdx)
+{
+	int nsamples = 4;
+	vec2 clampedpos;
+	
+	float visibility = getShadowv2(shadowsampler, smTexCoord.xy, realDistance, cIdx);
+	
+	for (int i = 1; i < nsamples; i++) {
+		clampedpos = smTexCoord.xy + (poissonDisk[i]/f_textureresolution);
+		visibility += getShadowv2(shadowsampler, clampedpos.xy, realDistance, cIdx);
 	}
+	return visibility / nsamples;
+}
 
+vec4 getDistortFactor(in vec4 shadowPosition)
+{
+	const float bias0 = 0.9f;
+	const float bias1 = 1.0f - bias0;
 
- float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance ,int cIdx) {
-		float nsamples=128.0;
-	    vec2 clampedpos;
-		
-		float visibility= getShadowv2(shadowsampler, smTexCoord.xy, realDistance ,  cIdx);
-		
-	    for (int i = 1; i <  nsamples ; i++){
-	        clampedpos = smTexCoord.xy + ( poissonDisk[i]/f_textureresolution);
-            visibility += getShadowv2(shadowsampler, clampedpos.xy, realDistance ,  cIdx) ;
-	    }
-	    
-	    return  visibility/ nsamples  ;
-	}
+	float factorDistance = sqrt(shadowPosition.x * shadowPosition.x +
+								shadowPosition.y * shadowPosition.y );
+	
+	//float factorDistance =  length(shadowPosition.xy);
+	float distortFactor = factorDistance * bias0 + bias1;
+	shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), .75);
+	return shadowPosition;
+}
 
+vec4 getDistortFactorv2(in vec4 shadowPosition)
+{
+	const float DistortPower = 7.0;
+	const float SHADOW_MAP_BIAS = 0.9;
+	vec2 p=shadowPosition.xy;
+	p = abs(p);
+	p = p * p * p;
+	float distordLengh=pow(p.x + p.y, 1.0 / 3.0);
+	float len = 1e-6 + distordLengh;
+	distordLengh =  (1.0 - SHADOW_MAP_BIAS) + len * SHADOW_MAP_BIAS;
+	vec2 distortedcoords =  shadowPosition.xy / min(distordLengh, 1.0);
+	return vec4(distortedcoords.xy,shadowPosition.z * 0.2,1.0);
+}
 
+vec3 getShadowSpacePosition(in vec4 pos,in mat4 shadowMVP)
+{
+	vec4 positionShadowSpace = mShadowProj* mShadowView * mWorld * pos; 
+	positionShadowSpace = getDistortFactor(positionShadowSpace);
+	positionShadowSpace.xy = positionShadowSpace.xy*0.5 +0.5;
+	positionShadowSpace.z = getLinearDepth(positionShadowSpace.z);
+	positionShadowSpace.z = positionShadowSpace.z*0.5 + 0.5;
+	return positionShadowSpace.xyz;
+}
 
+vec4 getWorldPosition(){
+	vec4 positionNDCSpace = vec4(
+		2.0 * gl_FragCoord.xy - 1.0,
+		2.0 * gl_FragCoord.z - 1.0,
+		1.0
+	);
 
-	vec4 getDistortFactor(in vec4 shadowPosition) {
-		
-	  const float bias0 = 0.9f;
-	  const float bias1 = 1.0f - bias0;
+	positionNDCSpace = vec4(
+		(gl_FragCoord.x / vScreen[0] - 0.5) * 2.0,
+		(gl_FragCoord.y / vScreen[1] - 0.5) * 2.0,
+		(gl_FragCoord.z - 0.5) * 2.0,
+		1.0
+	);
 
-	  float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
-	  							   shadowPosition.y * shadowPosition.y );
-	  //float factorDistance =  length(shadowPosition.xy);
-	  float distortFactor = factorDistance * bias0 + bias1;
-
-	    shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), .75);
-
-	  return shadowPosition;
-	}
-
-	vec4 getDistortFactorv2(in vec4 shadowPosition) {
-	  const float DistortPower = 7.0f;
-	  const float SHADOW_MAP_BIAS = 0.9f;
-	  vec2 p=shadowPosition.xy;
-	  p = abs(p);
-	  p = p * p * p;
-	  float distordLengh=pow(p.x + p.y, 1.0f / 3.0f);
-	  float len = 1e-6 + distordLengh;
-	  distordLengh =  (1.0f - SHADOW_MAP_BIAS) + len * SHADOW_MAP_BIAS;
-	  vec2 distortedcoords =  shadowPosition.xy / min(distordLengh, 1.0f);
-
-	  return vec4(distortedcoords.xy,shadowPosition.z * 0.2,1.0);
-	}
-
-	vec3 getShadowSpacePosition(in vec4 pos,in mat4 shadowMVP) {
-
-	  vec4 positionShadowSpace = mShadowProj* mShadowView * mWorld * pos; 
-	  positionShadowSpace = getDistortFactor(positionShadowSpace);
-	  positionShadowSpace.xy = positionShadowSpace.xy*0.5 +0.5;
-	  positionShadowSpace.z = getLinearDepth(positionShadowSpace.z);
-	  positionShadowSpace.z = positionShadowSpace.z*0.5 + 0.5;
-	  return positionShadowSpace.xyz;
-	}
-
-	vec4 getWorldPosition(){
-		vec4 positionNDCSpace = vec4(2.0f * gl_FragCoord.xy - 1.0f,
-									 2.0f * gl_FragCoord.z - 1.0f,
-									 1.0f);
-
-		positionNDCSpace = vec4(
-	        (gl_FragCoord.x / vScreen[0] - 0.5) * 2.0,
-	        (gl_FragCoord.y / vScreen[1] - 0.5) * 2.0,
-	        (gl_FragCoord.z - 0.5) * 2.0,
-	        1.0);
-
-	  vec4 positionCameraSpace = mInvProj * positionNDCSpace;
-
-	  positionCameraSpace = positionCameraSpace / positionCameraSpace.w;
-
-	  vec4 positionWorldSpace = mInvWorldView * positionCameraSpace;
-
-	  return positionWorldSpace;
-
-	}
-
-
-
- 
-
+	vec4 positionCameraSpace = mInvProj * positionNDCSpace;
+	positionCameraSpace = positionCameraSpace / positionCameraSpace.w;
+	vec4 positionWorldSpace = mInvWorldView * positionCameraSpace;
+	return positionWorldSpace;
+}
 #endif
-
 
 #ifdef ENABLE_TONE_MAPPING
 
@@ -341,7 +326,6 @@ vec4 applyToneMapping(vec4 color)
 }
 #endif
 
-
 void main(void)
 {
 	vec3 color;
@@ -358,69 +342,51 @@ void main(void)
 #endif
 
 	color = base.rgb;
-
 	vec4 col = vec4(color.rgb * varColor.rgb, 1.0);
 
-
 #if ENABLE_DYNAMIC_SHADOWS && DRAW_TYPE!=NDT_TORCHLIKE
-		float shadow_int =0.0;
+	float shadow_int =0.0;
+	float diffuseLight = dot(normalize(-v_LightDirection),normalize(N));
+	float bias = max(0.0005 * (1.0 - diffuseLight), 0.000005) ;  
 		
-		float diffuseLight = dot(normalize(-v_LightDirection),normalize(N)) ;
+	float NormalOffsetScale= 2.0+2.0/f_textureresolution;
+	float SlopeScale = abs(1-diffuseLight);
+	NormalOffsetScale*=SlopeScale;
+	vec3 posNormalbias = P.xyz + N.xyz*NormalOffsetScale;
+	diffuseLight=clamp(diffuseLight+0.2,0.5,1.0);
+	float shadow_int0 =0.0;
+	float shadow_int1 =0.0;
+	float shadow_int2 =0.0;
 
-		 
-
-	    float bias = max(0.0005 * (1.0 - diffuseLight), 0.000005) ;  
-	     
-	    float NormalOffsetScale= 2.0+2.0/f_textureresolution;
-	    float SlopeScale = abs(1-diffuseLight);
-		NormalOffsetScale*=SlopeScale;
-	    vec3 posNormalbias = P.xyz + N.xyz*NormalOffsetScale;
-		diffuseLight=clamp(diffuseLight+0.2,0.5,1.0);
-		float shadow_int0 =0.0;
-		float shadow_int1 =0.0;
-		float shadow_int2 =0.0;
-
-		//float brightness = rgb2hsl(col).b;//(col.r+col.g+col.b)/3.0;
-		
-		
-
-   		bias =  0.0000005 ;
- 		//bias=0.0f;
-        
-        if(dot(normalize(-v_LightDirection),normalize(N))  <= 0){
-        	shadow_int0=1.0f;
-        }
-		else {
-			vec4 posInWorld = getWorldPosition() ;
-			vec3 posInShadow=getShadowSpacePosition( posInWorld ,mShadowWorldViewProj0);
-			if(posInShadow.x>0.0&&posInShadow.x<1.0&&posInShadow.y>0.0&&posInShadow.y<1.0)
-			{
-				bias = 1.0 - clamp(dot(normalize(N), posInShadow.xyz), 0.0, 1.0);
-				bias = 0.0000000200 + 0.00000002 * bias;
-				shadow_int0=getShadow(ShadowMapSampler, posInShadow.xy,
-										posInShadow.z  + bias ,0);
-			}
-		}
-
-		 
-		//shadow_int = shadow_int0;
-		//shadow_int -= brightness;
-		shadow_int  = 1.0 - shadow_int0*0.35;
-		
-		
-		//ccol[cIdx]=0.15;
-		 diffuseLight=1.0;
-		//col = clamp(vec4((col.rgb-shadow_int),col.a),0.0,1.0);
-	#endif
-
-
+	//float brightness = rgb2hsl(col).b;//(col.r+col.g+col.b)/3.0;
+	bias =  0.0000005;
+	//bias=0.0f;
 	
- 
+	if(dot(normalize(-v_LightDirection),normalize(N))  <= 0){
+		shadow_int0=1.0f;
+	}
+	else {
+		vec4 posInWorld = getWorldPosition() ;
+		vec3 posInShadow=getShadowSpacePosition( posInWorld ,mShadowWorldViewProj0);
+		if(posInShadow.x>0.0&&posInShadow.x<1.0&&posInShadow.y>0.0&&posInShadow.y<1.0)
+		{
+			bias = 1.0 - clamp(dot(normalize(N), posInShadow.xyz), 0.0, 1.0);
+			bias = 0.0000000200 + 0.00000002 * bias;
+			shadow_int0=getShadow(ShadowMapSampler, posInShadow.xy,
+									posInShadow.z  + bias ,0);
+		}
+	}
+	//shadow_int = shadow_int0;
+	//shadow_int -= brightness;
+	shadow_int  = 1.0 - shadow_int0*0.35;
+	//ccol[cIdx]=0.15;
+		diffuseLight=1.0;
+	//col = clamp(vec4((col.rgb-shadow_int),col.a),0.0,1.0);
+#endif
 
 #ifdef ENABLE_TONE_MAPPING
 	col = applyToneMapping(col);
 #endif
-
 	// Due to a bug in some (older ?) graphics stacks (possibly in the glsl compiler ?),
 	// the fog will only be rendered correctly if the last operation before the
 	// clamp() is an addition. Else, the clamp() seems to be ignored.

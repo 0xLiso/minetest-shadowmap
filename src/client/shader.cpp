@@ -268,7 +268,7 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
         sanity_check(driver);
 	    
         const irr::core::dimension2du &screen_info = driver->getScreenSize();
-	    float screen[2] = {screen_info.Width, screen_info.Height};
+	    float screen[2] = {static_cast<float>(screen_info.Width), static_cast<float>(screen_info.Height)};
 	    m_screen_size.set(*reinterpret_cast<float(*)[2]>(screen), services);
 
         // Set world matrix

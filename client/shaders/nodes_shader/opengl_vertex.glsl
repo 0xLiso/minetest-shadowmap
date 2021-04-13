@@ -59,7 +59,6 @@ float smoothTriangleWave(float x)
 
 // OpenGL < 4.3 does not support continued preprocessor lines
 #if (MATERIAL_TYPE == TILE_MATERIAL_WAVING_LIQUID_TRANSPARENT || MATERIAL_TYPE == TILE_MATERIAL_WAVING_LIQUID_OPAQUE || MATERIAL_TYPE == TILE_MATERIAL_WAVING_LIQUID_BASIC) && ENABLE_WAVING_WATER
-
 //
 // Simple, fast noise function.
 // See: https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
@@ -91,7 +90,6 @@ float snoise(vec3 p)
 
 	return o4.y * d.y + o4.x * (1.0 - d.y);
 }
-
 #endif
 
  
@@ -175,10 +173,9 @@ void main(void)
 
 
 
-	#ifdef ENABLE_DYNAMIC_SHADOWS
-
-		gl_TexCoord[3] = gl_Position;//m_worldView*vec4(gl_Vertex.xyz,1.0);
-		P =  mWorld*vec4(gl_Vertex.xyz,1.0);
-		N =  vec3(gl_Normal.xyz);
-	#endif
+#ifdef ENABLE_DYNAMIC_SHADOWS
+	gl_TexCoord[3] = gl_Position;//m_worldView*vec4(gl_Vertex.xyz,1.0);
+	P =  mWorld*vec4(gl_Vertex.xyz,1.0);
+	N =  vec3(gl_Normal.xyz);
+#endif
 }
