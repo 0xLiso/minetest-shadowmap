@@ -225,28 +225,35 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance, in
 {
 	int nsamples = 4;
 	vec2 clampedpos;
-	
+	/*
 	float visibility = getShadowv2(shadowsampler, smTexCoord.xy, realDistance, cIdx);
 	
 	for (int i = 1; i < nsamples; i++) {
 		clampedpos = smTexCoord.xy + (poissonDisk[i]/f_textureresolution);
 		visibility += getShadowv2(shadowsampler, clampedpos.xy, realDistance, cIdx);
 	}
-	return visibility / nsamples;
+	return visibility / nsamples;*/
+	float visibility;
+	float x;
+	float y;
+	for (y = -1.5 ; y <=1.5 ; y+=1.0)
+			for (x = -1.5 ; x <=1.5 ; x+=1.0){
+				clampedpos = smTexCoord.xy + vec2(x,y)/f_textureresolution;
+				visibility += getShadowv2(shadowsampler, clampedpos.xy, realDistance, cIdx);
+			}
+	return visibility/16.0;
 }
 
-vec4 getDistortFactor(in vec4 shadowPosition)
-{
-	const float bias0 = 0.9f;
-	const float bias1 = 1.0f - bias0;
+vec4 getDistortFactor(in vec4 shadowPosition) {
+  float bias0 = 0.9;
+  float bias1 = 1.0 - bias0;
+  float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
+      shadowPosition.y * shadowPosition.y );
+  //float factorDistance =  length(shadowPosition.xy);
+  float distortFactor = factorDistance * bias0 + bias1;
+  shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), .75);
 
-	float factorDistance = sqrt(shadowPosition.x * shadowPosition.x +
-								shadowPosition.y * shadowPosition.y );
-	
-	//float factorDistance =  length(shadowPosition.xy);
-	float distortFactor = factorDistance * bias0 + bias1;
-	shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), .75);
-	return shadowPosition;
+  return shadowPosition;
 }
 
 vec4 getDistortFactorv2(in vec4 shadowPosition)
@@ -371,16 +378,16 @@ void main(void)
 		if(posInShadow.x>0.0&&posInShadow.x<1.0&&posInShadow.y>0.0&&posInShadow.y<1.0)
 		{
 			bias = 1.0 - clamp(dot(normalize(N), posInShadow.xyz), 0.0, 1.0);
-			bias = 0.0000000200 + 0.00000002 * bias;
+			bias = -0.0000005 - 0.00000005 * bias;
 			shadow_int0=getShadow(ShadowMapSampler, posInShadow.xy,
 									posInShadow.z  + bias ,0);
 		}
 	}
 	//shadow_int = shadow_int0;
 	//shadow_int -= brightness;
-	shadow_int  = 1.0 - shadow_int0*0.35;
+	shadow_int  = 1.0 - shadow_int0*0.25;
 	//ccol[cIdx]=0.15;
-		diffuseLight=1.0;
+	col*=shadow_int;
 	//col = clamp(vec4((col.rgb-shadow_int),col.a),0.0,1.0);
 #endif
 
@@ -399,10 +406,8 @@ void main(void)
 	float clarity = clamp(fogShadingParameter
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
 	col = mix(skyBgColor, col, clarity);
-	#if ENABLE_DYNAMIC_SHADOWS && DRAW_TYPE!=NDT_TORCHLIKE
-	col = vec4(col.rgb * shadow_int, base.a);
-	#else
+	
 	col = vec4(col.rgb , base.a);
-	#endif
+	
 	gl_FragColor = col;
 }

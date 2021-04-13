@@ -189,35 +189,16 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget)
 			_shadow_depth_cb->MapRes = (f32)_shadow_map_texture_size;
 			_shadow_depth_cb->MaxFar = (f32)_shadow_map_max_distance * BS;
 		
-			if (light.should_update_shadow) 
-			{
-				light.should_update_shadow = false;
-				for (irr::s32 nSplit = 0; nSplit < light.getNumberSplits();
-						nSplit++) {
-
-					renderShadowSplit(renderTargets[nSplit], light,
-							nSplit);
-
-				}
-			}	  // end if should render clientmap shadows
-
-		
+			// set the Render Target
+			// right now we can only render in usual RTT, not
+			// Depth texture is available in irrlicth maybe we
+			// should put some gl* fn here
+			_driver->setRenderTarget(shadowMapTextureFinal, true, true,
+					irr::video::SColor(255, 255, 255, 255));
+			renderShadowSplit(shadowMapTextureFinal, light, 0);
 			//render shadows for the n0n-map objects.
-			renderShadowObjects(shadowMapTextureDynamicObjects,light);
-
-			
-			//we should make a second pass :(
-			for (int i = 0; i < light.getNumberSplits(); i++) {
-				_screen_quad->getMaterial().setTexture(i,
-					renderTargets[i]);
-			}
-			//dynamic objs shadow texture.
-			_screen_quad->getMaterial().setTexture(
-					3,  shadowMapTextureDynamicObjects );
-
-			_driver->setRenderTarget(shadowMapTextureFinal,
-					true, true);
-			_screen_quad->render(_driver);
+			renderShadowObjects(shadowMapTextureFinal, light);
+			// clear the Render Target
 			_driver->setRenderTarget(0, false, false);
 			
 
@@ -307,11 +288,7 @@ void ShadowRenderer::renderShadowSplit(irr::video::ITexture *target,
 				light.getProjectionMatrix(nSplit));
 		_shadow_depth_cb->idx = nSplit;
 
-		// right now we can only render in usual RTT, not
-		// Depth texture is available in irrlicth maybe we
-		// should put some gl* fn here
-		_driver->setRenderTarget(renderTargets[nSplit], true, true,
-				irr::video::SColor(255, 255, 255, 255));
+		 
 
 		/// Render all shadow casters
 		///
@@ -366,16 +343,13 @@ void ShadowRenderer::renderShadowSplit(irr::video::ITexture *target,
 				break;
 			} // end clientMap render
 		}
-		// clear the Render Target
-		_driver->setRenderTarget(0, false, false );
+		 
 }
 
 void ShadowRenderer::renderShadowObjects(
 		irr::video::ITexture *target, DirectionalLight &light)
 {
-	// set the Render Target
-	_driver->setRenderTarget(
-			target, true, true, irr::video::SColor(255, 255, 255, 255));
+	
 
 	_driver->setTransform(irr::video::ETS_VIEW,
 		light.getViewMatrix(E_SHADOW_TEXTURE::SM_CLIENTMAP0));
@@ -436,10 +410,6 @@ void ShadowRenderer::renderShadowObjects(
 		}
 
 	} // end for caster shadow nodes
-
-
-	// clear the Render Target
-	_driver->setRenderTarget(0, false, false);
 
 }
 

@@ -3998,7 +3998,7 @@ void Game::updateShadows(float _timeoftheday)
 		float offsety = sin(timeoftheday * 5.0f) * 10000.0f;
 		float offsetx = cos(timeoftheday * 5.0f) * 10000.0f;
 		// small offset in z to avoid perspective shadow glitch
-		float offsetz =   -1500.0f; 
+		float offsetz = 0.0f; 
 					 
 		irr::core::vector3df sun_pos = irr::core::vector3df(std::ceil(offsetx),
 				std::ceil(offsety), std::ceil(offsetz));
