@@ -257,54 +257,27 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
 
 	#ifdef COLORED_SHADOWS
-		const float PackUpscale = 256. / 255.; // fraction -> 0..1 (including 1)
-		const float UnpackDownscale = 255. / 256.; // 0..1 -> fraction (excluding 1)
-		const vec3 PackFactors = vec3( 256. * 256. * 256., 256. * 256., 256. );
-		const vec4 UnpackFactors = UnpackDownscale / vec4( PackFactors, 1. );	
-		const float ShiftRight8 = 1. / 256.;
 
-		float packColor(vec4 v) {
-		    return dot( v, vec4(1.0, 1/255.0, 1/65025.0, 1/16581375.0) );
-		}
-
-		// decode r5g6b5 to vec3 rgb
-		// ripped from https://stackoverflow.com/questions/6893302/decode-rgb-value-to-single-float-without-bit-shift-in-glsl
-		vec4 unpackColor(float v) 
-		{
-		    vec4 enc = vec4(1.0, 255.0, 65025.0, 16581375.0) * v;
-			  enc = fract(enc);
-			  enc -= enc.yzww * vec4(1.0/255.0,1.0/255.0,1.0/255.0,0.0);
-			  return enc;
-		}
-
-		vec4 pack2HalfToRGBA( vec2 v ) {
-			vec4 r = vec4( v.x, fract( v.x * 255.0 ), v.y, fract( v.y * 255.0 ));
-			return vec4( r.x - r.y / 255.0, r.y, r.z - r.w / 255.0, r.w);
-		}
-		vec2 unpackRGBATo2Half( vec4 v ) {
-			return vec2( v.x + ( v.y / 255.0 ), v.z + ( v.w / 255.0 ) );
-		}
-
-		vec3 getHardShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
+		vec4 getHardShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 		{
 			vec4 texDepth = texture2D(shadowsampler, smTexCoord.xy);
-			return (realDistance > texDepth.r) ? texDepth.gba : vec3(0.0);
+			return (realDistance > texDepth.r) ? vec4(1.0,texDepth.gba) : vec4(0.0);
 		}
-		vec3 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
+		vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 		{
 
 			int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 128.0-i_shadow_samples)));
 			int end_offset = i_shadow_samples + init_offset;
 			vec2 clampedpos=smTexCoord.xy;
-			vec3 visibility=getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
-			/*
+			vec4 visibility=getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
+			
 			for ( int x=init_offset; x<end_offset; x++)
 			{
 				clampedpos = smTexCoord.xy + (poissonDisk[x]/(f_textureresolution/4.0) );
 				visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
 			}
-			vec3 result = visibility/float(i_shadow_samples+1);*/
-			return  visibility ;
+			vec4 result = visibility/float(i_shadow_samples+1);
+			return  result ;
 		}
 	#endif
 
@@ -361,14 +334,14 @@ void main(void)
 	vec4 col = vec4(color.rgb * varColor.rgb, 1.0);
 
 #if ENABLE_DYNAMIC_SHADOWS && DRAW_TYPE!=NDT_TORCHLIKE
-	vec3 shadow_int =  vec3(0.0,0.0,0.0);
+	vec4 shadow_int =  vec4(0.0,0.0,0.0,0.0);
 
 	#ifdef COLORED_SHADOWS
 		vec3 shadow_color=vec3(0.0,0.0,0.0);
 	#endif
 
 	if(dot( -v_LightDirection , N )  <= 0){
-		shadow_int = vec3(1.0,1.0,1.0);
+		shadow_int = vec4(1.0,0.0,0.0,0.0);
 	}
 	else {
 		vec4 posInWorld = getWorldPosition() ;
@@ -394,7 +367,8 @@ void main(void)
 	//ccol[cIdx]=0.15;
 
 	#ifdef COLORED_SHADOWS
-		col.rgb+=shadow_int*f_shadow_strength*adj_shadow_strength;
+		shadow_int.r  = 1.0 - (shadow_int.r*f_shadow_strength*adj_shadow_strength);
+		col.rgb=  col.rgb*shadow_int.r + shadow_int.gba*shadow_int.r;
 	#else
 		shadow_int  = vec3(1.0) - (shadow_int*f_shadow_strength*adj_shadow_strength);
 		col.rgb*=shadow_int;
