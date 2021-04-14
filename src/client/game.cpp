@@ -3992,11 +3992,18 @@ void Game::updateShadows(float _timeoftheday)
 		}
 
 		float timeoftheday = _timeoftheday - 0.2f;
-
+		bool isDay = false;
+		if (timeoftheday > 0.0f && timeoftheday < 0.6f)
+			isDay = true;
+		if (timeoftheday < 0)
+			isDay = false;
 		//@Liso: can we  add a z offset in the confgiuration??
 		// this calculation was made with a scientific method, try and error xD
-		float offsety = sin(timeoftheday * 5.0f) * 10000.0f;
-		float offsetx = cos(timeoftheday * 5.0f) * 10000.0f;
+		float offsety;
+		float offsetx;
+		offsety = sin(timeoftheday * 5.0f) * 10000.0f;
+		offsetx = cos(timeoftheday * 5.0f) * 10000.0f;
+		
 		// small offset in z to avoid perspective shadow glitch
 		float offsetz = 0.0f; 
 					 
@@ -4005,8 +4012,10 @@ void Game::updateShadows(float _timeoftheday)
 		
 
 		shadow->getDirectionalLight().setPosition(sun_pos);
-
-		shadow->getDirectionalLight().update_frustum(camera, client);
+		shadow->setTimeOfDay(_timeoftheday);
+		if (isDay) {
+			shadow->getDirectionalLight().update_frustum(camera, client);
+		}
 
 		
 	}

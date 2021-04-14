@@ -217,17 +217,12 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
     CachedVertexShaderSetting<float, 16> m_inv_view;
     CachedVertexShaderSetting<float, 16> m_world;
     CachedVertexShaderSetting<float, 16> m_worldview;
-    CachedVertexShaderSetting<float, 16> m_shadow_world_view_proj0;
-    CachedVertexShaderSetting<float, 16> m_shadow_world_view_proj1;
-    CachedVertexShaderSetting<float, 16> m_shadow_world_view_proj2;
-    CachedVertexShaderSetting<float, 16> m_shadow_proj;
-    CachedVertexShaderSetting<float, 16> m_shadow_view;
-    CachedVertexShaderSetting<float, 4> m_shadow_csm_splits;
     CachedVertexShaderSetting<float, 3> m_campos;
     CachedVertexShaderSetting<float, 2> m_screen_size;
-
     CachedPixelShaderSetting<s32> m_shadow_texture;
     f32 brightness{0.0f};
+
+    bool b_shadow_map_enabled { false };
 #if ENABLE_GLES
     // Modelview matrix
     CachedVertexShaderSetting<float, 16> m_world_view;
@@ -246,21 +241,15 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
         , m_worldview("mWorldView")
         , m_campos("vCamPos")
         , m_shadow_texture("ShadowMapSampler")
-        , m_shadow_csm_splits("mShadowCsmSplits")
         , m_screen_size("vScreen")
-        // @Liso: IDK how to pass a matrix array to the shader in
-        // irrlitch:(
-        , m_shadow_world_view_proj0("mShadowWorldViewProj0")
-        , m_shadow_world_view_proj1("mShadowWorldViewProj1")
-        , m_shadow_world_view_proj2("mShadowWorldViewProj2")
-        , m_shadow_proj("mShadowProj")
-        , m_shadow_view("mShadowView")
 #if ENABLE_GLES
         , m_world_view("mWorldView")
         , m_texture("mTexture")
         , m_normal("mNormal")
 #endif
-    {}
+    {
+	    b_shadow_map_enabled = g_settings->getBool("enable_dynamic_shadows");
+    }
     ~MainShaderConstantSetter() = default;
 
     virtual void onSetConstants(video::IMaterialRendererServices *services) override {
@@ -290,7 +279,7 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
 
         m_world_view_proj.set(*reinterpret_cast<float(*)[16]>(worldViewProj.pointer()), services);
 
-
+        //inverse view and projection matrices 
         core::matrix4 invView = worldView;
         invView.makeInverse();
         m_inv_view.set(*reinterpret_cast<float(*)[16]>(invView.pointer()), services);
@@ -327,29 +316,18 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
 
 
         // Set Shadow shader uniform
-        if (g_settings->getBool("enable_dynamic_shadows") &&
+	    if (b_shadow_map_enabled &&
                 RenderingEngine::get_instance()
                 ->is_renderingcore_ready()) {
 
             ShadowRenderer *shadow = RenderingEngine::get_instance()
                                      ->get_shadow_renderer();
 
-            irr::core::matrix4 shadowMVP0 =
-                shadow->getDirectionalLight().getProjectionMatrix(
-                    0);
-            shadowMVP0 *= shadow->getDirectionalLight().getViewMatrix(0);
-            shadowMVP0 *= world;
-
-            services->setVertexShaderConstant("mShadowWorldViewProj0",
-                                              *reinterpret_cast<float(*)[16]>(
-                                                  shadowMVP0.pointer()),
-                                              16);
-
-
             irr::core::matrix4 shadowProj =
                 shadow->getDirectionalLight().getProjectionMatrix(
                     0);
-            services->setVertexShaderConstant("mShadowProj",
+	        services->setPixelShaderConstant(
+			    services->getPixelShaderConstantID("mShadowProj"),
                                               *reinterpret_cast<float(*)[16]>(
                                                   shadowProj.pointer()),
                                               16);
@@ -357,77 +335,51 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
             irr::core::matrix4 shadowView =
                 shadow->getDirectionalLight().getViewMatrix(
                     0);
-            services->setVertexShaderConstant("mShadowView",
+	        services->setPixelShaderConstant(
+			    services->getPixelShaderConstantID("mShadowView"),
                                               *reinterpret_cast<float(*)[16]>(
                                                   shadowView.pointer()),
                                               16);
 
-            irr::core::matrix4 shadowMVP1 =
-                shadow->getDirectionalLight()
-                .getProjectionMatrix(1);
-            shadowMVP1 *= shadow->getDirectionalLight().getViewMatrix(1);
-            shadowMVP1 *= world;
-
-            services->setVertexShaderConstant("mShadowWorldViewProj1",
-                                              *reinterpret_cast<float(*)[16]>(
-                                                  shadowMVP1.pointer()),
-                                              16);
-
-            irr::core::matrix4 shadowMVP2 =
-                shadow->getDirectionalLight().getProjectionMatrix(
-                    2);
-            shadowMVP2 *= shadow->getDirectionalLight().getViewMatrix(2);
-            shadowMVP2 *= world;
-
-            services->setVertexShaderConstant("mShadowWorldViewProj2",
-                                              *reinterpret_cast<float(*)[16]>(
-                                                  shadowMVP2.pointer()),
-                                              16);
-
-            float split_distances[4];
-            shadow->getDirectionalLight().getSplitDistances(split_distances);
-
-            services->setVertexShaderConstant("mShadowCsmSplits",
-                                              *reinterpret_cast<float(*)[4]>(
-                                                  split_distances ),
-                                              4);
-
+            
             float v_LightDirection[3];
 
             shadow->getDirectionalLight()
             .getDirection()
             .getAs3Values(v_LightDirection);
-            services->setVertexShaderConstant("v_LightDirection",
+	        services->setPixelShaderConstant(
+			    services->getPixelShaderConstantID("v_LightDirection"),
                                               *reinterpret_cast<float(*)[3]>(v_LightDirection),
                                               3);
-
-            float v_LightPosition[3];
-
-            shadow->getDirectionalLight().getDirection().getAs3Values(
-                v_LightPosition);
-            services->setVertexShaderConstant("v_LightPosition",
-                                              *reinterpret_cast<float(*)[3]>(v_LightDirection),
-                                              3);
-            auto sworldView = driver->getTransform(video::ETS_VIEW);
-            sworldView *= world;
-            services->setVertexShaderConstant("m_worldView",
-                                              *reinterpret_cast<float(*)[16]>(sworldView.pointer()),
-                                              16);
-
 
             float TextureResolution = (float)shadow->getDirectionalLight().getMapResolution();
-            services->setVertexShaderConstant("f_textureresolution",
+	        services->setPixelShaderConstant(
+			    services->getPixelShaderConstantID("f_textureresolution"),
                                               &TextureResolution,
                                               1);
 
-            services->setVertexShaderConstant("f_brightness",
-                                              &brightness,
-                                              1);
+            int shadow_samples = shadow->getShadowSamples();
+						     
+            services->setPixelShaderConstant(
+			    services->getPixelShaderConstantID("i_shadow_samples"),
+			    &shadow_samples, 1);
 
+	        float ShadowStrengh = (float)shadow->getShadowStrengh();
+	        services->setPixelShaderConstant(
+				services->getPixelShaderConstantID("f_shadow_strength"),
+				&ShadowStrengh, 1);
+
+            float timeofDay = (float)shadow->getTimeofDay();
+		    services->setPixelShaderConstant(
+				services->getPixelShaderConstantID("f_timeofday"), &timeofDay,
+			    1);
+            
+
+            s32 TextureLayerID = 3;
+		    m_shadow_texture.set(&TextureLayerID, services);
 
         }
-        s32 TextureLayerID = 3;
-        m_shadow_texture.set(&TextureLayerID, services);
+        
 
     }
 };
@@ -820,11 +772,8 @@ ShaderInfo ShaderSource::generateShader(const std::string &name,
 
     if (g_settings->getBool("enable_dynamic_shadows")) {
         shaders_header << "#define ENABLE_DYNAMIC_SHADOWS 1\n";
-        if (g_settings->getBool("shadow_map_use_VMS")) {
-            shaders_header << "#define DYNAMIC_SHADOWS_VMS 1\n";
-        }
-        if (g_settings->getBool("enable_csm")) {
-            shaders_header << "#define DYNAMIC_SHADOWS_CMS 1\n";
+        if (g_settings->getBool("shadow_map_color")) {
+            shaders_header << "#define COLORED_SHADOWS 1\n";
         }
     }
 

@@ -613,8 +613,9 @@ static void makeFastFace(const TileSpec &tile, u16 li0, u16 li1, u16 li2, u16 li
 
 	for (u8 i = 0; i < 4; i++) {
 		video::SColor c = encode_light(li[i], tile.emissive_light);
-		if (!tile.emissive_light)
-			applyFacesShading(c, normal);
+		//if (!tile.emissive_light)
+		//	applyFacesShading(c, normal);
+		
 
 		face.vertices[i] = video::S3DVertex(vertex_pos[i], normal, c, f[i]);
 	}

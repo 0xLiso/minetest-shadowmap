@@ -410,26 +410,13 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 						"returning." << std::endl;
 				return;
 			}
+			//pass the shadow map texture to the buffer texture
 			if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-
-				ShadowRenderer *shadow =
-						RenderingEngine::get_instance()
-								->get_shadow_renderer();
+				ShadowRenderer *shadow = RenderingEngine::get_instance()->get_shadow_renderer();
 				if (shadow->is_active()) {
-					// list.m.setTexture(3, shadow->get_texture());
-					list.m.TextureLayer[3].Texture =
-							shadow->get_texture();
-					list.m.TextureLayer[3].TextureWrapU =
-							irr::video::E_TEXTURE_CLAMP::
-									ETC_CLAMP_TO_EDGE;
-					list.m.TextureLayer[3].TextureWrapV =
-							irr::video::E_TEXTURE_CLAMP::
-									ETC_CLAMP_TO_EDGE;
-					// Liso: param not used in irrlicht.
-					// We can use it to get the level of illumination
-					// of this mesh
-					list.m.MaterialTypeParam2 = 0.25;
-					 
+					list.m.TextureLayer[3].Texture = shadow->get_texture();
+					list.m.TextureLayer[3].TextureWrapU = irr::video::E_TEXTURE_CLAMP::ETC_CLAMP_TO_EDGE;
+					list.m.TextureLayer[3].TextureWrapV = irr::video::E_TEXTURE_CLAMP::ETC_CLAMP_TO_EDGE; 
 				}
 			}
 			driver->setMaterial(list.m);
@@ -661,8 +648,13 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 		irr::video::SMaterial &material, s32 pass, irr::core::vector3df position,
 		irr::core::vector3df direction, float max_distance, bool replace_material)
 {
-	
-	const std::string prefix = "renderMap(SHADOW): ";
+	bool is_transparent_pass = pass == scene::ESNRP_TRANSPARENT;
+	std::string prefix;
+	if (is_transparent_pass)
+		prefix = "renderMap(SHADOW TRANSPARENT): ";
+	else 
+		prefix = "renderMap(SHADOW SOLID): ";
+		
 	const u32 daynight_ratio = m_client->getEnv().getDayNightRatio();
 	const v3f camera_position = position;
 	const v3f camera_direction = direction;
@@ -722,8 +714,17 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 
 				u32 c = mesh->getMeshBufferCount();
 				for (u32 i = 0; i < c; i++) {
-					drawbufs.add(mesh->getMeshBuffer(i), block_pos,
-							layer);
+					scene::IMeshBuffer *buf = mesh->getMeshBuffer(i);
+
+					video::SMaterial &material = buf->getMaterial();
+					video::IMaterialRenderer *rnd =
+							driver->getMaterialRenderer(
+									material.MaterialType);
+					bool transparent = (rnd && rnd->isTransparent());
+					if (transparent == is_transparent_pass) {
+						drawbufs.add(mesh->getMeshBuffer(i),
+								block_pos, layer);
+					}
 				}
 			}
 		}

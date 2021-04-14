@@ -468,6 +468,8 @@ void Mapgen::lightSpread(VoxelArea &a, std::queue<std::pair<v3s16, u8>> &queue,
 void Mapgen::calcLighting(v3s16 nmin, v3s16 nmax, v3s16 full_nmin, v3s16 full_nmax,
 	bool propagate_shadow)
 {
+	if (g_settings->getBool("enable_dynamic_shadows"))
+		propagate_shadow = false;
 	ScopeProfiler sp(g_profiler, "EmergeThread: update lighting", SPT_AVG);
 	//TimeTaker t("updateLighting");
 

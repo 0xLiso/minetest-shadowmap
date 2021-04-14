@@ -84,7 +84,8 @@ DirectionalLight::DirectionalLight(const irr::u32 shadowMapResolution,
     }
 }
 void DirectionalLight::update_frustum(const Camera *cam, Client *client) {
-    should_update_shadow = true;
+	
+    should_update_map_shadow = true;
     float zNear = cam->getCameraNode()->getNearValue();
     /*float zFar = cam->getCameraNode()->getFarValue() > getMaxFarValue()
     			     ? getMaxFarValue()
@@ -130,7 +131,7 @@ void DirectionalLight::update_frustum(const Camera *cam, Client *client) {
             csm_frustum[i].position, getDirection(), csm_frustum[i].length);
 
     }
-    should_update_shadow = true;
+    should_update_map_shadow = true;
 
 }
 
@@ -156,7 +157,7 @@ const irr::core::matrix4 &DirectionalLight::getProjectionMatrix(int id) const {
     return csm_frustum[id].csmProjOrthMat;
 }
 
-const irr::core::matrix4 &DirectionalLight::getViewProjMatrix(int id) const {
+irr::core::matrix4 DirectionalLight::getViewProjMatrix(int id) {
     return csm_frustum[id].csmProjOrthMat * csm_frustum[id].csmViewMat;
 }
 
@@ -176,9 +177,8 @@ irr::u32 DirectionalLight::getMapResolution() const {
     return mapRes;
 }
 
-s32 DirectionalLight::getNumberSplits() {
-    return nsplits;
-}
+
+
 
 void DirectionalLight::getSplitDistances(float splitArray[4]) {
     for (int i = 0; i < csm_frustum.size(); i++) {

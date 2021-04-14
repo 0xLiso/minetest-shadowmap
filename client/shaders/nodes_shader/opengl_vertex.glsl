@@ -10,9 +10,6 @@ uniform vec3 cameraOffset;
 uniform float animationTimer;
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-// shadow matrix
-	uniform mat4 m_worldView;
-	varying vec4 P;
 	varying vec3 N;
 #endif
 
@@ -174,8 +171,6 @@ void main(void)
 
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-	gl_TexCoord[3] = gl_Position;//m_worldView*vec4(gl_Vertex.xyz,1.0);
-	P =  mWorld*vec4(gl_Vertex.xyz,1.0);
 	N =  vec3(gl_Normal.xyz);
 #endif
 }

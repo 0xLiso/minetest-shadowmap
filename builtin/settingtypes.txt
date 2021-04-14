@@ -592,7 +592,7 @@ enable_dynamic_shadows (Dynamic shadows) bool false
 
 #    Set the shadow strength.
 #    Lower value means lighter shadows, higher value means darker shadows.
-shadow_strength (Shadow strength) float 0.1 0.05 1.0
+shadow_strength (Shadow strength) float 0.25 0.05 1.0
 
 #    Max distance to render shadows. 
 shadow_map_max_distance (Shadow map max distance in blocks to render shadows) float 256.0 10.0 2000.0
@@ -608,14 +608,16 @@ shadow_map_texture_size (Shadow map texture size) int 1024 128 8192
 shadow_map_texture_32bit (Shadow map texture in 32 bits) bool true
 
 
-#   Force use Cascade Shadow Mapping levels.
-#   This increase the cuality of the shadows but
-#   it also use a lot more resources and a extra shader pass.
-enable_csm (Enable Cascade Shadow Mapping) bool false
+#   Define number of filter passes in shadow
+#   This simulates the soft shadows effects by applying a Poisson filter
+#   but it also use a more resources.
+shadow_filters (Shadow filter steps) int 0 0 128
 
+#    Enable colored shadows. 
+#    On true translucent block casts colored shadows. 
+#    This is expensive.
+shadow_map_color (Colored shadows) bool false
 
-#   Use Variance Shadow Mapping.
-shadow_map_use_VMS (Use VMS for shadows) bool false
 
 
 [**Advanced]

@@ -20,7 +20,6 @@ const float e = 2.718281828459;
 const float BS = 10.0;
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-	varying vec4 P;
 	varying vec3 N;
 #endif
 
@@ -55,7 +54,6 @@ void main(void)
 	varColor = inVertexColor;
 	
 	#ifdef ENABLE_DYNAMIC_SHADOWS
-		P =  mWorld*vec4(gl_Vertex.xyz,1.0);
 		N =  vec3(gl_Normal.xyz);
 	#endif
 }

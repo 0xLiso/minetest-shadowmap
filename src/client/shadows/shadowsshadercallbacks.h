@@ -19,6 +19,7 @@ public:
 	int idx{0};
 };
 
+
 class CSMDirectionalShadowShaderCB : public irr::video::IShaderConstantSetCallBack
 {
 public:

@@ -260,14 +260,15 @@ void set_default_settings()
 	settings->setDefault("water_wave_speed", "5.0");
 	settings->setDefault("enable_waving_leaves", "false");
 	settings->setDefault("enable_waving_plants", "false");
+	
 	// Effects Shadows
 	settings->setDefault("enable_dynamic_shadows", "false");
-	settings->setDefault("shadow_strength", "0.15");	
+	settings->setDefault("shadow_strength", "0.25");	
 	settings->setDefault("shadow_map_max_distance", "256.0");
-	settings->setDefault("shadow_map_texture_size", "1024");
+	settings->setDefault("shadow_map_texture_size", "2048");
 	settings->setDefault("shadow_map_texture_32bit", "true");
-	settings->setDefault("enable_csm", "true");
-	settings->setDefault("shadow_map_use_VMS", "false");
+	settings->setDefault("shadow_map_color", "false");
+	settings->setDefault("shadow_filters", "4");
 
 	// Input
 	settings->setDefault("invert_mouse", "false");

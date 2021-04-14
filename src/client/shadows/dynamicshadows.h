@@ -36,7 +36,7 @@ struct csmfrustum
 	irr::core::matrix4 cmsWorldViewProj;
 	irr::core::vector3df position;
 	BSphere sphere;
-	bool should_update_shadow{true};
+	bool should_update_map_shadow{true};
 	s8 id{-1};
 };
 
@@ -65,7 +65,7 @@ public:
 	/// Gets the light's matrices.
 	const irr::core::matrix4 &getViewMatrix(int id=0) const;
 	const irr::core::matrix4 &getProjectionMatrix(int id=0) const;
-	const irr::core::matrix4 &getViewProjMatrix(int id=0) const;
+	irr::core::matrix4 getViewProjMatrix(int id=0);
 
 	/// Gets the light's far value.
 	irr::f32 getMaxFarValue() const;
@@ -78,10 +78,10 @@ public:
 
 	/// Gets the shadow map resolution for this light.
 	irr::u32 getMapResolution() const;
-
-	s32 getNumberSplits();
+	
+ 
 	void getSplitDistances(float splitArray[4]);
-	bool should_update_shadow{true};
+	bool should_update_map_shadow{true};
 	
 private:
 	

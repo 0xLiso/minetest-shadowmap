@@ -77,17 +77,21 @@ public:
 	irr::video::ITexture *get_texture();
 
 	bool is_active() const { return _shadows_enabled; }
-	bool is_csm_active() const { return _enable_csm; }
+	void setTimeOfDay(float isDay) { _time_day = isDay ; };
 
 	
+	s32 getShadowSamples() const { return _shadow_samples; }
+	float getShadowStrengh() const { return _shadow_strength; }
+	float getTimeofDay() const { return _time_day; }
 
 	private:
 	irr::video::ITexture *getSMTexture(
-			const std::string &shadowMapName,irr::video::ECOLOR_FORMAT
-					texture_format);
+			const std::string &shadowMapName,irr::video::ECOLOR_FORMAT texture_format,
+				bool forcecreation = false);
 
-	void renderShadowSplit(
-			irr::video::ITexture *target, DirectionalLight &light, int nSplit);
+	void renderShadowSplit(irr::video::ITexture *target, DirectionalLight &light,
+			int nSplit,
+			irr::scene::E_SCENE_NODE_RENDER_PASS pass= irr::scene::ESNRP_SOLID);
 	void renderShadowObjects(irr::video::ITexture *target, DirectionalLight &light);
 	void mixShadowsQuad();
 
@@ -102,6 +106,7 @@ public:
 	irr::core::array<irr::video::ITexture *> renderTargets;
 	irr::video::ITexture *shadowMapTextureFinal{nullptr};
 	irr::video::ITexture *shadowMapTextureDynamicObjects{nullptr};
+	irr::video::ITexture *shadowMapTextureColors{nullptr};
 	bool _use_32bit_depth{false};
 	irr::video::SColor _clear_color{0x0};
 	
@@ -110,13 +115,16 @@ public:
 
 
 
-	bool _shadows_enabled{false};
-	float _shadow_strength{0.65f};
+	
+	float _shadow_strength{0.25f};
 	float _shadow_map_max_distance{4096.0f}; //arbitrary 4096 blocks
 	float _shadow_map_texture_size{2048.0f};
+	float _time_day{false};
+	int _shadow_samples{4};
 	bool _shadow_map_texture_32bit{true};
-	bool _enable_csm{false};
-	bool _shadow_map_use_VMS{false};
+	bool _shadows_enabled{false};
+	bool _shadow_map_colored{false};
+	
 	irr::video::ECOLOR_FORMAT _texture_format{irr::video::ECOLOR_FORMAT::ECF_R16F};
 
 	// Shadow Shader stuff
@@ -125,9 +133,12 @@ public:
 	std::string readFile(const std::string &path);
 
 	irr::s32 depth_shader{-1};
+	irr::s32 depth_shader_trans{-1};	
 	irr::s32 mixcsm_shader{-1};
 	irr::s32 _nSplits{1};
 	ShadowDepthShaderCB *_shadow_depth_cb{nullptr};
+	ShadowDepthShaderCB *_shadow_depth_trans_cb{nullptr};
+	
 
 	shadowScreenQuad *_screen_quad{nullptr};
 	shadowScreenQuadCB *_shadow_mix_cb{nullptr};
