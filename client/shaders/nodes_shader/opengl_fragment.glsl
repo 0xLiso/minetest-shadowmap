@@ -192,7 +192,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 		return (realDistance > texDepth) ? 1.0 : 0.0;
 	}
 
-	vec3 getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
+	vec4 getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	{
 
 		int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 128.0-i_shadow_samples)));
@@ -206,7 +206,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 			visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
 		}
 		float result = visibility/float(i_shadow_samples+1);
-		return vec3(result,result,result);
+		return vec4(result,result,result,result);
 	}
 
 	vec4 getDistortFactor(in vec4 shadowPosition) {
@@ -282,7 +282,18 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 	#endif
 
 #endif
+vec4 packFloatToVec4i(const float value) {
+  const vec4 bitSh = vec4(256.0*256.0*256.0, 256.0*256.0, 256.0, 1.0);
+  const vec4 bitMsk = vec4(0.0, 1.0/256.0, 1.0/256.0, 1.0/256.0);
+  vec4 res = fract(value * bitSh);
+  res -= res.xxyz * bitMsk;
+  return res;
+}
 
+float unpackFloatFromVec4i(const vec4 value) {
+  const vec4 bitSh = vec4(1.0/(256.0*256.0*256.0), 1.0/(256.0*256.0), 1.0/256.0, 1.0);
+  return(dot(value, bitSh));
+}
 #ifdef ENABLE_TONE_MAPPING
 
 /* Hable's UC2 Tone mapping parameters
@@ -370,8 +381,8 @@ void main(void)
 		shadow_int.r  = 1.0 - (shadow_int.r*f_shadow_strength*adj_shadow_strength);
 		col.rgb=  col.rgb*shadow_int.r + shadow_int.gba*shadow_int.r;
 	#else
-		shadow_int  = vec3(1.0) - (shadow_int*f_shadow_strength*adj_shadow_strength);
-		col.rgb*=shadow_int;
+		shadow_int  = vec4(1.0) - (shadow_int*f_shadow_strength*adj_shadow_strength);
+		col.rgb*=shadow_int.rgb;
 	#endif
 	
 	//col = clamp(vec4((col.rgb-shadow_int),col.a),0.0,1.0);
@@ -394,6 +405,6 @@ void main(void)
 	col = mix(skyBgColor, col, clarity);
 	
 	col = vec4(col.rgb , base.a);
-
+	 
 	gl_FragColor = col;
 }

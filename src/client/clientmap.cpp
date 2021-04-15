@@ -648,7 +648,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 		irr::video::SMaterial &material, s32 pass, irr::core::vector3df position,
 		irr::core::vector3df direction, float max_distance, bool replace_material)
 {
-	bool is_transparent_pass = pass == scene::ESNRP_TRANSPARENT;
+	bool is_transparent_pass = pass != scene::ESNRP_SOLID;
 	std::string prefix;
 	if (is_transparent_pass)
 		prefix = "renderMap(SHADOW TRANSPARENT): ";
@@ -747,20 +747,19 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 				return;
 			}
 
-			if (replace_material) {
-				driver->setMaterial(material);
-			} else {
-				auto m = list.m;
-				m.MaterialType = material.MaterialType;
-				m.BackfaceCulling = material.BackfaceCulling;
-				m.FrontfaceCulling = material.FrontfaceCulling;
-				m.Lighting = false;
-				driver->setMaterial(m);
-			}
-
 			for (auto &pair : list.bufs) {
 				scene::IMeshBuffer *buf = pair.second;
-
+				video::SMaterial local_material = buf->getMaterial();
+				video::IMaterialRenderer *rnd = driver->getMaterialRenderer(local_material.MaterialType);
+				bool transparent = (rnd && rnd->isTransparent());
+				if (transparent == is_transparent_pass) {
+					local_material.MaterialType = material.MaterialType;
+					local_material.BackfaceCulling = material.BackfaceCulling;
+					local_material.FrontfaceCulling =	material.FrontfaceCulling;
+					local_material.Lighting = false;
+					
+				}
+				driver->setMaterial(local_material);
 				v3f block_wpos = intToFloat(
 						pair.first * MAP_BLOCKSIZE, BS);
 				m.setTranslation(block_wpos - offset);

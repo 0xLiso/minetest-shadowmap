@@ -12,8 +12,8 @@ void main() {
     float depth_splitdynamics = texture2D(ShadowMapSamplerdynamic, gl_TexCoord[2].st ).r ;
     vec4 depth_color = texture2D(ShadowMapClientMapTraslucent, gl_TexCoord[1].st ) ;
     float first_depth = min(depth_map, depth_splitdynamics);
-    if (depth_color.a < first_depth) {
-        gl_FragColor = vec4(depth_color.a, depth_color.r, depth_color.g, depth_color.b);
+    if ( first_depth==1.0) {
+        gl_FragColor = vec4(depth_color.r, depth_color.g, depth_color.b, depth_color.a);
     } else {
         gl_FragColor = vec4(first_depth, 0.0, 0.0, 0.0);
     }

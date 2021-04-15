@@ -17,7 +17,7 @@ void main() {
     // ToDo: Liso: Apply movement on waving plants
     // depth in [0, 1] for texture
 
-    col.rgb = col.a == 1.0 ? vec3(1.0) : col.rgb;
-
-    gl_FragColor = vec4(  col.r, col.g, col.b , depth);
+    //col.rgb = col.a == 1.0 ? vec3(1.0) : col.rgb;
+    col.rgb*=col.a;
+    gl_FragColor = vec4( depth, col.r, col.g, col.b);
 }

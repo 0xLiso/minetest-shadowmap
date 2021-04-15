@@ -186,106 +186,101 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 
 
     if (!ShadowNodeArray.empty() && !_light_list.empty()) {
-        // for every directional light:
-        for (DirectionalLight &light : _light_list) {
-            // Static shader values.
-            _shadow_depth_cb->MapRes = (f32)_shadow_map_texture_size;
-            _shadow_depth_cb->MaxFar = (f32)_shadow_map_max_distance * BS;
+	    // for every directional light:
+	    for (DirectionalLight &light : _light_list) {
+		    // Static shader values.
+		    _shadow_depth_cb->MapRes = (f32)_shadow_map_texture_size;
+		    _shadow_depth_cb->MaxFar = (f32)_shadow_map_max_distance * BS;
 
-            // set the Render Target
-            // right now we can only render in usual RTT, not
-            // Depth texture is available in irrlicth maybe we
-            // should put some gl* fn here
+		    // set the Render Target
+		    // right now we can only render in usual RTT, not
+		    // Depth texture is available in irrlicth maybe we
+		    // should put some gl* fn here
 
-            if (light.should_update_map_shadow) {
-                light.should_update_map_shadow = false;
+		    if (light.should_update_map_shadow) {
+			    light.should_update_map_shadow = false;
 
+			    _driver->setRenderTarget(renderTargets[0], true, true,
+					    irr::video::SColor(255, 255, 255, 255));
+			    renderShadowSplit(renderTargets[0], light, 0);
 
+			    if (_shadow_map_colored) {
+				    _driver->setRenderTarget(0, true, true);
+				    _driver->setRenderTarget(shadowMapTextureColors, true,
+						    true,
+						    irr::video::SColor(
+								    255, 255, 255, 255));
+			    }
+			    renderShadowSplit(shadowMapTextureColors, light, 0,
+					    irr::scene::ESNRP_TRANSPARENT);
+			    _driver->setRenderTarget(0, false, false);
+		    }
 
-                _driver->setRenderTarget(renderTargets[0], true,
-                                         true,
-                                         irr::video::SColor(255, 255, 255,
-                                                 255));
-                renderShadowSplit(renderTargets[0], light, 0);
+		    // render shadows for the n0n-map objects.
+		    _driver->setRenderTarget(shadowMapTextureDynamicObjects, true, true,
+				    irr::video::SColor(255, 255, 255, 255));
+		    renderShadowObjects(shadowMapTextureDynamicObjects, light);
+		    // clear the Render Target
+		    _driver->setRenderTarget(0, false, false);
 
+		    // in order to avoid too many map shadow renders,
+		    // we should make a second pass to mix clientmap shadows and entities
+		    // shadows :(
+		    _screen_quad->getMaterial().setTexture(0, renderTargets[0]);
+		    // dynamic objs shadow texture.
+		    if (_shadow_map_colored) {
+			    _screen_quad->getMaterial().setTexture(
+					    1, shadowMapTextureColors);
+		    }
+		    _screen_quad->getMaterial().setTexture(
+				    2, shadowMapTextureDynamicObjects);
 
+		    _driver->setRenderTarget(shadowMapTextureFinal, false, false,
+				    irr::video::SColor(255, 255, 255, 255));
+		    _screen_quad->render(_driver);
+		    _driver->setRenderTarget(0, false, false);
 
-                if (_shadow_map_colored ) {
-                    _driver->setRenderTarget(0, false, false);
-                    _driver->setRenderTarget(shadowMapTextureColors,
-                                             true, true,
-                                             irr::video::SColor(255, 255, 255,
-                                                     255));
-                }
-                renderShadowSplit(shadowMapTextureColors, light,
-                                  0, irr::scene::ESNRP_TRANSPARENT);
-                _driver->setRenderTarget(0, false, false);
+	    } // end for lights
 
+	    // now render the actual MT render pass
+	    _driver->setRenderTarget(outputTarget, true, true, _clear_color);
+	    _smgr->drawAll();
 
-            }
+	    /**/
+	    if (false){
+	        // this is debug, ignore for now.
+	        _driver->draw2DImage(shadowMapTextureFinal,
+			        irr::core::rect<s32>(0, 50, 128, 128 + 50),
+			        irr::core::rect<s32>(0, 0,
+					        shadowMapTextureFinal->getSize().Width,
+					        shadowMapTextureFinal->getSize().Height));
 
-            //render shadows for the n0n-map objects.
-            _driver->setRenderTarget(shadowMapTextureDynamicObjects, true, true, irr::video::SColor(255, 255, 255, 255));
-            renderShadowObjects(shadowMapTextureDynamicObjects, light);
-            // clear the Render Target
-            _driver->setRenderTarget(0, false, false);
+	        _driver->draw2DImage(renderTargets[E_SHADOW_TEXTURE::SM_CLIENTMAP0],
+			        irr::core::rect<s32>(0, 50 + 128, 128, 128 + 50 + 128),
+			        irr::core::rect<s32>(0, 0, renderTargets[0]->getSize().Width,
+					        renderTargets[0]->getSize().Height));
+	        _driver->draw2DImage(shadowMapTextureDynamicObjects,
+			        irr::core::rect<s32>(
+					        0, 128 + 50 + 128, 128, 128 + 50 + 128 + 128),
+			        irr::core::rect<s32>(0, 0,
+					        shadowMapTextureDynamicObjects->getSize()
+							        .Width,
+					        shadowMapTextureDynamicObjects->getSize()
+							        .Height));
 
+	        if (_shadow_map_colored) {
 
-            // in order to avoid too many map shadow renders,
-            // we should make a second pass to mix clientmap shadows and entities shadows :(
-            _screen_quad->getMaterial().setTexture(0, renderTargets[0]);
-            // dynamic objs shadow texture.
-            if (_shadow_map_colored) {
-                _screen_quad->getMaterial().setTexture(	1, shadowMapTextureColors);
-            }
-            _screen_quad->getMaterial().setTexture(2, shadowMapTextureDynamicObjects);
-
-            _driver->setRenderTarget(shadowMapTextureFinal, true, true,
-                                     irr::video::SColor(255, 255, 255, 255));
-            _screen_quad->render(_driver);
-            _driver->setRenderTarget(0, false, false);
-
-        } // end for lights
-
-        // now render the actual MT render pass
-        _driver->setRenderTarget(outputTarget, true, true, _clear_color);
-        _smgr->drawAll();
-
-        /**/
-
-        //this is debug, ignore for now.
-        _driver->draw2DImage(shadowMapTextureFinal,
-                             irr::core::rect<s32>(0, 50 , 128, 128 + 50  ),
-                             irr::core::rect<s32>(0, 0,
-                                     shadowMapTextureFinal->getSize().Width,
-                                     shadowMapTextureFinal->getSize().Height));
-
-        _driver->draw2DImage(renderTargets[E_SHADOW_TEXTURE::SM_CLIENTMAP0],
-                             irr::core::rect<s32>(0, 50 + 128, 128, 128 + 50 + 128),
-                             irr::core::rect<s32>(0, 0,
-                                     renderTargets[0]->getSize().Width,
-                                     renderTargets[0]->getSize().Height));
-        _driver->draw2DImage(shadowMapTextureDynamicObjects,
-                             irr::core::rect<s32>(
-                                 0, 128 + 50 + 128, 128, 128 + 50 + 128 + 128),
-                             irr::core::rect<s32>(0, 0,
-                                     shadowMapTextureDynamicObjects->getSize()
-                                     .Width,
-                                     shadowMapTextureDynamicObjects->getSize()
-                                     .Height));
-
-        if (_shadow_map_colored) {
-
-            _driver->draw2DImage(shadowMapTextureColors,
-                                 irr::core::rect<s32>(128, 128 + 50 + 128 + 128,
-                                         128 + 128,
-                                         128 + 50 + 128 + 128 + 128),
-                                 irr::core::rect<s32>(0, 0,
-                                         shadowMapTextureColors->getSize()
-                                         .Width,
-                                         shadowMapTextureColors->getSize()
-                                         .Height));
-        }
+		        _driver->draw2DImage(shadowMapTextureColors,
+				        irr::core::rect<s32>(128, 128 + 50 + 128 + 128,
+						        128 + 128,
+						        128 + 50 + 128 + 128 + 128),
+				        irr::core::rect<s32>(0, 0,
+						        shadowMapTextureColors->getSize()
+								        .Width,
+						        shadowMapTextureColors->getSize()
+								        .Height));
+	    }
+    }
         _driver->setRenderTarget(0, false, false);
     }
 }
@@ -351,13 +346,7 @@ void ShadowRenderer::renderShadowSplit(irr::video::ITexture *target,
                 material = map_node->getMaterial(0);
             }
 
-
-            if (_shadow_map_colored &&
-                    (material.MaterialType == video::EMT_TRANSPARENT_ALPHA_CHANNEL_REF ||
-                     material.MaterialType == video::EMT_TRANSPARENT_ALPHA_CHANNEL)
-               ) {
-                if (pass == scene::ESNRP_SOLID)
-                    continue;
+            if (_shadow_map_colored && pass != irr::scene::ESNRP_SOLID) {
                 material.MaterialType =	(irr::video::E_MATERIAL_TYPE) depth_shader_trans;
             } else {
                 material.MaterialType =	(irr::video::E_MATERIAL_TYPE) depth_shader;
@@ -593,6 +582,7 @@ void ShadowRenderer::createShaders() {
             // upsi, something went wrong loading shader.
             delete _shadow_depth_trans_cb;
             _shadow_map_colored = false;
+	        _shadows_enabled = false;
             _device->getLogger()->log(
                 "Error compiling colored shadow mapping shader.",
                 ELL_WARNING);

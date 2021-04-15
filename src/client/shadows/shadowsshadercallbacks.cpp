@@ -18,6 +18,10 @@ void ShadowDepthShaderCB::OnSetConstants(
 	float time = porting::getTimeMs() % 1000000;
 	
 	services->setVertexShaderConstant("animationTimer", &time, 1);
+
+
+	irr::s32 TextureId = 0;
+	services->setPixelShaderConstant("ColorMapSampler", &TextureId, 1);
 	
 }
  
