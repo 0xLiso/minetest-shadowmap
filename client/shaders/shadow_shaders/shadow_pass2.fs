@@ -1,7 +1,7 @@
 
 uniform sampler2D ShadowMapClientMap;
 #ifdef COLORED_SHADOWS
-uniform sampler2D ShadowMapClientMapTraslucent;
+    uniform sampler2D ShadowMapClientMapTraslucent;
 #endif
 uniform sampler2D ShadowMapSamplerdynamic;
 
