@@ -257,8 +257,6 @@ struct TileLayer
 
 	bool isTileable() const
 	{
-		if (g_settings->getBool("enable_dynamic_shadows"))
-			return false;
 		return (material_flags & MATERIAL_FLAG_TILEABLE_HORIZONTAL)
 			&& (material_flags & MATERIAL_FLAG_TILEABLE_VERTICAL);
 	}
@@ -308,7 +306,8 @@ struct TileSpec
 	 * Returns true if this tile can be merged with the other tile.
 	 */
 	bool isTileable(const TileSpec &other) const {
-		return false;
+		if (g_settings->getBool("enable_dynamic_shadows"))
+			return false;
 		for (int layer = 0; layer < MAX_TILE_LAYERS; layer++) {
 			if (layers[layer] != other.layers[layer])
 				return false;
