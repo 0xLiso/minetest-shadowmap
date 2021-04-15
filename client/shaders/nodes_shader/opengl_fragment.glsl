@@ -177,7 +177,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 		vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 		{
 
-			int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 128.0-i_shadow_samples)));
+			int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64-i_shadow_samples)));
 			int end_offset = i_shadow_samples + init_offset;
 			vec2 clampedpos=smTexCoord.xy;
 			vec4 visibility=getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
@@ -200,7 +200,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 		float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 		{
 
-			int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 128.0-i_shadow_samples)));
+			int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64-i_shadow_samples)));
 			int end_offset = i_shadow_samples + init_offset;
 			vec2 clampedpos=smTexCoord.xy;
 			float visibility=getHardShadow(shadowsampler, clampedpos.xy, realDistance);
