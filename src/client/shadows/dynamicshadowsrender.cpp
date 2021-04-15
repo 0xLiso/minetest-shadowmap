@@ -205,9 +205,9 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 			    renderShadowSplit(renderTargets[0], light, 0);
 
 			    if (_shadow_map_colored) {
-				    _driver->setRenderTarget(0, true, true);
+				    _driver->setRenderTarget(0, false, false);
 				    _driver->setRenderTarget(shadowMapTextureColors, true,
-						    true,
+						    false,
 						    irr::video::SColor(
 								    255, 255, 255, 255));
 			    }
@@ -346,19 +346,23 @@ void ShadowRenderer::renderShadowSplit(irr::video::ITexture *target,
                 material = map_node->getMaterial(0);
             }
 
-            if (_shadow_map_colored && pass != irr::scene::ESNRP_SOLID) {
-                material.MaterialType =	(irr::video::E_MATERIAL_TYPE) depth_shader_trans;
-            } else {
-                material.MaterialType =	(irr::video::E_MATERIAL_TYPE) depth_shader;
-            }
+            
             // IDK if we need the back face
             // culling...
             material.BackfaceCulling = false;
             material.FrontfaceCulling = true;
             //material.PolygonOffsetFactor = -1;
             //material.PolygonOffsetDirection = video::EPO_BACK;
-            material.PolygonOffsetDepthBias =   1.0 * 4.8e-7;
+            material.PolygonOffsetDepthBias = 1.0 * 4.8e-7;
             material.PolygonOffsetSlopeScale = 1.f;
+
+            if (_shadow_map_colored && pass != irr::scene::ESNRP_SOLID) {
+		        material.MaterialType = (irr::video::E_MATERIAL_TYPE)depth_shader_trans;
+		        //material.FrontfaceCulling = false;
+	        } else {
+		        material.MaterialType = (irr::video::E_MATERIAL_TYPE)depth_shader;
+	        }
+
 
             map_node->OnAnimate(_device->getTimer()->getTime());
 

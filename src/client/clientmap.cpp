@@ -660,7 +660,8 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 	const v3f camera_direction = direction;
 
 	// ultraugly hack
-	const f32 camera_fov = 3.141593 ;
+	const f32 camera_fov = m_camera_fov * 1.1f;
+	;
 
 	/*
 		Get all blocks and draw all visible ones
@@ -790,7 +791,7 @@ void ClientMap::updateDrawListShadow(
 	v3f camera_direction = shadow_light_dir;
 	// I "fake" fov just to avoid creating a new function to handle orthografic
 	// projection.
-	f32 camera_fov = m_camera_fov * 1.3f;
+	f32 camera_fov = m_camera_fov * 1.1f;
 
 	v3s16 cam_pos_nodes = floatToInt(camera_position, BS);
 	v3s16 p_blocks_min;
