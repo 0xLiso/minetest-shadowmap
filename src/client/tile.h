@@ -27,6 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <SMaterial.h>
 #include "util/numeric.h"
 #include "config.h"
+#include "settings.h"
 
 #if ENABLE_GLES
 #include <IVideoDriver.h>
@@ -256,6 +257,8 @@ struct TileLayer
 
 	bool isTileable() const
 	{
+		if (g_settings->getBool("enable_dynamic_shadows"))
+			return false;
 		return (material_flags & MATERIAL_FLAG_TILEABLE_HORIZONTAL)
 			&& (material_flags & MATERIAL_FLAG_TILEABLE_VERTICAL);
 	}

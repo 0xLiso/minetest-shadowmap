@@ -18,6 +18,6 @@ void main() {
     // depth in [0, 1] for texture
 
     //col.rgb = col.a == 1.0 ? vec3(1.0) : col.rgb;
-    col.rgb*=col.a;
+    col.rgb*=col.a<0.8?col.a:0.0;
     gl_FragColor = vec4( depth, col.r, col.g, col.b);
 }
