@@ -86,7 +86,6 @@ public:
 private:
 	
 	void createSplitMatrices(csmfrustum &subfrusta, const Camera *cam);
-	
 	irr::video::SColorf diffuseColor{0xffffffff};
 
 	irr::f32 farPlane{128};

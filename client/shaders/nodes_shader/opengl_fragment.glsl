@@ -141,6 +141,13 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 		return positionShadowSpace.xyz;
 	}
 
+	vec3 getShadowSpacePosition2(in vec4 pos)
+	{
+		vec4 positionShadowSpace = mShadowProj* mShadowView * mWorld * pos; 
+		positionShadowSpace.xyz = positionShadowSpace.xyz*0.5 +0.5;
+		return positionShadowSpace.xyz;
+	}
+
 	vec4 getWorldPosition(){
 		vec4 positionNDCSpace = vec4(
 			(gl_FragCoord.x / vScreen[0] - 0.5) * 2.0,
@@ -287,19 +294,25 @@ void main(void)
 	else {
 		vec4 posInWorld = getWorldPosition() ;
 		vec3 posInShadow=getShadowSpacePosition( posInWorld );
-		if(posInShadow.x>0.0&&posInShadow.x<1.0&&posInShadow.y>0.0&&posInShadow.y<1.0)
+		//if(posInShadow.x>0.0&&posInShadow.x<1.0&&posInShadow.y>0.0&&posInShadow.y<1.0)
 		{
 			float bias = 1.0 - clamp(dot( N , posInShadow.xyz), 0.0, 1.0);
 			bias = -0.0000005 - 0.00000005 * bias;
 
 			#ifdef COLORED_SHADOWS
-				shadow_int=getShadowColor(ShadowMapSampler, posInShadow.xy,
+				shadow_int=getShadowColor2(ShadowMapSampler, posInShadow.xy,
 									posInShadow.z  + bias  );
 			#else
 				shadow_int=getShadow(ShadowMapSampler, posInShadow.xy,
 									posInShadow.z  + bias  );
 			#endif
+
+	
+
 		}
+		 
+
+
 	}
 	float adj_shadow_strength = mtsmoothstep(0.20,0.25,f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday) );
 	
