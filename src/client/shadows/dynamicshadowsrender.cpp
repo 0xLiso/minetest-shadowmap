@@ -247,7 +247,7 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 	    _smgr->drawAll();
 
 	    /**/
-	    if (true){
+	    if (false){
 	        // this is debug, ignore for now.
 	        _driver->draw2DImage(shadowMapTextureFinal,
 			        irr::core::rect<s32>(0, 50, 128, 128 + 50),

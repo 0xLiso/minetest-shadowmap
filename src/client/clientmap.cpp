@@ -658,8 +658,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 	const u32 daynight_ratio = m_client->getEnv().getDayNightRatio();
 	const v3f camera_position = position;
 	const v3f camera_direction = direction;
-	u32 drawcall_count = 0;
-	
+
 	// ultraugly hack
 	const f32 camera_fov = m_camera_fov * 1.1f;
 	;
@@ -759,6 +758,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 					local_material.BackfaceCulling = material.BackfaceCulling;
 					local_material.FrontfaceCulling =	material.FrontfaceCulling;
 					local_material.Lighting = false;
+					
 				}
 				driver->setMaterial(local_material);
 				v3f block_wpos = intToFloat(
@@ -769,12 +769,11 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 				driver->drawMeshBuffer(buf);
 				vertex_count += buf->getVertexCount();
 			}
-			drawcall_count += list.bufs.size();
 		}
 	}
 
 	g_profiler->avg(prefix + "draw Shadow meshes [ms]", draw.stop(true));
-	g_profiler->avg(prefix + "drawcalls [#]", drawcall_count);
+ 
 	g_profiler->avg(prefix + "vertices drawn [#]", vertex_count);
 }
 
