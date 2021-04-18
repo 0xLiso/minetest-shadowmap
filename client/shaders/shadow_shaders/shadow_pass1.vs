@@ -1,24 +1,33 @@
 uniform mat4 LightMVP;  //world matrix
 varying vec4 tPos;
- 
-const float bias0 = 0.9;
-const float bias1 = 0.1; //1.0 - bias0;
-const float zdistorFactor = 0.5;
+
+#ifdef SHADOWS_PSM
+const float bias0 = 0.75;
+const float bias1 = 0.15; //1.0 - bias0;
+const float zdistorFactor = 0.75;
 
 vec4 getDistortFactor(in vec4 shadowPosition) {
 
-  float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
-      shadowPosition.y * shadowPosition.y );
-  //float factorDistance =  length(shadowPosition.xy);
-  float distortFactor = factorDistance * bias0 + bias1;
-  shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), zdistorFactor);
+    float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
+                                 shadowPosition.y * shadowPosition.y );
+    //float factorDistance =  length(shadowPosition.xy);
+    float distortFactor = factorDistance * bias0 + bias1;
+    shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), zdistorFactor);
 
-  return shadowPosition;
+    return shadowPosition;
 }
+#endif
+
 
 void main() {
-	vec2 varTexCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
+    vec2 varTexCoord = (gl_TextureMatrix[0] * gl_MultiTexCoord0).st;
+    vec4 pos = LightMVP * gl_Vertex;
+
+#ifdef SHADOWS_PSM
     tPos = getDistortFactor(LightMVP *   gl_Vertex);
+#else
+    tPos = pos;
+#endif
 
     gl_Position = vec4(tPos.xyz, 1.0);
     gl_TexCoord[0].st = varTexCoord;

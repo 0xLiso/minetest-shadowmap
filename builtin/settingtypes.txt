@@ -608,16 +608,21 @@ shadow_map_texture_size (Shadow map texture size) int 1024 128 8192
 shadow_map_texture_32bit (Shadow map texture in 32 bits) bool true
 
 
-#   Define number of filter passes in shadow
-#   This simulates the soft shadows effects by applying a Poisson filter
+#   Define PCF quality
+#   This simulates the soft shadows effect by applying a PCF
 #   but it also use a more resources.
-shadow_filters (Shadow filter steps) int 4 0 128
+shadow_filters (Shadow filter quality) enum 1 0,1,2
 
 #    Enable colored shadows. 
 #    On true translucent block casts colored shadows. 
 #    This is expensive.
 shadow_map_color (Colored shadows) bool false
 
+
+#    Enable Perspective Shadow Mapping. 
+#    On true enable PSM. 
+#    This is expensive.
+shadow_psm (PSM shadows) bool false
 
 
 [**Advanced]

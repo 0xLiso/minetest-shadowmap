@@ -25,6 +25,7 @@ uniform float animationTimer;
 	uniform float f_timeofday;
 
 	varying vec3 N;
+	varying vec3 P;
 #endif
 
 varying vec3 vPosition;
@@ -47,175 +48,109 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-		 
-	const vec2[64] poissonDisk = vec2[64]
-	(
-	    vec2(0.170019, -0.040254),
-		vec2(-0.299417, 0.791925),
-		vec2(0.645680, 0.493210),
-		vec2(-0.651784, 0.717887),
-		vec2(0.421003, 0.027070),
-		vec2(-0.817194, -0.271096),
-		vec2(-0.705374, -0.668203),
-		vec2(0.977050, -0.108615),
-		vec2(0.063326, 0.142369),
-		vec2(0.203528, 0.214331),
-		vec2(-0.667531, 0.326090),
-		vec2(-0.098422, -0.295755),
-		vec2(-0.885922, 0.215369),
-		vec2(0.566637, 0.605213),
-		vec2(0.039766, -0.396100),
-		vec2(0.751946, 0.453352),
-		vec2(0.078707, -0.715323),
-		vec2(-0.075838, -0.529344),
-		vec2(0.724479, -0.580798),
-		vec2(0.222999, -0.215125),
-		vec2(-0.467574, -0.405438),
-		vec2(-0.248268, -0.814753),
-		vec2(0.354411, -0.887570),
-		vec2(0.175817, 0.382366),
-		vec2(0.487472, -0.063082),
-		vec2(0.355476, 0.025357),
-		vec2(-0.084078, 0.898312),
-		vec2(0.488876, -0.783441),
-		vec2(0.470016, 0.217933),
-		vec2(-0.696890, -0.549791),
-		vec2(-0.149693, 0.605762),
-		vec2(0.034211, 0.979980),
-		vec2(0.503098, -0.308878),
-		vec2(-0.016205, -0.872921),
-		vec2(0.385784, -0.393902),
-		vec2(-0.146886, -0.859249),
-		vec2(0.643361, 0.164098),
-		vec2(0.634388, -0.049471),
-		vec2(-0.688894, 0.007843),
-		vec2(0.464034, -0.188818),
-		vec2(-0.440840, 0.137486),
-		vec2(0.364483, 0.511704),
-		vec2(0.034028, 0.325968),
-		vec2(0.099094, -0.308023),
-		vec2(0.693960, -0.366253),
-		vec2(0.678884, -0.204688),
-		vec2(0.001801, 0.780328),
-		vec2(0.145177, -0.898984),
-		vec2(0.062655, -0.611866),
-		vec2(0.315226, -0.604297),
-		vec2(-0.780145, 0.486251),
-		vec2(-0.371868, 0.882138),
-		vec2(0.200476, 0.494430),
-		vec2(-0.494552, -0.711051),
-		vec2(0.612476, 0.705252),
-		vec2(-0.578845, -0.768792),
-		vec2(-0.772454, -0.090976),
-		vec2(0.504440, 0.372295),
-		vec2(0.155736, 0.065157),
-		vec2(0.391522, 0.849605),
-		vec2(-0.620106, -0.328104),
-		vec2(0.789239, -0.419965),
-		vec2(-0.545396, 0.538133),
-		vec2(-0.178564, -0.596057)
-	);
-
 	
+	#ifdef SHADOWS_PSM
+		const float bias0 = 0.75;
+		const float bias1 = 0.15; //1.0 - bias0;
+		const float zdistorFactor = 0.75;
 
-	const float bias0 = 0.9;
-	const float bias1 = 0.1; //1.0 - bias0;
-	const float zdistorFactor = 0.5;
+		vec4 getDistortFactor(in vec4 shadowPosition) {
 
-	vec4 getDistortFactor(in vec4 shadowPosition) {
+		  float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
+		      shadowPosition.y * shadowPosition.y );
+		  //float factorDistance =  length(shadowPosition.xy);
+		  float distortFactor = factorDistance * bias0 + bias1;
+		  shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), zdistorFactor);
 
-	  float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
-	      shadowPosition.y * shadowPosition.y );
-	  //float factorDistance =  length(shadowPosition.xy);
-	  float distortFactor = factorDistance * bias0 + bias1;
-	  shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), zdistorFactor);
+		  return shadowPosition;
+		}
 
-	  return shadowPosition;
-	}
+		
 
-	vec3 getShadowSpacePosition(in vec4 pos)
+		vec4 getWorldPosition(){
+			vec4 positionNDCSpace = vec4(
+				(gl_FragCoord.x / vScreen[0] - 0.5) * 2.0,
+				(gl_FragCoord.y / vScreen[1] - 0.5) * 2.0,
+				(gl_FragCoord.z - 0.5) * 2.0,
+				1.0
+			);
+
+			vec4 positionCameraSpace = mInvProj * positionNDCSpace;
+			positionCameraSpace = positionCameraSpace / positionCameraSpace.w;
+			vec4 positionWorldSpace = mInvWorldView * positionCameraSpace;
+			return positionWorldSpace;
+		}
+
+
+	#endif
+
+
+	vec3 getShadowSpacePosition()
 	{
-		vec4 positionShadowSpace = mShadowProj* mShadowView * mWorld * pos; 
-		positionShadowSpace = getDistortFactor(positionShadowSpace);
-		positionShadowSpace.xyz = positionShadowSpace.xyz*0.5 +0.5;
-		return positionShadowSpace.xyz;
+		#ifdef SHADOWS_PSM
+			vec4 posInWorld = getWorldPosition() ;
+			vec4 positionShadowSpace = mShadowProj* mShadowView * mWorld * posInWorld; 
+			positionShadowSpace = getDistortFactor(positionShadowSpace);
+			positionShadowSpace.xyz = positionShadowSpace.xyz*0.5 +0.5;
+			return positionShadowSpace.xyz;
+		#else
+			vec4 posInWorld = vec4(P.xyz,1.0) ;
+			vec4 positionShadowSpace = mShadowProj* mShadowView * mWorld * posInWorld; 
+			return positionShadowSpace.xyz*0.5 +0.5;
+		#endif
+
+		
 	}
-
-	vec4 getWorldPosition(){
-		vec4 positionNDCSpace = vec4(
-			(gl_FragCoord.x / vScreen[0] - 0.5) * 2.0,
-			(gl_FragCoord.y / vScreen[1] - 0.5) * 2.0,
-			(gl_FragCoord.z - 0.5) * 2.0,
-			1.0
-		);
-
-		vec4 positionCameraSpace = mInvProj * positionNDCSpace;
-		positionCameraSpace = positionCameraSpace / positionCameraSpace.w;
-		vec4 positionWorldSpace = mInvWorldView * positionCameraSpace;
-		return positionWorldSpace;
-	}
-
-	/*
-		custom smoothstep implementation because it's not defined in glsl1.2
-		https://docs.gl/sl4/smoothstep
-	*/
+	//custom smoothstep implementation because it's not defined in glsl1.2
+	//	https://docs.gl/sl4/smoothstep
 	float mtsmoothstep(in float edge0, in float edge1, in float x ){
-
-		float t;  /* Or genDType t; */
+		float t;
 	    t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
 	    return t * t * (3.0 - 2.0 * t);
 	}
 
 
-	#ifdef COLORED_SHADOWS
+	
+	float getLinearDepth() {
+			float near=1.0;
+			float far=256.0;
+	  return 2.0f * near * far / (far + near - (2.0f * gl_FragCoord.z - 1.0f) * (far - near));
+	}
+	float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
+	{
+		float texDepth = texture2D(shadowsampler, smTexCoord.xy).r;
+		float visibility = step(0.00000015f * getLinearDepth() +0.0000005,
+			realDistance - texDepth);
+		return visibility;
+	}
 
-		vec4 getHardShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
+	float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
+	{
+		vec2 clampedpos;
+		float visibility=0.0;//getHardShadow(shadowsampler, clampedpos.xy, realDistance);
+
+		float texture_size= 1/(f_textureresolution*0.5);
+		#if SHADOW_FILTER == 2
+			#define PCFBOUND 3.5
+			#define PCFSAMPLES 64.0
+		#elif  SHADOW_FILTER == 1
+			#define PCFBOUND 1.5
+			#define PCFSAMPLES 16.0
+		#else
+			#define PCFBOUND 0.0
+			#define PCFSAMPLES 1.0
+		#endif
+		float y;
+		float x;
+		for (y = -PCFBOUND ; y <=PCFBOUND ; y+=1.0)
+			for (x = -PCFBOUND ; x <=PCFBOUND ; x+=1.0)
 		{
-			vec4 texDepth = texture2D(shadowsampler, smTexCoord.xy);
-			return (realDistance > texDepth.r) ? vec4(1.0,texDepth.gba) : vec4(0.0);
+			clampedpos = vec2(x,y)*texture_size + smTexCoord.xy;
+			visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
 		}
-		vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
-		{
-
-			int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64-i_shadow_samples)));
-			int end_offset = i_shadow_samples + init_offset;
-			vec2 clampedpos=smTexCoord.xy;
-			vec4 visibility=getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
-			
-			for ( int x=init_offset; x<end_offset; x++)
-			{
-				clampedpos = smTexCoord.xy + (poissonDisk[x]/(f_textureresolution/4.0) );
-				visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
-			}
-			vec4 result = visibility/float(i_shadow_samples+1);
-			return  result ;
-		}
-	#else
-		float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
-		{
-			float texDepth = texture2D(shadowsampler, smTexCoord.xy).r;
-			return (realDistance > texDepth) ? 1.0 : 0.0;
-		}
-
-		float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
-		{
-
-			int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64-i_shadow_samples)));
-			int end_offset = i_shadow_samples + init_offset;
-			vec2 clampedpos=smTexCoord.xy;
-			float visibility=getHardShadow(shadowsampler, clampedpos.xy, realDistance);
-
-			for ( int x=init_offset; x<end_offset; x++)
-			{
-				clampedpos = smTexCoord.xy + (poissonDisk[x]/(f_textureresolution/2.0) );
-				visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
-			}
-			
-			return visibility/float(i_shadow_samples+1);
-		}
-
-
-	#endif
+		
+		return visibility/PCFSAMPLES;
+	}
 
 #endif
  
@@ -271,53 +206,41 @@ void main(void)
 
 #if ENABLE_DYNAMIC_SHADOWS && DRAW_TYPE!=NDT_TORCHLIKE
 	
-	#ifdef COLORED_SHADOWS
-		vec4 shadow_int =  vec4(0.0,0.0,0.0,0.0);
-	#else
-		float shadow_int=0.0;
-	#endif
+	float shadow_int=0.0;
+	vec3 shadow_color=vec3(0.0,0.0,0.0);
+	
 
 	if(dot( -v_LightDirection , N )  <= 0){
-		#ifdef COLORED_SHADOWS
-			shadow_int = vec4(1.0,0.0,0.0,0.0);
-		#else
-			shadow_int=1.0;
-		#endif
+		shadow_int=1.0;
 	}
 	else {
-		vec4 posInWorld = getWorldPosition() ;
-		vec3 posInShadow=getShadowSpacePosition( posInWorld );
+		
+		vec3 posInShadow=getShadowSpacePosition( );
+
 		if(posInShadow.x>0.0&&posInShadow.x<1.0 &&
 		   posInShadow.y>0.0&&posInShadow.y<1.0 &&
 		   posInShadow.z>0.0&&posInShadow.z<1.0)
 		{
-			float bias = 1.0 - clamp(dot( N , posInShadow.xyz), 0.0, 1.0);
-			bias = -0.0000005 - 0.00000005 * bias;
+			//float bias = 1.0 - clamp(dot( N , posInShadow.xyz), 0.0, 1.0);
+			//bias = -0.0000005 - 0.00000005 * bias;
+
+			shadow_int=getShadow(ShadowMapSampler, posInShadow.xy,
+									posInShadow.z  );
 
 			#ifdef COLORED_SHADOWS
 				shadow_int=getShadowColor(ShadowMapSampler, posInShadow.xy,
-									posInShadow.z  + bias  );
-			#else
-				shadow_int=getShadow(ShadowMapSampler, posInShadow.xy,
-									posInShadow.z  + bias  );
+									posInShadow.z  );			
 			#endif
 
-			//col.rb=vec2(1.);
+			
 		}
 	}
 	float adj_shadow_strength = mtsmoothstep(0.20,0.25,f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday) );
-	
-	//ccol[cIdx]=0.15;
 
-	#ifdef COLORED_SHADOWS
-		shadow_int.r  = 1.0 - (shadow_int.r*f_shadow_strength*adj_shadow_strength);
-		col.rgb=  col.rgb*shadow_int.r + shadow_int.gba*shadow_int.r;
-	#else
-		shadow_int  =  1.0  - (shadow_int*f_shadow_strength*adj_shadow_strength);
-		col.rgb*=shadow_int;
-	#endif
 	
-	//col = clamp(vec4((col.rgb-shadow_int),col.a),0.0,1.0);
+	shadow_int  =  1.0  - (shadow_int*f_shadow_strength*adj_shadow_strength);
+	col.rgb=shadow_int*col.rgb + shadow_color*shadow_int;
+	
 #endif
 
 #ifdef ENABLE_TONE_MAPPING

@@ -10,7 +10,6 @@ void DirectionalLight::createSplitMatrices(csmfrustum &subfrusta, const Camera *
     float radius;
     v3f newCenter;
     v3f look = cam->getDirection();
-    look.Y = 0.0;
     look.normalize();
     v3f camPos2 = cam->getPosition();
     v3f camPos = v3f(camPos2.X - cam->getOffset().X * BS,
@@ -35,7 +34,7 @@ void DirectionalLight::createSplitMatrices(csmfrustum &subfrusta, const Camera *
     v3f farCorner = look + viewRight * tanFovX + viewUp * tanFovY;
     // Compute the frustumBoundingSphere radius
     v3f boundVec = (camPos + farCorner * subfrusta.zFar) - newCenter;
-    radius = subfrusta.zFar;
+    radius = boundVec.getLength() * 2.0f;
     //boundVec.getLength();
     float vvolume = radius * 2.0f;
 
@@ -69,7 +68,7 @@ void DirectionalLight::createSplitMatrices(csmfrustum &subfrusta, const Camera *
     subfrusta.csmViewMat.buildCameraLookAtMatrixLH(
         eye, frustumCenter, v3f(0.0f, 1.0f, 0.0f).normalize());
     subfrusta.csmProjOrthMat.buildProjectionMatrixOrthoLH(
-		    vvolume, vvolume, -subfrusta.length, subfrusta.length);
+        subfrusta.length, subfrusta.length, -subfrusta.length, subfrusta.length);
 }
 DirectionalLight::DirectionalLight(const irr::u32 shadowMapResolution,
                                    const irr::core::vector3df &position, irr::video::SColorf lightColor,
@@ -83,22 +82,22 @@ DirectionalLight::DirectionalLight(const irr::u32 shadowMapResolution,
     }
 }
 void DirectionalLight::update_frustum(const Camera *cam, Client *client) {
-	
+
     should_update_map_shadow = true;
     float zNear = cam->getCameraNode()->getNearValue();
     /*float zFar = cam->getCameraNode()->getFarValue() > getMaxFarValue()
-    			     ? getMaxFarValue()
-    			     : cam->getCameraNode()->getFarValue();
-    				 */
+                     ? getMaxFarValue()
+                     : cam->getCameraNode()->getFarValue();
+                     */
     float wanted_range =
         client->getEnv().getClientMap().getWantedRange() ;
 
-    float zFar = getMaxFarValue() > wanted_range ? wanted_range : getMaxFarValue();
+    float zFar = getMaxFarValue()  > wanted_range ? wanted_range : getMaxFarValue() ;
     ///////////////////////////////////
     // update splits near and fars
-
+#pragma warning "check what values are in here, wanted_range vs getMaxFarValue"
     float nd = zNear;
-    float fd = zFar;
+    float fd = zFar ;
 
     float lambda = 0.90f;
     float ratio = (zFar / zNear);

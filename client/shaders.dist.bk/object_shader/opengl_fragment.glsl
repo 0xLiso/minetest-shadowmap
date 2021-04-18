@@ -169,10 +169,9 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 
 const float bias0 = 0.9;
 const float bias1 = 0.1; //1.0 - bias0;
-const float zdistorFactor = 0.2;
+const float zdistorFactor = 0.5;
 
 vec4 getDistortFactor(in vec4 shadowPosition) {
-
   float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
       shadowPosition.y * shadowPosition.y );
   //float factorDistance =  length(shadowPosition.xy);

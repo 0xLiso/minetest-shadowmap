@@ -56,32 +56,32 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #endif
 
 /*
-	A cache from shader name to shader path
+    A cache from shader name to shader path
 */
 MutexedMap<std::string, std::string> g_shadername_to_path_cache;
 
 /*
-	Gets the path to a shader by first checking if the file
-	  name_of_shader/filename
-	exists in shader_path and if not, using the data path.
+    Gets the path to a shader by first checking if the file
+      name_of_shader/filename
+    exists in shader_path and if not, using the data path.
 
-	If not found, returns "".
+    If not found, returns "".
 
-	Utilizes a thread-safe cache.
+    Utilizes a thread-safe cache.
 */
 std::string getShaderPath(const std::string &name_of_shader,
                           const std::string &filename) {
     std::string combined = name_of_shader + DIR_DELIM + filename;
     std::string fullpath;
     /*
-    	Check from cache
+        Check from cache
     */
     bool incache = g_shadername_to_path_cache.get(combined, &fullpath);
     if (incache)
         return fullpath;
 
     /*
-    	Check from shader_path
+        Check from shader_path
     */
     std::string shader_path = g_settings->get("shader_path");
     if (!shader_path.empty()) {
@@ -91,7 +91,7 @@ std::string getShaderPath(const std::string &name_of_shader,
     }
 
     /*
-    	Check from default data directory
+        Check from default data directory
     */
     if (fullpath.empty()) {
         std::string rel_path = std::string("client") + DIR_DELIM
@@ -111,7 +111,7 @@ std::string getShaderPath(const std::string &name_of_shader,
 }
 
 /*
-	SourceShaderCache: A cache used for storing source shaders.
+    SourceShaderCache: A cache used for storing source shaders.
 */
 
 class SourceShaderCache {
@@ -179,7 +179,7 @@ class SourceShaderCache {
 
 
 /*
-	ShaderCallback: Sets constants that can be used in shaders
+    ShaderCallback: Sets constants that can be used in shaders
 */
 
 class ShaderCallback : public video::IShaderConstantSetCallBack {
@@ -208,7 +208,7 @@ class ShaderCallback : public video::IShaderConstantSetCallBack {
 
 
 /*
-	MainShaderConstantSetter: Set basic constants required for almost everything
+    MainShaderConstantSetter: Set basic constants required for almost everything
 */
 
 class MainShaderConstantSetter : public IShaderConstantSetter {
@@ -248,17 +248,17 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
         , m_normal("mNormal")
 #endif
     {
-	    b_shadow_map_enabled = g_settings->getBool("enable_dynamic_shadows");
+        b_shadow_map_enabled = g_settings->getBool("enable_dynamic_shadows");
     }
     ~MainShaderConstantSetter() = default;
 
     virtual void onSetConstants(video::IMaterialRendererServices *services) override {
         video::IVideoDriver *driver = services->getVideoDriver();
         sanity_check(driver);
-	    
+
         const irr::core::dimension2du &screen_info = driver->getScreenSize();
-	    float screen[2] = {static_cast<float>(screen_info.Width), static_cast<float>(screen_info.Height)};
-	    m_screen_size.set(*reinterpret_cast<float(*)[2]>(screen), services);
+        float screen[2] = {static_cast<float>(screen_info.Width), static_cast<float>(screen_info.Height)};
+        m_screen_size.set(*reinterpret_cast<float(*)[2]>(screen), services);
 
         // Set world matrix
         core::matrix4 world = driver->getTransform(video::ETS_WORLD);
@@ -279,7 +279,7 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
 
         m_world_view_proj.set(*reinterpret_cast<float(*)[16]>(worldViewProj.pointer()), services);
 
-        //inverse view and projection matrices 
+        //inverse view and projection matrices
         core::matrix4 invView = worldView;
         invView.makeInverse();
         m_inv_view.set(*reinterpret_cast<float(*)[16]>(invView.pointer()), services);
@@ -316,7 +316,7 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
 
 
         // Set Shadow shader uniform
-	    if (b_shadow_map_enabled &&
+        if (b_shadow_map_enabled &&
                 RenderingEngine::get_instance()
                 ->is_renderingcore_ready()) {
 
@@ -326,60 +326,60 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
             irr::core::matrix4 shadowProj =
                 shadow->getDirectionalLight().getProjectionMatrix(
                     0);
-	        services->setPixelShaderConstant(
-			    services->getPixelShaderConstantID("mShadowProj"),
-                                              *reinterpret_cast<float(*)[16]>(
-                                                  shadowProj.pointer()),
-                                              16);
+            services->setPixelShaderConstant(
+                services->getPixelShaderConstantID("mShadowProj"),
+                *reinterpret_cast<float(*)[16]>(
+                    shadowProj.pointer()),
+                16);
 
             irr::core::matrix4 shadowView =
                 shadow->getDirectionalLight().getViewMatrix(
                     0);
-	        services->setPixelShaderConstant(
-			    services->getPixelShaderConstantID("mShadowView"),
-                                              *reinterpret_cast<float(*)[16]>(
-                                                  shadowView.pointer()),
-                                              16);
+            services->setPixelShaderConstant(
+                services->getPixelShaderConstantID("mShadowView"),
+                *reinterpret_cast<float(*)[16]>(
+                    shadowView.pointer()),
+                16);
 
-            
+
             float v_LightDirection[3];
 
             shadow->getDirectionalLight()
             .getDirection()
             .getAs3Values(v_LightDirection);
-	        services->setPixelShaderConstant(
-			    services->getPixelShaderConstantID("v_LightDirection"),
-                                              *reinterpret_cast<float(*)[3]>(v_LightDirection),
-                                              3);
+            services->setPixelShaderConstant(
+                services->getPixelShaderConstantID("v_LightDirection"),
+                *reinterpret_cast<float(*)[3]>(v_LightDirection),
+                3);
 
             float TextureResolution = (float)shadow->getDirectionalLight().getMapResolution();
-	        services->setPixelShaderConstant(
-			    services->getPixelShaderConstantID("f_textureresolution"),
-                                              &TextureResolution,
-                                              1);
+            services->setPixelShaderConstant(
+                services->getPixelShaderConstantID("f_textureresolution"),
+                &TextureResolution,
+                1);
 
             int shadow_samples = shadow->getShadowSamples();
-						     
-            services->setPixelShaderConstant(
-			    services->getPixelShaderConstantID("i_shadow_samples"),
-			    &shadow_samples, 1);
 
-	        float ShadowStrengh = (float)shadow->getShadowStrengh();
-	        services->setPixelShaderConstant(
-				services->getPixelShaderConstantID("f_shadow_strength"),
-				&ShadowStrengh, 1);
+            services->setPixelShaderConstant(
+                services->getPixelShaderConstantID("i_shadow_samples"),
+                &shadow_samples, 1);
+
+            float ShadowStrengh = (float)shadow->getShadowStrengh();
+            services->setPixelShaderConstant(
+                services->getPixelShaderConstantID("f_shadow_strength"),
+                &ShadowStrengh, 1);
 
             float timeofDay = (float)shadow->getTimeofDay();
-		    services->setPixelShaderConstant(
-				services->getPixelShaderConstantID("f_timeofday"), &timeofDay,
-			    1);
-            
+            services->setPixelShaderConstant(
+                services->getPixelShaderConstantID("f_timeofday"), &timeofDay,
+                1);
+
 
             s32 TextureLayerID = 3;
-		    m_shadow_texture.set(&TextureLayerID, services);
+            m_shadow_texture.set(&TextureLayerID, services);
 
         }
-        
+
 
     }
 };
@@ -393,7 +393,7 @@ class MainShaderConstantSetterFactory : public IShaderConstantSetterFactory {
 
 
 /*
-	ShaderSource
+    ShaderSource
 */
 
 class ShaderSource : public IWritableShaderSource {
@@ -401,22 +401,22 @@ class ShaderSource : public IWritableShaderSource {
     ShaderSource();
 
     /*
-    	- If shader material specified by name is found from cache,
-    	  return the cached id.
-    	- Otherwise generate the shader material, add to cache and return id.
+        - If shader material specified by name is found from cache,
+          return the cached id.
+        - Otherwise generate the shader material, add to cache and return id.
 
-    	The id 0 points to a null shader. Its material is EMT_SOLID.
+        The id 0 points to a null shader. Its material is EMT_SOLID.
     */
     u32 getShaderIdDirect(const std::string &name,
                           MaterialType material_type, NodeDrawType drawtype) override;
 
     /*
-    	If shader specified by the name pointed by the id doesn't
-    	exist, create it, then return id.
+        If shader specified by the name pointed by the id doesn't
+        exist, create it, then return id.
 
-    	Can be called from any thread. If called from some other thread
-    	and not found in cache, the call is queued to the main thread
-    	for processing.
+        Can be called from any thread. If called from some other thread
+        and not found in cache, the call is queued to the main thread
+        for processing.
     */
 
     u32 getShader(const std::string &name,
@@ -484,7 +484,7 @@ ShaderSource::ShaderSource() {
 u32 ShaderSource::getShader(const std::string &name,
                             MaterialType material_type, NodeDrawType drawtype) {
     /*
-    	Get shader
+        Get shader
     */
 
     if (std::this_thread::get_id() == m_main_thread) {
@@ -501,7 +501,7 @@ u32 ShaderSource::getShader(const std::string &name,
     m_get_shader_queue.add(name, 0, 0, &result_queue);
 
     /* infostream<<"Waiting for shader from main thread, name=\""
-    		<<name<<"\""<<std::endl;*/
+            <<name<<"\""<<std::endl;*/
 
     while (true) {
         GetResult<std::string, u32, u8, u8>
@@ -520,7 +520,7 @@ u32 ShaderSource::getShader(const std::string &name,
 }
 
 /*
-	This method generates all the shaders
+    This method generates all the shaders
 */
 u32 ShaderSource::getShaderIdDirect(const std::string &name,
                                     MaterialType material_type, NodeDrawType drawtype) {
@@ -541,7 +541,7 @@ u32 ShaderSource::getShaderIdDirect(const std::string &name,
     }
 
     /*
-    	Calling only allowed from main thread
+        Calling only allowed from main thread
     */
     if (std::this_thread::get_id() != m_main_thread) {
         errorstream << "ShaderSource::getShaderIdDirect() "
@@ -552,7 +552,7 @@ u32 ShaderSource::getShaderIdDirect(const std::string &name,
     ShaderInfo info = generateShader(name, material_type, drawtype);
 
     /*
-    	Add shader to caches (add dummy shaders too)
+        Add shader to caches (add dummy shaders too)
     */
 
     MutexAutoLock lock(m_shaderinfo_cache_mutex);
@@ -584,8 +584,8 @@ void ShaderSource::processQueue() {
 void ShaderSource::insertSourceShader(const std::string &name_of_shader,
                                       const std::string &filename, const std::string &program) {
     /*infostream<<"ShaderSource::insertSourceShader(): "
-    		"name_of_shader=\""<<name_of_shader<<"\", "
-    		"filename=\""<<filename<<"\""<<std::endl;*/
+            "name_of_shader=\""<<name_of_shader<<"\", "
+            "filename=\""<<filename<<"\""<<std::endl;*/
 
     sanity_check(std::this_thread::get_id() == m_main_thread);
 
@@ -600,9 +600,9 @@ void ShaderSource::rebuildShaders() {
     m_name_to_id.clear();*/
 
     /*
-    	FIXME: Old shader materials can't be deleted in Irrlicht,
-    	or can they?
-    	(This would be nice to do in the destructor too)
+        FIXME: Old shader materials can't be deleted in Irrlicht,
+        or can they?
+        (This would be nice to do in the destructor too)
     */
 
     // Recreate shaders
@@ -775,6 +775,13 @@ ShaderInfo ShaderSource::generateShader(const std::string &name,
         if (g_settings->getBool("shadow_map_color")) {
             shaders_header << "#define COLORED_SHADOWS 1\n";
         }
+
+        if (g_settings->getBool("shadow_psm")) {
+            shaders_header << "#define SHADOWS_PSM 1\n";
+        }
+        s32 shadow_filter = g_settings->getS32("shadow_filters");
+        shaders_header << "#define SHADOW_FILTER " << shadow_filter << "\n";
+
     }
 
     std::string common_header = shaders_header.str();
