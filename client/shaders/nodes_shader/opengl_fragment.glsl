@@ -287,7 +287,9 @@ void main(void)
 	else {
 		vec4 posInWorld = getWorldPosition() ;
 		vec3 posInShadow=getShadowSpacePosition( posInWorld );
-		if(posInShadow.x>0.0&&posInShadow.x<1.0&&posInShadow.y>0.0&&posInShadow.y<1.0)
+		if(posInShadow.x>0.0&&posInShadow.x<1.0 &&
+		   posInShadow.y>0.0&&posInShadow.y<1.0 &&
+		   posInShadow.z>0.0&&posInShadow.z<1.0)
 		{
 			float bias = 1.0 - clamp(dot( N , posInShadow.xyz), 0.0, 1.0);
 			bias = -0.0000005 - 0.00000005 * bias;
@@ -299,6 +301,8 @@ void main(void)
 				shadow_int=getShadow(ShadowMapSampler, posInShadow.xy,
 									posInShadow.z  + bias  );
 			#endif
+
+			//col.rb=vec2(1.);
 		}
 	}
 	float adj_shadow_strength = mtsmoothstep(0.20,0.25,f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday) );

@@ -35,11 +35,10 @@ void DirectionalLight::createSplitMatrices(csmfrustum &subfrusta, const Camera *
     v3f farCorner = look + viewRight * tanFovX + viewUp * tanFovY;
     // Compute the frustumBoundingSphere radius
     v3f boundVec = (camPos + farCorner * subfrusta.zFar) - newCenter;
-    radius = boundVec.getLength();
-    float vvolume = radius * ( 8.0f - subfrusta.id * 2  );
+    radius = subfrusta.zFar;
+    //boundVec.getLength();
+    float vvolume = radius * 2.0f;
 
-    vvolume > getMaxFarValue() *BS / 2.0f ? vvolume = getMaxFarValue() * BS / 2.0f
-            : vvolume;
     float texelsPerUnit = getMapResolution() / vvolume;
     m4f mTexelScaling;
     mTexelScaling.setScale(texelsPerUnit);
@@ -70,14 +69,14 @@ void DirectionalLight::createSplitMatrices(csmfrustum &subfrusta, const Camera *
     subfrusta.csmViewMat.buildCameraLookAtMatrixLH(
         eye, frustumCenter, v3f(0.0f, 1.0f, 0.0f).normalize());
     subfrusta.csmProjOrthMat.buildProjectionMatrixOrthoLH(
-        vvolume, vvolume, -subfrusta.length, subfrusta.length);
+		    vvolume, vvolume, -subfrusta.length, subfrusta.length);
 }
 DirectionalLight::DirectionalLight(const irr::u32 shadowMapResolution,
                                    const irr::core::vector3df &position, irr::video::SColorf lightColor,
                                    irr::f32 farValue, irr::u8 nSplits) :
     diffuseColor(lightColor),
     pos(position),
-    farPlane(farValue *BS ),
+    farPlane(farValue   ),
     mapRes(shadowMapResolution), nsplits(nSplits) {
     for (int i = 0; i < csm_frustum.size(); i++) {
         csm_frustum[i].id = i;
@@ -92,7 +91,7 @@ void DirectionalLight::update_frustum(const Camera *cam, Client *client) {
     			     : cam->getCameraNode()->getFarValue();
     				 */
     float wanted_range =
-        client->getEnv().getClientMap().getWantedRange() * BS;
+        client->getEnv().getClientMap().getWantedRange() ;
 
     float zFar = getMaxFarValue() > wanted_range ? wanted_range : getMaxFarValue();
     ///////////////////////////////////
@@ -109,7 +108,7 @@ void DirectionalLight::update_frustum(const Camera *cam, Client *client) {
     // so we need to add huge offset to the zNear
     // right now, I´ve only find this hack to minimize it.
     csm_frustum[0].zNear = nd   ;
-    size_t maxSplits = 3;
+    size_t maxSplits = 1;
     for (size_t i = 1; i < maxSplits; i++) {
         float si = i / (float)maxSplits;
 

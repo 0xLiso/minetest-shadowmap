@@ -651,7 +651,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 	bool is_transparent_pass = pass != scene::ESNRP_SOLID;
 	std::string prefix;
 	if (is_transparent_pass)
-		prefix = "renderMap(SHADOW TRANSPARENT): ";
+		prefix = "renderMap(SHADOW TRANS): ";
 	else 
 		prefix = "renderMap(SHADOW SOLID): ";
 		
@@ -661,7 +661,8 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 
 	// ultraugly hack
 	const f32 camera_fov = m_camera_fov * 1.1f;
-	;
+
+	u32 drawcall_count = 0;
 
 	/*
 		Get all blocks and draw all visible ones
@@ -769,12 +770,14 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 				driver->drawMeshBuffer(buf);
 				vertex_count += buf->getVertexCount();
 			}
+			
+			drawcall_count += list.bufs.size();
 		}
 	}
 
 	g_profiler->avg(prefix + "draw Shadow meshes [ms]", draw.stop(true));
- 
 	g_profiler->avg(prefix + "vertices drawn [#]", vertex_count);
+	g_profiler->avg(prefix + "drawcalls [#]", drawcall_count);
 }
 
 
