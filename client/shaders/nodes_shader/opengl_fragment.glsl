@@ -52,7 +52,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 	#ifdef SHADOWS_PSM
 		const float bias0 = 0.75;
 		const float bias1 = 0.15; //1.0 - bias0;
-		const float zdistorFactor = 0.75;
+		const float zdistorFactor = 0.5;
 
 		vec4 getDistortFactor(in vec4 shadowPosition) {
 
@@ -152,6 +152,14 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 		return visibility/PCFSAMPLES;
 	}
 
+
+	#ifdef COLORED_SHADOWS
+	vec3 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
+	{
+		vec3 tcol = texture2D(shadowsampler, smTexCoord.xy).gba;
+		return tcol;
+	}	
+	#endif
 #endif
  
 #ifdef ENABLE_TONE_MAPPING
@@ -228,18 +236,21 @@ void main(void)
 									posInShadow.z  );
 
 			#ifdef COLORED_SHADOWS
-				shadow_int=getShadowColor(ShadowMapSampler, posInShadow.xy,
+				shadow_color=getShadowColor(ShadowMapSampler, posInShadow.xy,
 									posInShadow.z  );			
 			#endif
 
 			
 		}
 	}
-	float adj_shadow_strength = mtsmoothstep(0.20,0.25,f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday) );
+	float adj_shadow_strength = mtsmoothstep(0.20,0.25,
+		f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday) );
 
 	
-	shadow_int  =  1.0  - (shadow_int*f_shadow_strength*adj_shadow_strength);
-	col.rgb=shadow_int*col.rgb + shadow_color*shadow_int;
+	shadow_int *= 1.0 - mtsmoothstep(200,500.0,vPosition.z);
+	shadow_int  = 1.0 - (shadow_int*f_shadow_strength*adj_shadow_strength);
+	
+	col.rgb=shadow_int*col.rgb + ( shadow_color*shadow_int*0.25);
 	
 #endif
 

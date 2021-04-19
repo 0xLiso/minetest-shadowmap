@@ -206,11 +206,11 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
                 renderShadowSplit(renderTargets[0], light, 0);
 
                 if (_shadow_map_colored) {
-                    _driver->setRenderTarget(0, false, false);
+                    _driver->setRenderTarget(0, true, false);
                     _driver->setRenderTarget(shadowMapTextureColors, true,
                                              false,
                                              irr::video::SColor(
-                                                 255, 255, 255, 255));
+                                                 255, 0, 0, 0));
                 }
                 renderShadowSplit(shadowMapTextureColors, light, 0,
                                   irr::scene::ESNRP_TRANSPARENT);

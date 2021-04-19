@@ -4,7 +4,7 @@ varying vec4 tPos;
 #ifdef SHADOWS_PSM
 const float bias0 = 0.75;
 const float bias1 = 0.15; //1.0 - bias0;
-const float zdistorFactor = 0.75;
+const float zdistorFactor = 0.5;
 
 vec4 getDistortFactor(in vec4 shadowPosition) {
 
