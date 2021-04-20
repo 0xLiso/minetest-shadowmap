@@ -11,7 +11,7 @@ uniform float animationTimer;
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	varying vec3 N;
-	varying vec3 P;
+	varying vec4 P;
 #endif
 
 varying vec3 vPosition;
@@ -173,6 +173,6 @@ void main(void)
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	N =  vec3(gl_Normal.xyz);
-	P = inVertexPosition.xyz;
+	P = mWorld*inVertexPosition;
 #endif
 }

@@ -21,6 +21,7 @@ const float BS = 10.0;
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	varying vec3 N;
+	varying vec4 P;
 #endif
 
 float directional_ambient(vec3 normal)
@@ -35,7 +36,7 @@ float directional_ambient(vec3 normal)
 
 void main(void)
 {
-	varTexCoord = (mTexture * inTexCoord0).st;
+	varTexCoord = inTexCoord0.st;
 	gl_Position = mWorldViewProj * inVertexPosition;
 
 	vPosition = gl_Position.xyz;
@@ -53,7 +54,4 @@ void main(void)
 
 	varColor = inVertexColor;
 	
-	#ifdef ENABLE_DYNAMIC_SHADOWS
-		N =  vec3(gl_Normal.xyz);
-	#endif
 }

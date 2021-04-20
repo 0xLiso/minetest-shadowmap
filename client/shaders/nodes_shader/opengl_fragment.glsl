@@ -25,7 +25,7 @@ uniform float animationTimer;
 	uniform float f_timeofday;
 
 	varying vec3 N;
-	varying vec3 P;
+	varying vec4 P;
 #endif
 
 varying vec3 vPosition;
@@ -50,9 +50,9 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	
 	#ifdef SHADOWS_PSM
-		const float bias0 = 0.75;
-		const float bias1 = 0.15; //1.0 - bias0;
-		const float zdistorFactor = 0.5;
+		const float bias0 = 0.95;
+		const float bias1 = 0.05; //1.0 - bias0;
+		const float zdistorFactor = 0.2;
 
 		vec4 getDistortFactor(in vec4 shadowPosition) {
 
@@ -88,14 +88,12 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 	vec3 getShadowSpacePosition()
 	{
 		#ifdef SHADOWS_PSM
-			vec4 posInWorld = getWorldPosition() ;
-			vec4 positionShadowSpace = mShadowProj* mShadowView * mWorld * posInWorld; 
+			vec4 positionShadowSpace = mShadowProj* mShadowView  * vec4(worldPosition,1.0); 
 			positionShadowSpace = getDistortFactor(positionShadowSpace);
 			positionShadowSpace.xyz = positionShadowSpace.xyz*0.5 +0.5;
 			return positionShadowSpace.xyz;
 		#else
-			vec4 posInWorld = vec4(P.xyz,1.0) ;
-			vec4 positionShadowSpace = mShadowProj* mShadowView * mWorld * posInWorld; 
+			vec4 positionShadowSpace = mShadowProj* mShadowView * vec4(worldPosition,1.0); 
 			return positionShadowSpace.xyz*0.5 +0.5;
 		#endif
 
@@ -197,7 +195,7 @@ vec4 applyToneMapping(vec4 color)
 void main(void)
 {
 	vec3 color;
-	vec2 uv = varTexCoord.st;
+	vec2 uv = varTexCoord.ts;
 
 	vec4 base = texture2D(baseTexture, uv).rgba;
 #ifdef USE_DISCARD

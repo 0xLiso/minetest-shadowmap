@@ -43,6 +43,14 @@ local labels = {
 		fgettext("2x"),
 		fgettext("4x"),
 		fgettext("8x")
+	},
+	shadow_levels={
+		fgettext("Disabled"),
+		fgettext("Low"),
+		fgettext("Medium"),
+		fgettext("High"),
+		fgettext("Ultra"),
+		fgettext("Custom"),
 	}
 }
 
