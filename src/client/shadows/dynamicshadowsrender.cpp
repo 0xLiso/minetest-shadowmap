@@ -92,7 +92,18 @@ DirectionalLight &ShadowRenderer::getDirectionalLight(irr::u32 index) {
 size_t ShadowRenderer::getDirectionalLightCount() const {
     return _light_list.size();
 }
+irr::f32 ShadowRenderer::getMaxShadowFar() const
+{
+	if (!_light_list.empty()) {
+		float wanted_range = _client->getEnv().getClientMap().getWantedRange();
 
+		float zMax= _light_list[0].getMaxFarValue() > wanted_range
+					     ? wanted_range
+					     : _light_list[0].getMaxFarValue();
+		return zMax * BS;
+	}
+	return 0.0f;
+}
 void ShadowRenderer::addNodeToShadowList(
     irr::scene::ISceneNode *node, E_SHADOW_MODE shadowMode) {
     ShadowNodeArray.push_back(NodeToApply(node, shadowMode));
@@ -248,7 +259,7 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
         _smgr->drawAll();
 
         /**/
-        if (true) {
+        if (false) {
             // this is debug, ignore for now.
             _driver->draw2DImage(shadowMapTextureFinal,
                                  irr::core::rect<s32>(0, 50, 128, 128 + 50),

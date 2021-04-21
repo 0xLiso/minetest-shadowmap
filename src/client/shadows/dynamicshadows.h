@@ -69,7 +69,8 @@ public:
 
 	/// Gets the light's far value.
 	irr::f32 getMaxFarValue() const;
-
+	
+	
 	/// Gets the light's color.
 	const irr::video::SColorf &getLightColor() const;
 

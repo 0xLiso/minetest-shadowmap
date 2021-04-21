@@ -51,7 +51,7 @@ class ShadowRenderer {
     size_t addDirectionalLight();
     DirectionalLight &getDirectionalLight(irr::u32 index = 0);
     size_t getDirectionalLightCount() const;
-
+    irr::f32 getMaxShadowFar() const;
     /// Adds a shadow to the scene node.
     /// The shadow mode can be ESM_BOTH, ESM_CAST, or ESM_RECEIVE.
     /// ESM_BOTH casts and receives shadows

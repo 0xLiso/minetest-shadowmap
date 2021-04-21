@@ -375,6 +375,12 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
                 1);
 
 
+            float shadowFar = shadow->getMaxShadowFar();
+	        services->setPixelShaderConstant(
+			    services->getPixelShaderConstantID("f_shadowfar"), &shadowFar,
+			    1);
+	    
+
             s32 TextureLayerID = 3;
             m_shadow_texture.set(&TextureLayerID, services);
 
