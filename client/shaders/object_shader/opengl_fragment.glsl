@@ -38,6 +38,7 @@ const float fogShadingParameter = 1.0 / (1.0 - fogStart);
 	uniform int i_shadow_samples;
 	uniform float f_shadow_strength;
 	uniform float f_timeofday;
+	uniform float f_shadowfar;
 #endif
 
 #if ENABLE_TONE_MAPPING
@@ -136,7 +137,7 @@ vec4 applyToneMapping(vec4 color)
 	
 	float getLinearDepth() {
 			float near=1.0;
-			float far=256.0;
+			float far=f_shadowfar;
 	  return 2.0f * near * far / (far + near - (2.0f * gl_FragCoord.z - 1.0f) * (far - near));
 	}
 	float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
@@ -240,7 +241,7 @@ void main(void)
 		f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday) );
 
 	
-	shadow_int *= 1.0 - mtsmoothstep(200,500.0,vPosition.z);
+	shadow_int *= 1.0 - mtsmoothstep(f_shadowfar*0.5,f_shadowfar,vPosition.z);
 	shadow_int  = 1.0 - (shadow_int*f_shadow_strength*adj_shadow_strength);
 	
 	col.rgb=shadow_int*col.rgb + ( shadow_color*shadow_int*0.25);
