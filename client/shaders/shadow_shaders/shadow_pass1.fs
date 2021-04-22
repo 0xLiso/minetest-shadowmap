@@ -31,8 +31,10 @@ void main() {
 
     //col.rgb = col.a == 1.0 ? vec3(1.0) : col.rgb;
     #ifdef COLORED_SHADOWS
-	    float packetColor = packColor(col.rgb*(1.0-col.a));
-	    gl_FragColor = vec4( depth, packetColor,0.0,1.0);
+    	//maybe we can set some kind of color here, but it will fail in z test :(.
+    	// translucent objects must be drawed in the transparent pass
+	    //float packetColor = packColor(col.rgb*(1.0-col.a));
+	    gl_FragColor = vec4( depth, 0.0,0.0,1.0);
     #else
     	gl_FragColor = vec4( depth, 0.0, 0.0, 1.0);
     #endif
