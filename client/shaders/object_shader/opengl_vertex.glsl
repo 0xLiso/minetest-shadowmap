@@ -19,10 +19,6 @@ varying float vIDiff;
 const float e = 2.718281828459;
 const float BS = 10.0;
 
-#ifdef ENABLE_DYNAMIC_SHADOWS
-	varying vec3 N;
-	varying vec4 P;
-#endif
 
 float directional_ambient(vec3 normal)
 {

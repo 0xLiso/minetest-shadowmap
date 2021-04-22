@@ -100,7 +100,7 @@ irr::f32 ShadowRenderer::getMaxShadowFar() const
 		float zMax= _light_list[0].getMaxFarValue() > wanted_range
 					     ? wanted_range
 					     : _light_list[0].getMaxFarValue();
-		return zMax * BS;
+		return zMax * MAP_BLOCKSIZE;
 	}
 	return 0.0f;
 }
@@ -258,7 +258,7 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
         _smgr->drawAll();
 
         /**/
-        if (false) {
+        if (true) {
             // this is debug, ignore for now.
             _driver->draw2DImage(shadowMapTextureFinal,
                                  irr::core::rect<s32>(0, 50, 128, 128 + 50),

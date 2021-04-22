@@ -213,12 +213,9 @@ class ShaderCallback : public video::IShaderConstantSetCallBack {
 
 class MainShaderConstantSetter : public IShaderConstantSetter {
     CachedVertexShaderSetting<float, 16> m_world_view_proj;
-    CachedVertexShaderSetting<float, 16> m_inv_proj;
-    CachedVertexShaderSetting<float, 16> m_inv_view;
     CachedVertexShaderSetting<float, 16> m_world;
     CachedVertexShaderSetting<float, 16> m_worldview;
     CachedVertexShaderSetting<float, 3> m_campos;
-    CachedVertexShaderSetting<float, 2> m_screen_size;
     CachedPixelShaderSetting<s32> m_shadow_texture;
     f32 brightness{0.0f};
 
@@ -235,13 +232,10 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
   public:
     MainShaderConstantSetter() :
         m_world_view_proj("mWorldViewProj")
-        , m_inv_proj("mInvProj")
-        , m_inv_view("mInvWorldView")
         , m_world("mWorld")
         , m_worldview("mWorldView")
         , m_campos("vCamPos")
         , m_shadow_texture("ShadowMapSampler")
-        , m_screen_size("vScreen")
 #if ENABLE_GLES
         , m_world_view("mWorldView")
         , m_texture("mTexture")
@@ -255,10 +249,6 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
     virtual void onSetConstants(video::IMaterialRendererServices *services) override {
         video::IVideoDriver *driver = services->getVideoDriver();
         sanity_check(driver);
-
-        const irr::core::dimension2du &screen_info = driver->getScreenSize();
-        float screen[2] = {static_cast<float>(screen_info.Width), static_cast<float>(screen_info.Height)};
-        m_screen_size.set(*reinterpret_cast<float(*)[2]>(screen), services);
 
         // Set world matrix
         core::matrix4 world = driver->getTransform(video::ETS_WORLD);
@@ -279,16 +269,7 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
 
         m_world_view_proj.set(*reinterpret_cast<float(*)[16]>(worldViewProj.pointer()), services);
 
-        //inverse view and projection matrices
-        core::matrix4 invView = worldView;
-        invView.makeInverse();
-        m_inv_view.set(*reinterpret_cast<float(*)[16]>(invView.pointer()), services);
-
-        core::matrix4 invProj = driver->getTransform(video::ETS_PROJECTION);
-        invProj.makeInverse();
-        m_inv_proj.set(*reinterpret_cast<float(*)[16]>(invProj.pointer()), services);
-
-
+    
         irr::core::vector3df cpos = RenderingEngine::get_instance()->get_scene_manager()->getActiveCamera()->getAbsolutePosition();
         float camval[3];
         cpos.getAs3Values(camval);
@@ -316,37 +297,22 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
 
 
         // Set Shadow shader uniform
-        if (b_shadow_map_enabled &&
-                RenderingEngine::get_instance()
-                ->is_renderingcore_ready()) {
+        if (b_shadow_map_enabled && RenderingEngine::get_instance()->is_renderingcore_ready()) {
 
-            ShadowRenderer *shadow = RenderingEngine::get_instance()
-                                     ->get_shadow_renderer();
+            ShadowRenderer *shadow = RenderingEngine::get_instance()->get_shadow_renderer();
 
-            irr::core::matrix4 shadowProj =
-                shadow->getDirectionalLight().getProjectionMatrix(
-                    0);
+            irr::core::matrix4 shadowViewProj = shadow->getDirectionalLight().getProjectionMatrix(0);
+	        shadowViewProj *= shadow->getDirectionalLight().getViewMatrix(0);
+
             services->setPixelShaderConstant(
-                services->getPixelShaderConstantID("mShadowProj"),
-                *reinterpret_cast<float(*)[16]>(
-                    shadowProj.pointer()),
-                16);
-
-            irr::core::matrix4 shadowView =
-                shadow->getDirectionalLight().getViewMatrix(
-                    0);
-            services->setPixelShaderConstant(
-                services->getPixelShaderConstantID("mShadowView"),
-                *reinterpret_cast<float(*)[16]>(
-                    shadowView.pointer()),
+                services->getPixelShaderConstantID("m_ShadowViewProj"),
+                *reinterpret_cast<float(*)[16]>(shadowViewProj.pointer()),
                 16);
 
 
             float v_LightDirection[3];
 
-            shadow->getDirectionalLight()
-            .getDirection()
-            .getAs3Values(v_LightDirection);
+            shadow->getDirectionalLight().getDirection().getAs3Values(v_LightDirection);
             services->setPixelShaderConstant(
                 services->getPixelShaderConstantID("v_LightDirection"),
                 *reinterpret_cast<float(*)[3]>(v_LightDirection),
@@ -357,12 +323,6 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
                 services->getPixelShaderConstantID("f_textureresolution"),
                 &TextureResolution,
                 1);
-
-            int shadow_samples = shadow->getShadowSamples();
-
-            services->setPixelShaderConstant(
-                services->getPixelShaderConstantID("i_shadow_samples"),
-                &shadow_samples, 1);
 
             float ShadowStrengh = (float)shadow->getShadowStrengh();
             services->setPixelShaderConstant(
@@ -380,7 +340,7 @@ class MainShaderConstantSetter : public IShaderConstantSetter {
 			    services->getPixelShaderConstantID("f_shadowfar"), &shadowFar,
 			    1);
 	    
-
+            /// I don´t like using this hardcoded value. maybe something like MAX_TEXTURE -1 or somthing like that??
             s32 TextureLayerID = 3;
             m_shadow_texture.set(&TextureLayerID, services);
 

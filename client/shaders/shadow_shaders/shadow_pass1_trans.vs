@@ -2,27 +2,26 @@ uniform mat4 LightMVP;  //world matrix
 varying vec4 tPos;
 
 #ifdef SHADOWS_PSM
-const float bias0 = 0.95;
-const float bias1 = 0.05; //1.0 - bias0;
-const float zdistorFactor = 0.2;
+    const float bias0 = 0.95;
+    const float bias1 = 0.05; //1.0 - bias0;
+    const float zPersFactor = 0.2;
 
-vec4 getDistortFactor(in vec4 shadowPosition) {
+    vec4 getPerspectiveFactor(in vec4 shadowPosition) {
 
-    float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
-                                 shadowPosition.y * shadowPosition.y );
-    //float factorDistance =  length(shadowPosition.xy);
-    float distortFactor = factorDistance * bias0 + bias1;
-    shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), zdistorFactor);
+      float pDistance =  sqrt(shadowPosition.x * shadowPosition.x +
+          shadowPosition.y * shadowPosition.y );
+      float pFactor = pDistance * bias0 + bias1;
+      shadowPosition.xyz *= vec3(vec2(1.0 / pFactor), zPersFactor);
 
-    return shadowPosition;
-}
+      return shadowPosition;
+    }
 #endif
 
 void main() {
     vec4 pos = LightMVP * gl_Vertex;
 
 #ifdef SHADOWS_PSM
-    tPos = getDistortFactor(LightMVP *   gl_Vertex);
+    tPos = getPerspectiveFactor(LightMVP *   gl_Vertex);
 #else
     tPos = pos;
 #endif

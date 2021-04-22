@@ -8,12 +8,7 @@ uniform vec3 eyePosition;
 // The cameraOffset is the current center of the visible world.
 uniform vec3 cameraOffset;
 uniform float animationTimer;
-
-#ifdef ENABLE_DYNAMIC_SHADOWS
-	varying vec3 N;
-	varying vec4 P;
-#endif
-
+varying vec3 vNormal;
 varying vec3 vPosition;
 // World position in the visible world (i.e. relative to the cameraOffset.)
 // This can be used for many shader effects without loss of precision.
@@ -147,7 +142,7 @@ void main(void)
 	vPosition = gl_Position.xyz;
 
 	eyeVec = -(mWorldView * inVertexPosition).xyz;
-
+	vNormal = inVertexNormal;
 	// Calculate color.
 	// Red, green and blue components are pre-multiplied with
 	// the brightness, so now we have to multiply these
@@ -168,11 +163,4 @@ void main(void)
 
 	varColor = clamp(color, 0.0, 1.0);
 
-
-
-
-#ifdef ENABLE_DYNAMIC_SHADOWS
-	N =  vec3(gl_Normal.xyz);
-	P = mWorld*inVertexPosition;
-#endif
 }

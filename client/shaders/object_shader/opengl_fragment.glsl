@@ -23,19 +23,13 @@ const float BS = 10.0;
 const float fogStart = FOG_START;
 const float fogShadingParameter = 1.0 / (1.0 - fogStart);
 
-#if ENABLE_DYNAMIC_SHADOWS
+#ifdef ENABLE_DYNAMIC_SHADOWS
 	// shadow texture
 	uniform sampler2D ShadowMapSampler;
 	//shadow uniforms
 	uniform vec3 v_LightDirection;
 	uniform float f_textureresolution;
-	uniform mat4 mWorld;
-	uniform mat4 mShadowProj;
-	uniform mat4 mShadowView;
-	uniform mat4 mInvProj;
-	uniform mat4 mInvWorldView;
-	uniform vec2 vScreen;  //screen size w,h
-	uniform int i_shadow_samples;
+	uniform mat4 m_ShadowViewProj;
 	uniform float f_shadow_strength;
 	uniform float f_timeofday;
 	uniform float f_shadowfar;
@@ -72,59 +66,38 @@ vec4 applyToneMapping(vec4 color)
 }
 #endif
 
-
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	
 	#ifdef SHADOWS_PSM
 		const float bias0 = 0.95;
 		const float bias1 = 0.05; //1.0 - bias0;
-		const float zdistorFactor = 0.2;
+		const float zPersFactor = 0.2;
 
-		vec4 getDistortFactor(in vec4 shadowPosition) {
+		vec4 getPerspectiveFactor(in vec4 shadowPosition) {
 
-		  float factorDistance =  sqrt(shadowPosition.x * shadowPosition.x +
+		  float pDistance =  sqrt(shadowPosition.x * shadowPosition.x +
 		      shadowPosition.y * shadowPosition.y );
-		  //float factorDistance =  length(shadowPosition.xy);
-		  float distortFactor = factorDistance * bias0 + bias1;
-		  shadowPosition.xyz *= vec3(vec2(1.0 / distortFactor), zdistorFactor);
+		  float pFactor = pDistance * bias0 + bias1;
+		  shadowPosition.xyz *= vec3(vec2(1.0 / pFactor), zPersFactor);
 
 		  return shadowPosition;
 		}
-
-		
-
-		vec4 getWorldPosition(){
-			vec4 positionNDCSpace = vec4(
-				(gl_FragCoord.x / vScreen[0] - 0.5) * 2.0,
-				(gl_FragCoord.y / vScreen[1] - 0.5) * 2.0,
-				(gl_FragCoord.z - 0.5) * 2.0,
-				1.0
-			);
-
-			vec4 positionCameraSpace = mInvProj * positionNDCSpace;
-			positionCameraSpace = positionCameraSpace / positionCameraSpace.w;
-			vec4 positionWorldSpace = mInvWorldView * positionCameraSpace;
-			return positionWorldSpace;
-		}
-
-
 	#endif
 
 
-	vec3 getShadowSpacePosition()
+	vec3 getLightSpacePosition()
 	{
 		#ifdef SHADOWS_PSM
-			vec4 positionShadowSpace = mShadowProj* mShadowView  * vec4(worldPosition,1.0); 
-			positionShadowSpace = getDistortFactor(positionShadowSpace);
-			positionShadowSpace.xyz = positionShadowSpace.xyz*0.5 +0.5;
-			return positionShadowSpace.xyz;
+			vec4 pLightSpace = m_ShadowViewProj  * vec4(worldPosition,1.0); 
+			pLightSpace = getPerspectiveFactor(pLightSpace);
+			pLightSpace.xyz = pLightSpace.xyz*0.5 +0.5;
+			return pLightSpace.xyz;
 		#else
-			vec4 positionShadowSpace = mShadowProj* mShadowView * vec4(worldPosition,1.0); 
-			return positionShadowSpace.xyz*0.5 +0.5;
+			vec4 pLightSpace = m_ShadowViewProj * vec4(worldPosition,1.0); 
+			return pLightSpace.xyz*0.5 +0.5;
 		#endif
-
-		
 	}
+
 	//custom smoothstep implementation because it's not defined in glsl1.2
 	//	https://docs.gl/sl4/smoothstep
 	float mtsmoothstep(in float edge0, in float edge1, in float x ){
@@ -135,11 +108,15 @@ vec4 applyToneMapping(vec4 color)
 
 
 	
+	//assuming near is allways 1.0
 	float getLinearDepth() {
-			float near=1.0;
-			float far=f_shadowfar;
-	  return 2.0f * near * far / (far + near - (2.0f * gl_FragCoord.z - 1.0f) * (far - near));
+		//float near=1.0;
+		//float far=f_shadowfar;
+	  	//return 2.0f * near * far / (far + near - (2.0f * gl_FragCoord.z - 1.0f) * (far - near));
+	  	return 2.0f * f_shadowfar / (f_shadowfar + 1.0 - (2.0 * gl_FragCoord.z - 1.0) * (f_shadowfar - 1.0));
+
 	}
+
 	float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	{
 		float texDepth = texture2D(shadowsampler, smTexCoord.xy).r;
@@ -151,7 +128,7 @@ vec4 applyToneMapping(vec4 color)
 	float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	{
 		vec2 clampedpos;
-		float visibility=0.0;//getHardShadow(shadowsampler, clampedpos.xy, realDistance);
+		float visibility=0.0;
 
 		float texture_size= 1/(f_textureresolution*0.5);
 		#if SHADOW_FILTER == 2
@@ -166,12 +143,13 @@ vec4 applyToneMapping(vec4 color)
 		#endif
 		float y;
 		float x;
+		//basic PCF filter. we can explorer Poisson filter
 		for (y = -PCFBOUND ; y <=PCFBOUND ; y+=1.0)
 			for (x = -PCFBOUND ; x <=PCFBOUND ; x+=1.0)
-			{
-				clampedpos = vec2(x,y)*texture_size + smTexCoord.xy;
-				visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
-			}
+		{
+			clampedpos = vec2(x,y)*texture_size + smTexCoord.xy;
+			visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
+		}
 		
 		return visibility/PCFSAMPLES;
 	}
@@ -212,27 +190,24 @@ void main(void)
 	vec3 shadow_color=vec3(0.0,0.0,0.0);
 	
 
-	if(dot( -v_LightDirection , vNormal)  <= 0){
+	if(dot( -v_LightDirection , vNormal )  <= 0){
 		shadow_int=1.0;
 	}
 	else {
 		
-		vec3 posInShadow=getShadowSpacePosition( );
+		vec3 posinLightSpace=getLightSpacePosition( );
 
-		if(posInShadow.x>0.0&&posInShadow.x<1.0 &&
-		   posInShadow.y>0.0&&posInShadow.y<1.0 &&
-		   posInShadow.z>0.0&&posInShadow.z<1.0)
+		if(posinLightSpace.x>0.0&&posinLightSpace.x<1.0 &&
+		   posinLightSpace.y>0.0&&posinLightSpace.y<1.0 &&
+		   posinLightSpace.z>0.0&&posinLightSpace.z<1.0)
 		{
-			//float bias = 1.0 - clamp(dot( N , posInShadow.xyz), 0.0, 1.0);
-			//bias = -0.0000005 - 0.00000005 * bias;
+			shadow_int=getShadow(ShadowMapSampler, posinLightSpace.xy,
+									posinLightSpace.z  );
 
-			shadow_int=getShadow(ShadowMapSampler, posInShadow.xy,
-									posInShadow.z  );
-
-			#ifdef COLORED_SHADOWS
-				shadow_color=getShadowColor(ShadowMapSampler, posInShadow.xy,
-									posInShadow.z  );			
-			#endif
+		#ifdef COLORED_SHADOWS
+			shadow_color=getShadowColor(ShadowMapSampler, posinLightSpace.xy,
+									posinLightSpace.z  );			
+		#endif
 
 			
 		}
