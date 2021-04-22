@@ -123,7 +123,9 @@ class ShadowRenderer {
     bool _shadow_psm{false};
 
     irr::video::ECOLOR_FORMAT _texture_format{irr::video::ECOLOR_FORMAT::ECF_R16F};
+    irr::video::ECOLOR_FORMAT _texture_format_color{irr::video::ECOLOR_FORMAT::ECF_R16G16};
 
+    
     // Shadow Shader stuff
 
     void createShaders();

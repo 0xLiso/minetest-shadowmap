@@ -73,6 +73,10 @@ void ShadowRenderer::initialize() {
                       ? irr::video::ECOLOR_FORMAT::ECF_R32F
                       : irr::video::ECOLOR_FORMAT::ECF_R16F;
 
+    _texture_format_color = _shadow_map_texture_32bit
+					    ? irr::video::ECOLOR_FORMAT::ECF_G32R32F
+					    : irr::video::ECOLOR_FORMAT::ECF_G16R16F;
+
     _nSplits =  E_SHADOW_RENDER_MODE::ERM_SHADOWMAP;
 }
 
@@ -162,39 +166,41 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 
             renderTargets.push_back(getSMTexture(
                                         shadowMapName,
-                                        _texture_format, true) );
+			    _shadow_map_colored ? _texture_format_color : _texture_format,
+			    true));
         }
 
 
     }
 
     if (_shadow_map_colored && !shadowMapTextureColors) {
-        shadowMapTextureColors = getSMTexture(
-                                     std::string("shadow_colored_") +
-                                     std::to_string(_shadow_map_texture_size),
-                                     _shadow_map_texture_32bit
-                                     ? irr::video::ECOLOR_FORMAT::ECF_A32B32G32R32F
-                                     : irr::video::ECOLOR_FORMAT::ECF_A16B16G16R16F
-                                     , true);
-        if (!shadowMapTextureFinal) {
-            shadowMapTextureFinal = getSMTexture(
-                                        std::string("shadowmap_final_") +
-                                        std::to_string(_shadow_map_texture_size),
-                                        _shadow_map_texture_32bit
-                                        ? irr::video::ECOLOR_FORMAT::ECF_A32B32G32R32F
-                                        : irr::video::ECOLOR_FORMAT::ECF_A16B16G16R16F,
-                                        true);
-        }
-    } else {
-
-        // The merge all shadowmaps texture
-        if (!shadowMapTextureFinal) {
-            shadowMapTextureFinal = getSMTexture(
-                                        std::string("shadowmap_final_") +
-                                        std::to_string(_shadow_map_texture_size),
-                                        _texture_format, true);
-        }
+	    shadowMapTextureColors = getSMTexture(
+			    std::string("shadow_colored_") +
+					    std::to_string(_shadow_map_texture_size),
+			    _shadow_map_colored ? _texture_format_color : _texture_format,
+			    true);
     }
+
+    // The merge all shadowmaps texture
+    if (!shadowMapTextureFinal) {
+	    irr::video::ECOLOR_FORMAT frt;
+	    if (_shadow_map_texture_32bit) {
+		    if (_shadow_map_colored)
+		        frt = irr::video::ECOLOR_FORMAT::ECF_A32B32G32R32F;
+		    else
+			    frt = irr::video::ECOLOR_FORMAT::ECF_R32F;
+	    } else {
+		    if (_shadow_map_colored)
+			    frt = irr::video::ECOLOR_FORMAT::ECF_A16B16G16R16F;
+		    else
+			    frt = irr::video::ECOLOR_FORMAT::ECF_R16F;
+	    }
+        shadowMapTextureFinal = getSMTexture(
+                                    std::string("shadowmap_final_") +
+                                    std::to_string(_shadow_map_texture_size),
+			                        frt,true);
+    }
+    
 
 
     if (!ShadowNodeArray.empty() && !_light_list.empty()) {
@@ -213,14 +219,14 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
                 light.should_update_map_shadow = false;
 
                 _driver->setRenderTarget(renderTargets[0], true, true,
-                                         irr::video::SColor(255, 255, 255, 255));
+				irr::video::SColor(255, 255, 255, 255));
                 renderShadowSplit(renderTargets[0], light, 0);
 
                 if (_shadow_map_colored) {
 			        //_driver->setRenderTarget(0, true, true);
                     _driver->setRenderTarget(shadowMapTextureColors, true,
-                                             false,
-				                             irr::video::SColor(1.0f, .0f, .0f, .0f));
+						false,
+						irr::video::SColor(255, 255, 255, 255));
                 }
                 renderShadowSplit(shadowMapTextureColors, light, 0,
                                   irr::scene::ESNRP_TRANSPARENT);
@@ -229,7 +235,7 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 
             // render shadows for the n0n-map objects.
             _driver->setRenderTarget(shadowMapTextureDynamicObjects, true, true,
-                                     irr::video::SColor(255, 255, 255, 255));
+			    irr::video::SColor(255, 255, 255, 255));
             renderShadowObjects(shadowMapTextureDynamicObjects, light);
             // clear the Render Target
             _driver->setRenderTarget(0, false, false);
@@ -247,7 +253,7 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
                 2, shadowMapTextureDynamicObjects);
 
             _driver->setRenderTarget(shadowMapTextureFinal, false, false,
-                                     irr::video::SColor(255, 255, 255, 255));
+			    irr::video::SColor(255, 255, 255, 255));
             _screen_quad->render(_driver);
             _driver->setRenderTarget(0, false, false);
 
@@ -258,7 +264,7 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
         _smgr->drawAll();
 
         /**/
-        if (true) {
+        if (false) {
             // this is debug, ignore for now.
             _driver->draw2DImage(shadowMapTextureFinal,
                                  irr::core::rect<s32>(0, 50, 128, 128 + 50),

@@ -8,22 +8,39 @@ uniform sampler2D ShadowMapSamplerdynamic;
 void main() {
 
 #ifdef COLORED_SHADOWS
-    float depth_map = texture2D(ShadowMapClientMap, gl_TexCoord[0].st ).r ;
-    float depth_splitdynamics = texture2D(ShadowMapSamplerdynamic, gl_TexCoord[2].st ).r ;
-    vec4 depth_color = texture2D(ShadowMapClientMapTraslucent, gl_TexCoord[1].st ) ;
-    float first_depth = min(depth_map, depth_splitdynamics);
-    if ( false) {
-        gl_FragColor = vec4(depth_color.r, depth_color.g, depth_color.b, depth_color.a);
-    } else {
-        gl_FragColor = vec4(first_depth, depth_color.g, depth_color.b, depth_color.a);
+    vec2 first_depth = texture2D(ShadowMapClientMap, gl_TexCoord[0].st ).rg ;
+    vec2 depth_splitdynamics = vec2(texture2D(ShadowMapSamplerdynamic, gl_TexCoord[2].st ).r,0.0); 
+    if(first_depth.r>depth_splitdynamics.r){
+        first_depth=depth_splitdynamics;
     }
+    vec2 depth_color = texture2D(ShadowMapClientMapTraslucent, gl_TexCoord[1].st ).rg ;
+    
+    gl_FragColor = vec4(first_depth.r, first_depth.g, depth_color.r,depth_color.g);
+    
 #else
-    float depth_map = texture2D(ShadowMapClientMap, gl_TexCoord[0].st ).r ;
+    float first_depth = texture2D(ShadowMapClientMap, gl_TexCoord[0].st ).r ;
     float depth_splitdynamics = texture2D(ShadowMapSamplerdynamic, gl_TexCoord[2].st ).r ;
 
-    float first_depth = min(depth_map, depth_splitdynamics);
+    first_depth = min(first_depth, depth_splitdynamics);
 
     gl_FragColor = vec4(first_depth, 0.0, 0.0, 1.0);
 #endif
 
 }
+
+
+
+/*
+    vec2 first_depth = texture2D(ShadowMapClientMap, gl_TexCoord[0].st ).rg ;
+    vec2 depth_splitdynamics = vec2(texture2D(ShadowMapSamplerdynamic, gl_TexCoord[2].st ).r,0.0); 
+    if(first_depth.r>depth_splitdynamics.r){
+        first_depth=depth_splitdynamics;
+    }
+    vec2 depth_color = texture2D(ShadowMapClientMapTraslucent, gl_TexCoord[1].st ).rg ;
+    if(first_depth.r>depth_color.r){
+        first_depth=depth_color;
+    }
+    
+    gl_FragColor = vec4(first_depth.r, first_depth.g, 0.0,1.0);
+    
+*/
