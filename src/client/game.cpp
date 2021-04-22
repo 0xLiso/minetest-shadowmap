@@ -400,12 +400,7 @@ public:
 };
 
 
-// before 1.8 there isn't a "integer interface", only float
-#if (IRRLICHT_VERSION_MAJOR == 1 && IRRLICHT_VERSION_MINOR < 8)
-typedef f32 SamplerLayer_t;
-#else
 typedef s32 SamplerLayer_t;
-#endif
 
 
 class GameGlobalShaderConstantSetter : public IShaderConstantSetter
@@ -513,38 +508,20 @@ public:
 
 		float eye_position_array[3];
 		v3f epos = m_client->getEnv().getLocalPlayer()->getEyePosition();
-#if (IRRLICHT_VERSION_MAJOR == 1 && IRRLICHT_VERSION_MINOR < 8)
-		eye_position_array[0] = epos.X;
-		eye_position_array[1] = epos.Y;
-		eye_position_array[2] = epos.Z;
-#else
 		epos.getAs3Values(eye_position_array);
-#endif
 		m_eye_position_pixel.set(eye_position_array, services);
 		m_eye_position_vertex.set(eye_position_array, services);
 
 		if (m_client->getMinimap()) {
 			float minimap_yaw_array[3];
 			v3f minimap_yaw = m_client->getMinimap()->getYawVec();
-#if (IRRLICHT_VERSION_MAJOR == 1 && IRRLICHT_VERSION_MINOR < 8)
-			minimap_yaw_array[0] = minimap_yaw.X;
-			minimap_yaw_array[1] = minimap_yaw.Y;
-			minimap_yaw_array[2] = minimap_yaw.Z;
-#else
 			minimap_yaw.getAs3Values(minimap_yaw_array);
-#endif
 			m_minimap_yaw.set(minimap_yaw_array, services);
 		}
 
 		float camera_offset_array[3];
 		v3f offset = intToFloat(m_client->getCamera()->getOffset(), BS);
-#if (IRRLICHT_VERSION_MAJOR == 1 && IRRLICHT_VERSION_MINOR < 8)
-		camera_offset_array[0] = offset.X;
-		camera_offset_array[1] = offset.Y;
-		camera_offset_array[2] = offset.Z;
-#else
 		offset.getAs3Values(camera_offset_array);
-#endif
 		m_camera_offset_pixel.set(camera_offset_array, services);
 		m_camera_offset_vertex.set(camera_offset_array, services);
 
@@ -1391,9 +1368,21 @@ bool Game::createClient(const GameStartData &start_data)
 	std::wstring str = utf8_to_wide(PROJECT_NAME_C);
 	str += L" ";
 	str += utf8_to_wide(g_version_hash);
+	{
+		const wchar_t *text = nullptr;
+		if (simple_singleplayer_mode)
+			text = wgettext("Singleplayer");
+		else
+			text = wgettext("Multiplayer");
+		str += L" [";
+		str += text;
+		str += L"]";
+		delete text;
+	}
 	str += L" [";
 	str += driver->getName();
 	str += L"]";
+
 	device->setWindowCaption(str.c_str());
 
 	LocalPlayer *player = client->getEnv().getLocalPlayer();
@@ -1548,7 +1537,7 @@ bool Game::connectToServer(const GameStartData &start_data,
 			} else {
 				wait_time += dtime;
 				// Only time out if we aren't waiting for the server we started
-				if (!start_data.isSinglePlayer() && wait_time > 10) {
+				if (!start_data.address.empty() && wait_time > 10) {
 					*error_message = "Connection timed out.";
 					errorstream << *error_message << std::endl;
 					break;
@@ -1944,6 +1933,8 @@ void Game::processKeyInput()
 		toggleCinematic();
 	} else if (wasKeyDown(KeyType::SCREENSHOT)) {
 		client->makeScreenshot();
+	} else if (wasKeyDown(KeyType::TOGGLE_BLOCK_BOUNDS)) {
+		hud->toggleBlockBounds();
 	} else if (wasKeyDown(KeyType::TOGGLE_HUD)) {
 		m_game_ui->toggleHud();
 	} else if (wasKeyDown(KeyType::MINIMAP)) {
@@ -2580,14 +2571,18 @@ void Game::handleClientEvent_PlayerDamage(ClientEvent *event, CameraOrientation 
 
 	// Damage flash and hurt tilt are not used at death
 	if (client->getHP() > 0) {
-		runData.damage_flash += 95.0f + 3.2f * event->player_damage.amount;
-		runData.damage_flash = MYMIN(runData.damage_flash, 127.0f);
-
 		LocalPlayer *player = client->getEnv().getLocalPlayer();
+
+		f32 hp_max = player->getCAO() ?
+			player->getCAO()->getProperties().hp_max : PLAYER_MAX_HP_DEFAULT;
+		f32 damage_ratio = event->player_damage.amount / hp_max;
+
+		runData.damage_flash += 95.0f + 64.f * damage_ratio;
+		runData.damage_flash = MYMIN(runData.damage_flash, 127.0f);
 
 		player->hurt_tilt_timer = 1.5f;
 		player->hurt_tilt_strength =
-			rangelim(event->player_damage.amount / 4.0f, 1.0f, 4.0f);
+			rangelim(damage_ratio * 5.0f, 1.0f, 4.0f);
 	}
 
 	// Play damage sound

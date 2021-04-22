@@ -10,8 +10,10 @@
 #include "client/clientmap.h"
 
 ShadowRenderer::ShadowRenderer(irr::IrrlichtDevice *irrlichtDevice, Client *client) :
-    _device(irrlichtDevice), _smgr(irrlichtDevice->getSceneManager()),
-    _driver(irrlichtDevice->getVideoDriver()), _client(client) {
+    _device(irrlichtDevice), 
+    _smgr(irrlichtDevice->getSceneManager()),
+    _driver(irrlichtDevice->getVideoDriver()), 
+    _client(client) {
     _shadows_enabled = g_settings->getBool("enable_shaders");
     _shadows_enabled &= g_settings->getBool("enable_dynamic_shadows");
     if (!_shadows_enabled)

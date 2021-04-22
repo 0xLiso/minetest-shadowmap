@@ -74,10 +74,11 @@ DirectionalLight::DirectionalLight(const irr::u32 shadowMapResolution,
                                    const irr::core::vector3df &position, irr::video::SColorf lightColor,
                                    irr::f32 farValue, irr::u8 nSplits) :
     diffuseColor(lightColor),
-    pos(position),
     farPlane(farValue   ),
-    mapRes(shadowMapResolution), nsplits(nSplits) {
-    for (int i = 0; i < csm_frustum.size(); i++) {
+    mapRes(shadowMapResolution),
+    pos(position),
+    nsplits(nSplits) {
+    for (size_t i = 0; i < csm_frustum.size(); i++) {
         csm_frustum[i].id = i;
     }
 }
@@ -95,7 +96,7 @@ void DirectionalLight::update_frustum(const Camera *cam, Client *client) {
     float zFar = getMaxFarValue()  > wanted_range ? wanted_range : getMaxFarValue() ;
     ///////////////////////////////////
     // update splits near and fars
-#pragma warning "check what values are in here, wanted_range vs getMaxFarValue"
+    //#pragma warning "check what values are in here, wanted_range vs getMaxFarValue"
     float nd = zNear;
     float fd = zFar ;
 
@@ -179,7 +180,7 @@ irr::u32 DirectionalLight::getMapResolution() const {
 
 
 void DirectionalLight::getSplitDistances(float splitArray[4]) {
-    for (int i = 0; i < csm_frustum.size(); i++) {
+    for (size_t i = 0; i < csm_frustum.size(); i++) {
         splitArray[i] = csm_frustum[i].zFar;
     }
 }

@@ -294,9 +294,7 @@ void WieldMeshSceneNode::setExtruded(const std::string &imagename,
 		}
 		material.setFlag(video::EMF_ANISOTROPIC_FILTER, m_anisotropic_filter);
 		// mipmaps cause "thin black line" artifacts
-#if (IRRLICHT_VERSION_MAJOR == 1 && IRRLICHT_VERSION_MINOR >= 8) || IRRLICHT_VERSION_MAJOR >= 2
 		material.setFlag(video::EMF_USE_MIP_MAPS, false);
-#endif
 		if (m_enable_shaders) {
 			material.setTexture(2, tsrc->getShaderFlagsTexture(false));
 		}
@@ -315,12 +313,14 @@ static scene::SMesh *createSpecialNodeMesh(Client *client, MapNode n,
 		// keep it
 	} else if (f.param_type_2 == CPT2_WALLMOUNTED ||
 			f.param_type_2 == CPT2_COLORED_WALLMOUNTED) {
-		if (f.drawtype == NDT_TORCHLIKE)
-			n.setParam2(1);
-		else if (f.drawtype == NDT_SIGNLIKE ||
+		if (f.drawtype == NDT_TORCHLIKE ||
+				f.drawtype == NDT_SIGNLIKE ||
 				f.drawtype == NDT_NODEBOX ||
-				f.drawtype == NDT_MESH)
+				f.drawtype == NDT_MESH) {
 			n.setParam2(4);
+		}
+	} else if (f.drawtype == NDT_SIGNLIKE || f.drawtype == NDT_TORCHLIKE) {
+		n.setParam2(1);
 	}
 	gen.renderSingle(n.getContent(), n.getParam2());
 

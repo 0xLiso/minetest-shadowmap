@@ -1140,14 +1140,20 @@ Look for examples in `games/devtest` or `games/minetest_game`.
       used to compensate for how `glasslike` reduces visual thickness.
 * `torchlike`
     * A single vertical texture.
-    * If placed on top of a node, uses the first texture specified in `tiles`.
-    * If placed against the underside of a node, uses the second texture
-      specified in `tiles`.
-    * If placed on the side of a node, uses the third texture specified in
-      `tiles` and is perpendicular to that node.
+    * If `paramtype2="[color]wallmounted":
+        * If placed on top of a node, uses the first texture specified in `tiles`.
+        * If placed against the underside of a node, uses the second texture
+          specified in `tiles`.
+        * If placed on the side of a node, uses the third texture specified in
+          `tiles` and is perpendicular to that node.
+    * If `paramtype2="none"`:
+        * Will be rendered as if placed on top of a node (see
+          above) and only the first texture is used.
 * `signlike`
     * A single texture parallel to, and mounted against, the top, underside or
       side of a node.
+    * If `paramtype2="[color]wallmounted", it rotates according to `param2`
+    * If `paramtype2="none"`, it will always be on the floor.
 * `plantlike`
     * Two vertical and diagonal textures at right-angles to each other.
     * See `paramtype2 = "meshoptions"` above for other options.
@@ -1730,7 +1736,15 @@ to games.
     * `3`: the node always gets the digging time 0 seconds (torch)
 * `disable_jump`: Player (and possibly other things) cannot jump from node
   or if their feet are in the node. Note: not supported for `new_move = false`
-* `fall_damage_add_percent`: damage speed = `speed * (1 + value/100)`
+* `fall_damage_add_percent`: modifies the fall damage suffered when hitting
+  the top of this node. There's also an armor group with the same name.
+  The final player damage is determined by the following formula:
+    damage =
+      collision speed
+      * ((node_fall_damage_add_percent   + 100) / 100) -- node group
+      * ((player_fall_damage_add_percent + 100) / 100) -- player armor group
+      - (14)                                           -- constant tolerance
+  Negative damage values are discarded as no damage.
 * `falling_node`: if there is no walkable block under the node it will fall
 * `float`: the node will not fall through liquids
 * `level`: Can be used to give an additional sense of progression in the game.
@@ -1750,12 +1764,15 @@ to games.
   `"toolrepair"` crafting recipe
 
 
-### `ObjectRef` groups
+### `ObjectRef` armor groups
 
 * `immortal`: Skips all damage and breath handling for an object. This group
   will also hide the integrated HUD status bars for players. It is
   automatically set to all players when damage is disabled on the server and
   cannot be reset (subject to change).
+* `fall_damage_add_percent`: Modifies the fall damage suffered by players
+  when they hit the ground. It is analog to the node group with the same
+  name. See the node group above for the exact calculation.
 * `punch_operable`: For entities; disables the regular damage mechanism for
   players punching it by hand or a non-tool item, so that it can do something
   else than take damage.
@@ -3149,6 +3166,16 @@ For the following functions, `v`, `v1`, `v2` are vectors,
     * Returns a vector.
     * A copy of `a` if `a` is a vector.
     * `{x = a, y = b, z = c}`, if all of `a`, `b`, `c` are defined numbers.
+* `vector.from_string(s[, init])`:
+    * Returns `v, np`, where `v` is a vector read from the given string `s` and
+      `np` is the next position in the string after the vector.
+    * Returns `nil` on failure.
+    * `s`: Has to begin with a substring of the form `"(x, y, z)"`. Additional
+           spaces, leaving away commas and adding an additional comma to the end
+           is allowed.
+    * `init`: If given starts looking for the vector at this string index.
+* `vector.to_string(v)`:
+    * Returns a string of the form `"(x, y, z)"`.
 * `vector.direction(p1, p2)`:
     * Returns a vector of length 1 with direction `p1` to `p2`.
     * If `p1` and `p2` are identical, returns `{x = 0, y = 0, z = 0}`.
@@ -3163,6 +3190,7 @@ For the following functions, `v`, `v1`, `v2` are vectors,
     * Returns a vector, each dimension rounded down.
 * `vector.round(v)`:
     * Returns a vector, each dimension rounded to nearest integer.
+    * At a multiple of 0.5, rounds away from zero.
 * `vector.apply(v, func)`:
     * Returns a vector where the function `func` has been applied to each
       component.
@@ -3237,6 +3265,8 @@ Helper functions
     * If the absolute value of `x` is within the `tolerance` or `x` is NaN,
       `0` is returned.
 * `math.factorial(x)`: returns the factorial of `x`
+* `math.round(x)`: Returns `x` rounded to the nearest integer.
+    * At a multiple of 0.5, rounds away from zero.
 * `string.split(str, separator, include_empty, max_splits, sep_is_pattern)`
     * `separator`: string, default: `","`
     * `include_empty`: boolean, default: `false`
@@ -4662,6 +4692,7 @@ Call these functions only at load time!
     * `cheat`: `{type=<cheat_type>}`, where `<cheat_type>` is one of:
         * `moved_too_fast`
         * `interacted_too_far`
+        * `interacted_with_self`
         * `interacted_while_dead`
         * `finished_unknown_dig`
         * `dug_unbreakable`
@@ -4902,7 +4933,7 @@ Environment access
     * Punch node with the same effects that a player would cause
 * `minetest.spawn_falling_node(pos)`
     * Change node into falling node
-    * Returns `true` if successful, `false` on failure
+    * Returns `true` and the ObjectRef of the spawned entity if successful, `false` on failure
 
 * `minetest.find_nodes_with_meta(pos1, pos2)`
     * Get a table of positions of nodes that have metadata within a region
@@ -8390,7 +8421,7 @@ Used by `HTTPApiTable.fetch` and `HTTPApiTable.fetch_async`.
         url = "http://example.org",
 
         timeout = 10,
-        -- Timeout for connection in seconds. Default is 3 seconds.
+        -- Timeout for request to be completed in seconds. Default depends on engine settings.
 
         method = "GET", "POST", "PUT" or "DELETE"
         -- The http method to use. Defaults to "GET".

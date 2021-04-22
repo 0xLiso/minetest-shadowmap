@@ -336,22 +336,22 @@ void Hud::drawLuaElements(const v3s16 &camera_offset)
 	irr::gui::IGUIFont* font = g_fontengine->getFont();
 
 	// Reorder elements by z_index
-	std::vector<size_t> ids;
+	std::vector<HudElement*> elems;
+	elems.reserve(player->maxHudId());
 
 	for (size_t i = 0; i != player->maxHudId(); i++) {
 		HudElement *e = player->getHud(i);
 		if (!e)
 			continue;
 
-		auto it = ids.begin();
-		while (it != ids.end() && player->getHud(*it)->z_index <= e->z_index)
+		auto it = elems.begin();
+		while (it != elems.end() && (*it)->z_index <= e->z_index)
 			++it;
 
-		ids.insert(it, i);
+		elems.insert(it, e);
 	}
 
-	for (size_t i : ids) {
-		HudElement *e = player->getHud(i);
+	for (HudElement *e : elems) {
 
 		v2s32 pos(floor(e->pos.X * (float) m_screensize.X + 0.5),
 				floor(e->pos.Y * (float) m_screensize.Y + 0.5));
@@ -522,8 +522,8 @@ void Hud::drawLuaElements(const v3s16 &camera_offset)
 				client->getMinimap()->drawMinimap(rect);
 				break; }
 			default:
-				infostream << "Hud::drawLuaElements: ignoring drawform " << e->type <<
-					" of hud element ID " << i << " due to unrecognized type" << std::endl;
+				infostream << "Hud::drawLuaElements: ignoring drawform " << e->type
+					<< " due to unrecognized type" << std::endl;
 		}
 	}
 }
@@ -862,6 +862,54 @@ void Hud::drawSelectionMesh()
 	}
 }
 
+void Hud::toggleBlockBounds()
+{
+	m_block_bounds_mode = static_cast<BlockBoundsMode>(m_block_bounds_mode + 1);
+
+	if (m_block_bounds_mode >= BLOCK_BOUNDS_MAX) {
+		m_block_bounds_mode = BLOCK_BOUNDS_OFF;
+	}
+}
+
+void Hud::drawBlockBounds()
+{
+	if (m_block_bounds_mode == BLOCK_BOUNDS_OFF) {
+		return;	
+	}
+
+	video::SMaterial old_material = driver->getMaterial2D();
+	driver->setMaterial(m_selection_material);
+
+	v3s16 pos = player->getStandingNodePos();
+
+	v3s16 blockPos(
+		floorf((float) pos.X / MAP_BLOCKSIZE),
+		floorf((float) pos.Y / MAP_BLOCKSIZE),
+		floorf((float) pos.Z / MAP_BLOCKSIZE)
+	);
+
+	v3f offset = intToFloat(client->getCamera()->getOffset(), BS);
+
+	s8 radius = m_block_bounds_mode == BLOCK_BOUNDS_ALL ? 2 : 0;
+
+	v3f halfNode = v3f(BS, BS, BS) / 2.0f;
+
+	for (s8 x = -radius; x <= radius; x++)
+	for (s8 y = -radius; y <= radius; y++)
+	for (s8 z = -radius; z <= radius; z++) {
+		v3s16 blockOffset(x, y, z);
+
+		aabb3f box(
+			intToFloat((blockPos + blockOffset) * MAP_BLOCKSIZE, BS) - offset - halfNode,
+			intToFloat(((blockPos + blockOffset) * MAP_BLOCKSIZE) + (MAP_BLOCKSIZE - 1), BS) - offset + halfNode
+		);
+
+		driver->draw3DBox(box, video::SColor(255, 255, 0, 0));
+	}
+
+	driver->setMaterial(old_material);
+}
+
 void Hud::updateSelectionMesh(const v3s16 &camera_offset)
 {
 	m_camera_offset = camera_offset;
@@ -945,10 +993,16 @@ void drawItemStack(
 		return;
 	}
 
-	const ItemDefinition &def = item.getDefinition(client->idef());
-	ItemMesh *imesh = client->idef()->getWieldMesh(def.name, client);
+	const static thread_local bool enable_animations =
+		g_settings->getBool("inventory_items_animations");
 
-	if (imesh && imesh->mesh) {
+	const ItemDefinition &def = item.getDefinition(client->idef());
+
+	// Render as mesh if animated or no inventory image
+	if ((enable_animations && rotation_kind < IT_ROT_NONE) || def.inventory_image.empty()) {
+		ItemMesh *imesh = client->idef()->getWieldMesh(def.name, client);
+		if (!imesh || !imesh->mesh)
+			return;
 		scene::IMesh *mesh = imesh->mesh;
 		driver->clearBuffers(video::ECBF_DEPTH);
 		s32 delta = 0;
@@ -991,9 +1045,6 @@ void drawItemStack(
 
 		core::matrix4 matrix;
 		matrix.makeIdentity();
-
-		static thread_local bool enable_animations =
-			g_settings->getBool("inventory_items_animations");
 
 		if (enable_animations) {
 			float timer_f = (float) delta / 5000.f;
@@ -1039,16 +1090,27 @@ void drawItemStack(
 		driver->setTransform(video::ETS_VIEW, oldViewMat);
 		driver->setTransform(video::ETS_PROJECTION, oldProjMat);
 		driver->setViewPort(oldViewPort);
+	} else { // Otherwise just draw as 2D
+		video::ITexture *texture = client->idef()->getInventoryTexture(def.name, client);
+		if (!texture)
+			return;
+		video::SColor color =
+			client->idef()->getItemstackColor(item, client);
+		const video::SColor colors[] = { color, color, color, color };
 
-		// draw the inventory_overlay
-		if (def.type == ITEM_NODE && def.inventory_image.empty() &&
-				!def.inventory_overlay.empty()) {
-			ITextureSource *tsrc = client->getTextureSource();
-			video::ITexture *overlay_texture = tsrc->getTexture(def.inventory_overlay);
-			core::dimension2d<u32> dimens = overlay_texture->getOriginalSize();
-			core::rect<s32> srcrect(0, 0, dimens.Width, dimens.Height);
-			draw2DImageFilterScaled(driver, overlay_texture, rect, srcrect, clip, 0, true);
-		}
+		draw2DImageFilterScaled(driver, texture, rect,
+			core::rect<s32>({0, 0}, core::dimension2di(texture->getOriginalSize())),
+			clip, colors, true);
+	}
+
+	// draw the inventory_overlay
+	if (def.type == ITEM_NODE && def.inventory_image.empty() &&
+			!def.inventory_overlay.empty()) {
+		ITextureSource *tsrc = client->getTextureSource();
+		video::ITexture *overlay_texture = tsrc->getTexture(def.inventory_overlay);
+		core::dimension2d<u32> dimens = overlay_texture->getOriginalSize();
+		core::rect<s32> srcrect(0, 0, dimens.Width, dimens.Height);
+		draw2DImageFilterScaled(driver, overlay_texture, rect, srcrect, clip, 0, true);
 	}
 
 	if (def.type == ITEM_TOOL && item.wear != 0) {

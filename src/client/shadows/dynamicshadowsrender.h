@@ -95,8 +95,8 @@ class ShadowRenderer {
 
     //a bunch of variables
     irr::IrrlichtDevice *_device{nullptr};
-    irr::video::IVideoDriver *_driver{nullptr};
     irr::scene::ISceneManager *_smgr{nullptr};
+    irr::video::IVideoDriver *_driver{nullptr};    
     Client *_client{nullptr};
     irr::core::dimension2du _screenRTT_resolution;
     irr::core::array<irr::video::ITexture *> renderTargets;

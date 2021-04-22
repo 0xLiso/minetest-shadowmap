@@ -30,10 +30,10 @@ void shadowScreenQuadCB::OnSetConstants(
 		irr::video::IMaterialRendererServices *services, irr::s32 userData)
 {
 	irr::s32 TextureId = 0;
-	services->setPixelShaderConstant("ShadowMapClientMap", &TextureId, 1);
+	services->setPixelShaderConstant(services->getPixelShaderConstantID("ShadowMapClientMap"), &TextureId, 1);
 	TextureId = 1;
-	services->setPixelShaderConstant("ShadowMapClientMapTraslucent", &TextureId, 1);
+	services->setPixelShaderConstant(services->getPixelShaderConstantID("ShadowMapClientMapTraslucent"), &TextureId, 1);
 	TextureId = 2;
-	services->setPixelShaderConstant("ShadowMapSamplerdynamic", &TextureId, 1);
+	services->setPixelShaderConstant(services->getPixelShaderConstantID("ShadowMapSamplerdynamic"), &TextureId, 1);
 
 }

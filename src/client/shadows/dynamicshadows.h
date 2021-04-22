@@ -90,12 +90,14 @@ private:
 	
 	irr::video::SColorf diffuseColor{0xffffffff};
 
-	irr::f32 farPlane{128};
-	irr::u32 mapRes{512};
+	irr::f32 farPlane;
+	irr::u32 mapRes;
 	v3s16 m_camera_offset;
 
 
-	irr::core::vector3df pos{0}, direction{0}, lastcampos{0};
+	irr::core::vector3df pos;
+	irr::core::vector3df direction{0};
+	irr::core::vector3df  lastcampos{0};
 	std::array<csmfrustum, 3> csm_frustum;
 	s32 nsplits{1};
 	

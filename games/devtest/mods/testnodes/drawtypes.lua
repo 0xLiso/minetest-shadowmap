@@ -15,22 +15,6 @@ testing this node easier and more convenient.
 
 local S = minetest.get_translator("testnodes")
 
--- If set to true, will show an inventory image for nodes that have no inventory image as of Minetest 5.1.0.
--- This is due to <https://github.com/minetest/minetest/issues/9209>.
--- This is only added to make the items more visible to avoid confusion, but you will no longer see
--- the default inventory images for these items. When you want to test the default inventory image of drawtypes,
--- this should be turned off.
--- TODO: Remove support for fallback inventory image as soon #9209 is fixed.
-local SHOW_FALLBACK_IMAGE = minetest.settings:get_bool("testnodes_show_fallback_image", false)
-
-local fallback_image = function(img)
-	if SHOW_FALLBACK_IMAGE then
-		return img
-	else
-		return nil
-	end
-end
-
 -- A regular cube
 minetest.register_node("testnodes:normal", {
 	description = S("Normal Drawtype Test Node"),
@@ -145,20 +129,15 @@ minetest.register_node("testnodes:fencelike", {
 })
 
 minetest.register_node("testnodes:torchlike", {
-	description = S("Torchlike Drawtype Test Node"),
+	description = S("Floor Torchlike Drawtype Test Node"),
 	drawtype = "torchlike",
 	paramtype = "light",
-	tiles = {
-		"testnodes_torchlike_floor.png",
-		"testnodes_torchlike_ceiling.png",
-		"testnodes_torchlike_wall.png",
-	},
+	tiles = { "testnodes_torchlike_floor.png^[colorize:#FF0000:64" },
 
 
 	walkable = false,
 	sunlight_propagates = true,
 	groups = { dig_immediate = 3 },
-	inventory_image = fallback_image("testnodes_torchlike_floor.png"),
 })
 
 minetest.register_node("testnodes:torchlike_wallmounted", {
@@ -176,12 +155,22 @@ minetest.register_node("testnodes:torchlike_wallmounted", {
 	walkable = false,
 	sunlight_propagates = true,
 	groups = { dig_immediate = 3 },
-	inventory_image = fallback_image("testnodes_torchlike_floor.png"),
+})
+
+minetest.register_node("testnodes:signlike", {
+	description = S("Floor Signlike Drawtype Test Node"),
+	drawtype = "signlike",
+	paramtype = "light",
+	tiles = { "testnodes_signlike.png^[colorize:#FF0000:64" },
+
+
+	walkable = false,
+	groups = { dig_immediate = 3 },
+	sunlight_propagates = true,
 })
 
 
-
-minetest.register_node("testnodes:signlike", {
+minetest.register_node("testnodes:signlike_wallmounted", {
 	description = S("Wallmounted Signlike Drawtype Test Node"),
 	drawtype = "signlike",
 	paramtype = "light",
@@ -192,7 +181,6 @@ minetest.register_node("testnodes:signlike", {
 	walkable = false,
 	groups = { dig_immediate = 3 },
 	sunlight_propagates = true,
-	inventory_image = fallback_image("testnodes_signlike.png"),
 })
 
 minetest.register_node("testnodes:plantlike", {
@@ -510,7 +498,6 @@ minetest.register_node("testnodes:airlike", {
 	walkable = false,
 	groups = { dig_immediate = 3 },
 	sunlight_propagates = true,
-	inventory_image = fallback_image("testnodes_airlike.png"),
 })
 
 -- param2 changes liquid height
@@ -603,7 +590,7 @@ scale("plantlike",
 scale("torchlike_wallmounted",
 	S("Double-sized Wallmounted Torchlike Drawtype Test Node"),
 	S("Half-sized Wallmounted Torchlike Drawtype Test Node"))
-scale("signlike",
+scale("signlike_wallmounted",
 	S("Double-sized Wallmounted Signlike Drawtype Test Node"),
 	S("Half-sized Wallmounted Signlike Drawtype Test Node"))
 scale("firelike",
