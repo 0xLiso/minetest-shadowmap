@@ -156,10 +156,72 @@ vec4 applyToneMapping(vec4 color)
 
 
 	#ifdef COLORED_SHADOWS
-	vec3 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
+	// c_precision of 128 fits within 7 base-10 digits
+	const float c_precision = 128.0;
+	const float c_precisionp1 = c_precision + 1.0;
+	 
+	float packColor(vec3 color) {
+	   
+	    return floor(color.r * c_precision + 0.5) 
+	        + floor(color.b * c_precision + 0.5) * c_precisionp1
+	        + floor(color.g * c_precision + 0.5) * c_precisionp1 * c_precisionp1;
+	}
+
+	vec3 unpackColor(float value) {
+	    vec3 color;
+	    color.r = mod(value, c_precisionp1) / c_precision;
+	    color.b = mod(floor(value / c_precisionp1), c_precisionp1) / c_precision;
+	    color.g = floor(value / (c_precisionp1 * c_precisionp1)) / c_precision;
+	    return color;
+	}
+
+
+	vec4 getHardShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	{
-		vec3 tcol = texture2D(shadowsampler, smTexCoord.xy).gba;
-		return tcol;
+		vec4 texDepth = texture2D(shadowsampler, smTexCoord.xy).rgba;
+
+		float visibility = step(0.00000015f * getLinearDepth() +0.0000005,
+			realDistance - texDepth.r);
+		vec4 result = vec4(visibility,unpackColor(texDepth.g));
+		if(visibility<0.1){
+			visibility = step(0.00000015f * getLinearDepth() +0.0000005,
+				realDistance - texDepth.b);
+			result = vec4(visibility,unpackColor(texDepth.a));
+		}
+		return result;
+
+	}
+
+	vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
+	{
+	 
+		vec2 clampedpos;
+		vec4 visibility=vec4(0.0);
+
+		float texture_size= 1/(f_textureresolution*0.5);
+		#if SHADOW_FILTER == 2
+			#define PCFBOUND 3.5
+			#define PCFSAMPLES 64.0
+		#elif  SHADOW_FILTER == 1
+			#define PCFBOUND 1.5
+			#define PCFSAMPLES 16.0
+		#else
+			#define PCFBOUND 0.0
+			#define PCFSAMPLES 1.0
+		#endif
+		float y;
+		float x;
+		//basic PCF filter. we can explorer Poisson filter
+		for (y = -PCFBOUND ; y <=PCFBOUND ; y+=1.0)
+			for (x = -PCFBOUND ; x <=PCFBOUND ; x+=1.0)
+		{
+			clampedpos = vec2(x,y)*texture_size + smTexCoord.xy;
+			visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
+
+		}
+		
+		return visibility/PCFSAMPLES;
+	 
 	}	
 	#endif
 #endif
@@ -203,12 +265,12 @@ void main(void)
 		{
 			shadow_int=getShadow(ShadowMapSampler, posinLightSpace.xy,
 									posinLightSpace.z  );
-
 		#ifdef COLORED_SHADOWS
-			shadow_color=getShadowColor(ShadowMapSampler, posinLightSpace.xy,
+			vec4 visibility=getShadowColor(ShadowMapSampler, posinLightSpace.xy,
 									posinLightSpace.z  );			
+			shadow_int=visibility.r;
+			shadow_color=visibility.gba;
 		#endif
-
 			
 		}
 	}

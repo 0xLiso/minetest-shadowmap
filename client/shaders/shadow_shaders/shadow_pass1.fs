@@ -19,17 +19,19 @@ varying vec4 tPos;
 
 void main() {
     vec4 col = texture2D(ColorMapSampler, gl_TexCoord[0].st);
-	if (col.a < 0.5) {
-	        discard;
-	    }
+    
+    if (col.a < 0.5) {
+        discard;
+    }
+    
+
     float depth = 0.5 + tPos.z * 0.5;
     // ToDo: Liso: Apply movement on waving plants
     // depth in [0, 1] for texture
 
     //col.rgb = col.a == 1.0 ? vec3(1.0) : col.rgb;
     #ifdef COLORED_SHADOWS
-    	//pack param1 color?
-    	float packetColor = packColor(col.rgb*(1.0-col.a));
+	    float packetColor = packColor(col.rgb*(1.0-col.a));
 	    gl_FragColor = vec4( depth, packetColor,0.0,1.0);
     #else
     	gl_FragColor = vec4( depth, 0.0, 0.0, 1.0);
