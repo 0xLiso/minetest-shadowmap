@@ -3986,6 +3986,9 @@ void Game::updateShadows(float _timeoftheday)
 			shadow->addDirectionalLight();
 		}
 
+		//time of the day
+		//0 ->00:00
+		//1 -> 23_59
 		float timeoftheday = _timeoftheday - 0.2f;
 		bool isDay = false;
 		if (timeoftheday > 0.0f && timeoftheday < 0.6f)
@@ -3993,17 +3996,18 @@ void Game::updateShadows(float _timeoftheday)
 		if (timeoftheday < 0)
 			isDay = false;
 		//@Liso: can we  add a z offset in the confgiuration??
-		// this calculation was made with a scientific method, try and error xD
-		float offsety;
-		float offsetx;
-		offsety = sin(timeoftheday * 5.0f) * 10000.0f;
-		offsetx = cos(timeoftheday * 5.0f) * 10000.0f;
-		
-		// small offset in z to avoid perspective shadow glitch
-		float offsetz = -1500.0f; 
+		// https://image2.slideserve.com/4889289/spherical-coordinates-l.jpg
+		const float offset_constant=10000.0f;
+		float phi = timeoftheday * 5.0f;
+		float theta =  3.14f / 2.0f; //from 90 degrees +- 15 degrees should be ok.
+		float offsety = sin(phi)   * offset_constant * sin(theta);
+		float offsetx = cos(phi)   * offset_constant * sin(theta);
+		float offsetz =  cos(theta) * offset_constant; 
+
+		//(offsetx / abs(offsetx)) *
 					 
-		irr::core::vector3df sun_pos = irr::core::vector3df(std::ceil(offsetx),
-				std::ceil(offsety), std::ceil(offsetz));
+		irr::core::vector3df sun_pos = irr::core::vector3df( offsetx ,
+				 offsety , offsetz );
 		
 
 		shadow->getDirectionalLight().setPosition(sun_pos);

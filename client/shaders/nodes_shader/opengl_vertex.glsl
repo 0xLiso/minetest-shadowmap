@@ -26,7 +26,7 @@ varying mediump vec2 varTexCoord;
 centroid varying vec2 varTexCoord;
 #endif
 varying vec3 eyeVec;
-
+varying float nightRatio;
 // Color of the light emitted by the light sources.
 const vec3 artificialLight = vec3(1.04, 1.04, 1.04);
 const float e = 2.718281828459;
@@ -150,7 +150,7 @@ void main(void)
 	// The pre-baked colors are halved to prevent overflow.
 	vec4 color;
 	// The alpha gives the ratio of sunlight in the incoming light.
-	float nightRatio = 1.0 - inVertexColor.a;
+	nightRatio = 1.0 - inVertexColor.a;
 	color.rgb = inVertexColor.rgb * (inVertexColor.a * dayLight.rgb +
 		nightRatio * artificialLight.rgb) * 2.0;
 	color.a = 1.0;

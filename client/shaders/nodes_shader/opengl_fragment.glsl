@@ -36,6 +36,7 @@ varying mediump vec2 varTexCoord;
 centroid varying vec2 varTexCoord;
 #endif
 varying vec3 eyeVec;
+varying float nightRatio;
 
 const float fogStart = FOG_START;
 const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
@@ -260,7 +261,7 @@ void main(void)
 	
 
 	if(dot( -v_LightDirection , vNormal )  <= 0){
-		shadow_int=1.0;
+		shadow_int=1.0-nightRatio;
 	}
 	else {
 		
@@ -278,6 +279,8 @@ void main(void)
 			shadow_int=visibility.r;
 			shadow_color=visibility.gba;
 		#endif
+
+			shadow_int*=1.0-nightRatio;
 		}
 	}
 	float adj_shadow_strength = mtsmoothstep(0.20,0.25,
@@ -308,6 +311,7 @@ void main(void)
 	col = mix(skyBgColor, col, clarity);
 	
 	col = vec4(col.rgb , base.a);
+	
 
 	gl_FragColor = col;
 }
