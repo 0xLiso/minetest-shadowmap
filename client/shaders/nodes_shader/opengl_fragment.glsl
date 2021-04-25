@@ -260,7 +260,7 @@ void main(void)
 	vec3 shadow_color=vec3(0.0,0.0,0.0);
 	
 
-	if(dot( -v_LightDirection , vNormal )  <= 0){
+	if(dot( -v_LightDirection , vNormal )  < 0){
 		shadow_int=1.0-nightRatio;
 	}
 	else {
@@ -312,6 +312,6 @@ void main(void)
 	
 	col = vec4(col.rgb , base.a);
 	
-
+	 
 	gl_FragColor = col;
 }

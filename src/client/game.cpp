@@ -3999,7 +3999,7 @@ void Game::updateShadows(float _timeoftheday)
 		// https://image2.slideserve.com/4889289/spherical-coordinates-l.jpg
 		const float offset_constant=10000.0f;
 		float phi = timeoftheday * 5.0f;
-		float theta =  3.14f / 2.0f; //from 90 degrees +- 15 degrees should be ok.
+		float theta = 1.4835; //85%		3.14f /2.0f; // from 90 degrees +- 15 degrees should be ok.
 		float offsety = sin(phi)   * offset_constant * sin(theta);
 		float offsetx = cos(phi)   * offset_constant * sin(theta);
 		float offsetz =  cos(theta) * offset_constant; 
