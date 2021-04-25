@@ -289,6 +289,7 @@ void main(void)
 	
 	shadow_int *= 1.0 - mtsmoothstep(f_shadowfar*0.5,f_shadowfar,vPosition.z);
 	shadow_int  = 1.0 - (shadow_int*f_shadow_strength*adj_shadow_strength);
+	shadow_color*=adj_shadow_strength;
 	
 	col.rgb=shadow_int*col.rgb + ( shadow_color*shadow_int*0.25);
 	
