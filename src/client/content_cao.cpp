@@ -561,9 +561,7 @@ void GenericCAO::removeFromScene(bool permanent)
 	if (m_meshnode) {
 		// remove mesh from shadow caster
 		if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-			RenderingEngine::get_instance()
-					->get_shadow_renderer()
-					->removeNodeFromShadowList(m_meshnode);
+			RenderingEngine::get_instance()->get_shadow_renderer()->removeNodeFromShadowList(m_meshnode);
 		}
 		m_meshnode->remove();
 		m_meshnode->drop();
@@ -571,9 +569,7 @@ void GenericCAO::removeFromScene(bool permanent)
 	} else if (m_animated_meshnode)	{
 		// remove mesh from shadow caster
 		if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-			RenderingEngine::get_instance()
-					->get_shadow_renderer()
-					->removeNodeFromShadowList(m_animated_meshnode);
+			RenderingEngine::get_instance()->get_shadow_renderer()->removeNodeFromShadowList(m_animated_meshnode);
 		}
 		m_animated_meshnode->remove();
 		m_animated_meshnode->drop();
@@ -581,9 +577,7 @@ void GenericCAO::removeFromScene(bool permanent)
 	} else if (m_wield_meshnode) {
 		// remove mesh from shadow caster
 		if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-			RenderingEngine::get_instance()
-					->get_shadow_renderer()
-					->removeNodeFromShadowList(m_wield_meshnode);
+			RenderingEngine::get_instance()->get_shadow_renderer()->removeNodeFromShadowList(m_wield_meshnode);
 		}
 		m_wield_meshnode->remove();
 		m_wield_meshnode->drop();
@@ -591,9 +585,7 @@ void GenericCAO::removeFromScene(bool permanent)
 	} else if (m_spritenode) {
 		// remove mesh from shadow caster
 		if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-			RenderingEngine::get_instance()
-					->get_shadow_renderer()
-					->removeNodeFromShadowList(m_spritenode);
+			RenderingEngine::get_instance()->get_shadow_renderer()->removeNodeFromShadowList(m_spritenode);
 		}
 		m_spritenode->remove();
 		m_spritenode->drop();
@@ -601,6 +593,10 @@ void GenericCAO::removeFromScene(bool permanent)
 	}
 
 	if (m_matrixnode) {
+		// remove mesh from shadow caster
+		if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
+			RenderingEngine::get_instance()->get_shadow_renderer()->removeNodeFromShadowList(m_matrixnode);
+		}
 		m_matrixnode->remove();
 		m_matrixnode->drop();
 		m_matrixnode = nullptr;
@@ -684,6 +680,9 @@ void GenericCAO::addToScene(ITextureSource *tsrc)
 			setBillboardTextureMatrix(m_spritenode,
 					txs, tys, 0, 0);
 		}
+		if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
+			RenderingEngine::get_instance()->get_shadow_renderer()->addNodeToShadowList(m_spritenode);
+		}
 	} else if (m_prop.visual == "upright_sprite") {
 		grabMatrixNode();
 		scene::SMesh *mesh = new scene::SMesh();
@@ -757,9 +756,7 @@ void GenericCAO::addToScene(ITextureSource *tsrc)
 			addMeshSceneNode(mesh, m_matrixnode);
 		//Add mesh to shadow caster
 		if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-			RenderingEngine::get_instance()
-					->get_shadow_renderer()
-					->addNodeToShadowList(m_meshnode);
+			RenderingEngine::get_instance()->get_shadow_renderer()->addNodeToShadowList(m_meshnode);
 
 		}
 
@@ -775,9 +772,7 @@ void GenericCAO::addToScene(ITextureSource *tsrc)
 			addMeshSceneNode(mesh, m_matrixnode);
 		// Add mesh to shadow caster
 		if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-			RenderingEngine::get_instance()
-					->get_shadow_renderer()
-					->addNodeToShadowList(m_meshnode);
+			RenderingEngine::get_instance()->get_shadow_renderer()->addNodeToShadowList(m_meshnode);
 		}
 		m_meshnode->grab();
 		mesh->drop();
@@ -795,10 +790,7 @@ void GenericCAO::addToScene(ITextureSource *tsrc)
 				addAnimatedMeshSceneNode(mesh, m_matrixnode);
 			// Add mesh to shadow caster
 			if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-				RenderingEngine::get_instance()
-						->get_shadow_renderer()
-						->addNodeToShadowList(
-								m_animated_meshnode);
+				RenderingEngine::get_instance()->get_shadow_renderer()->addNodeToShadowList(m_animated_meshnode);
 			}
 			m_animated_meshnode->grab();
 			mesh->drop(); // The scene node took hold of it
@@ -844,14 +836,10 @@ void GenericCAO::addToScene(ITextureSource *tsrc)
 			RenderingEngine::get_scene_manager(), -1);
 		m_wield_meshnode->setItem(item, m_client,
 			(m_prop.visual == "wielditem"));
-		// Add mesh to shadow caster
-		if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-			RenderingEngine::get_instance()
-					->get_shadow_renderer()
-					->addNodeToShadowList(m_wield_meshnode);
-		}
+		
 		m_wield_meshnode->setScale(m_prop.visual_size / 2.0f);
 		m_wield_meshnode->setColor(video::SColor(0xFFFFFFFF));
+		
 	} else {
 		infostream<<"GenericCAO::addToScene(): \""<<m_prop.visual
 				<<"\" not supported"<<std::endl;
