@@ -685,18 +685,6 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 		if (!isBlockInSight(block->getPos(), position - direction * 2, direction,
 				    camera_fov, max_distance, &d))
 			continue;
-		/*
-		* Liso: Ok, with that isug->param1 we can know if is illuminated by torch,
-		sun or nothing.
-		*
-		* If we can pass this to the shader, we can handle underground
-		illumination. Misc parameter. Initialized to 0.
-			- For light_propagates() blocks, this is light intensity,
-			  stored logarithmically from 0 to LIGHT_MAX.
-			  Sunlight is LIGHT_SUN, which is LIGHT_MAX+1.
-			  - Contains 2 values, day- and night lighting. Each takes 4 bits.
-			- Uhh... well, most blocks have light or nothing in here.
-		*/
 		
 		/*
 			Get the meshbuffers of the block
@@ -813,7 +801,7 @@ void ClientMap::updateDrawListShadow(
 	u32 blocks_occlusion_culled = 0;
 
 	// allways occlusion
-	const bool occlusion_culling_enabled = true; //dedicado a @trontxu
+	const bool occlusion_culling_enabled = true; 
 
 	for (auto i = p_blocks_min.X; i < p_blocks_max.X; i++) {
 		for (auto j = p_blocks_min.Z; j < p_blocks_max.Z; j++) {
@@ -857,21 +845,16 @@ void ClientMap::updateDrawListShadow(
 
 				float d = 0.0;
 				if (!isBlockInSight(block->getPos(),
-						    camera_position -
-								    camera_direction * 4,
-						    camera_direction, camera_fov, range,
-						    &d))
+						    camera_position - camera_direction * 4,
+						    camera_direction, camera_fov, range, &d))
 					continue;
 				
-						       blocks_in_range_with_mesh++;
+				blocks_in_range_with_mesh++;
 				/*
 					Occlusion culling
 				*/
-				if ((!m_control.range_all &&
-						    d > m_control.wanted_range * BS) ||
-						(occlusion_culling_enabled &&
-								isBlockOccluded(block,
-										cam_pos_nodes))) {
+				if ((!m_control.range_all && d > m_control.wanted_range * BS) ||
+						(occlusion_culling_enabled && isBlockOccluded(block, cam_pos_nodes))) {
 					blocks_occlusion_culled++;
 					continue;
 				}
@@ -888,12 +871,11 @@ void ClientMap::updateDrawListShadow(
 		
 		if (sector_blocks_drawn != 0)
 			m_last_drawn_sectors.insert(sp);
-
 		}
 	}
 	//@Liso check this measurements
-	g_profiler->avg("MapBlock meshes in range [#]", blocks_in_range_with_mesh);
-	g_profiler->avg("MapBlocks occlusion culled [#]", blocks_occlusion_culled);
-	g_profiler->avg("MapBlocks drawn [#]", m_drawlist.size());
-	g_profiler->avg("MapBlocks loaded [#]", blocks_loaded);
+	g_profiler->avg("SHADOW MapBlock meshes in range [#]", blocks_in_range_with_mesh);
+	g_profiler->avg("SHADOW MapBlocks occlusion culled [#]", blocks_occlusion_culled);
+	g_profiler->avg("SHADOW MapBlocks drawn [#]", m_drawlist_shadow.size());
+	g_profiler->avg("SHADOW MapBlocks loaded [#]", blocks_loaded);
 }
