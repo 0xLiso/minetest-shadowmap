@@ -252,11 +252,7 @@ void main(void)
 	vec3 shadow_color=vec3(0.0,0.0,0.0);
 	
 
-	if(dot( -v_LightDirection , vNormal )  < 0){
-		shadow_int=0.7;
-	}
-	else {
-		
+	
 		vec3 posinLightSpace=getLightSpacePosition( );
 
 		if(posinLightSpace.x>0.0&&posinLightSpace.x<1.0 &&
@@ -273,7 +269,7 @@ void main(void)
 		#endif
 			
 		}
-	}
+	 
 	float adj_shadow_strength = mtsmoothstep(0.20,0.25,
 		f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday) );
 
@@ -301,6 +297,5 @@ void main(void)
 	float clarity = clamp(fogShadingParameter
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
 	col = mix(skyBgColor, col, clarity);
-
 	gl_FragColor = vec4(col.rgb, base.a);
 }
