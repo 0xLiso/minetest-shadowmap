@@ -49,8 +49,7 @@ local labels = {
 		fgettext("Low"),
 		fgettext("Medium"),
 		fgettext("High"),
-		fgettext("Ultra"),
-		fgettext("Custom"),
+		fgettext("Ultra")
 	}
 }
 
@@ -74,6 +73,10 @@ local dd_options = {
 	antialiasing = {
 		table.concat(labels.antialiasing, ","),
 		{"0", "2", "4", "8"}
+	},
+	shadow_levels = {
+		table.concat(labels.shadow_levels, ","),
+		{ "0","1","2","3","4" }
 	}
 }
 
@@ -114,6 +117,15 @@ local getSettingIndex = {
 		local antialiasing_setting = core.settings:get("fsaa")
 		for i = 1, #dd_options.antialiasing[2] do
 			if antialiasing_setting == dd_options.antialiasing[2][i] then
+				return i
+			end
+		end
+		return 1
+	end,
+	ShadowsMapping = function()
+		local shadow_setting = core.settings:get("shadow_levels")
+		for i = 1, #dd_options.shadow_levels[2] do
+			if shadow_setting == dd_options.shadow_levels[2][i] then
 				return i
 			end
 		end
@@ -206,8 +218,9 @@ local function formspec(tabview, name, tabdata)
 					.. dump(core.settings:get_bool("enable_waving_leaves")) .. "]" ..
 			"checkbox[8.25,2;cb_waving_plants;" .. fgettext("Waving Plants") .. ";"
 					.. dump(core.settings:get_bool("enable_waving_plants")) .. "]"..
-			"checkbox[8.25,2.5;cb_shadow_mapping;" .. fgettext("Dynamic shadows") .. ";"
-					.. dump(core.settings:get_bool("enable_dynamic_shadows")) .. "]"
+			"label[8.25,3.0;" .. fgettext("Dynamic shadows: ") .. "]" ..
+			"dropdown[8.25,3.5;3.5;dd_shadows;" .. dd_options.shadow_levels[1] .. ";"
+				.. getSettingIndex.ShadowsMapping() .. "]" 
 	else
 		tab_string = tab_string ..
 			"label[8.38,0.7;" .. core.colorize("#888888",
@@ -285,10 +298,7 @@ local function handle_settings_buttons(this, fields, tabname, tabdata)
 		core.settings:set("enable_waving_plants", fields["cb_waving_plants"])
 		return true
 	end
-	if fields["cb_shadow_mapping"] then
-		core.settings:set("enable_dynamic_shadows", fields["cb_shadow_mapping"])
-		return true
-	end
+	
 	if fields["btn_change_keys"] then
 		core.show_keys_menu()
 		return true
@@ -347,6 +357,51 @@ local function handle_settings_buttons(this, fields, tabname, tabdata)
 	if fields["dd_touchthreshold"] then
 		core.settings:set("touchscreen_threshold", fields["dd_touchthreshold"])
 		ddhandled = true
+	end
+
+	for i = 1, #labels.shadow_levels do
+		if fields["dd_shadows"] == labels.shadow_levels[i] then
+			core.settings:set("shadow_levels", dd_options.shadow_levels[2][i])
+			ddhandled = true
+		end
+	end
+
+	if fields["dd_shadows"] == labels.shadow_levels[1] then
+		core.settings:set("enable_dynamic_shadows", "false")
+		ddhandled = true
+	else
+		core.settings:set("enable_dynamic_shadows", "true")
+		core.settings:set("shadow_strength", "0.35")
+		ddhandled = true
+		if fields["dd_shadows"] == labels.shadow_levels[2] then
+			core.settings:set("shadow_map_max_distance", "40")
+			core.settings:set("shadow_map_texture_size", "512")
+			core.settings:set("shadow_map_texture_32bit", "false")
+			core.settings:set("shadow_filters", "1")
+			core.settings:set("shadow_map_color", "false")
+			core.settings:set("shadow_psm", "false")	
+		elseif fields["dd_shadows"] == labels.shadow_levels[3] then
+			core.settings:set("shadow_map_max_distance", "120")
+			core.settings:set("shadow_map_texture_size", "2048")
+			core.settings:set("shadow_map_texture_32bit", "true")
+			core.settings:set("shadow_filters", "1")
+			core.settings:set("shadow_map_color", "false")
+			core.settings:set("shadow_psm", "true")
+		elseif fields["dd_shadows"] == labels.shadow_levels[4] then
+			core.settings:set("shadow_map_max_distance", "200")
+			core.settings:set("shadow_map_texture_size", "4096")
+			core.settings:set("shadow_map_texture_32bit", "true")
+			core.settings:set("shadow_filters", "2")
+			core.settings:set("shadow_map_color", "true")
+			core.settings:set("shadow_psm", "true")
+		elseif fields["dd_shadows"] == labels.shadow_levels[5] then
+			core.settings:set("shadow_map_max_distance", "300")
+			core.settings:set("shadow_map_texture_size", "8192")
+			core.settings:set("shadow_map_texture_32bit", "true")
+			core.settings:set("shadow_filters", "2")
+			core.settings:set("shadow_map_color", "true")
+			core.settings:set("shadow_psm", "true")	
+		end
 	end
 
 	return ddhandled
