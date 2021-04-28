@@ -96,7 +96,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 	float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	{
 		float texDepth = texture2D(shadowsampler, smTexCoord.xy).r;
-		float visibility = step(0.00000015f * getLinearDepth() +0.0000005,
+		float visibility = step(0.0000005f * getLinearDepth() +0.000005,
 			realDistance - texDepth);
 		return visibility;
 	}
@@ -156,11 +156,11 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 	{
 		vec4 texDepth = texture2D(shadowsampler, smTexCoord.xy).rgba;
 
-		float visibility = step(0.00000015f * getLinearDepth() +0.0000005,
+		float visibility = step(0.0000005f * getLinearDepth() +0.000005,
 			realDistance - texDepth.r);
 		vec4 result = vec4(visibility,unpackColor(texDepth.g));
 		if(visibility<0.1){
-			visibility = step(0.00000015f * getLinearDepth() +0.0000005,
+			visibility = step(0.0000005f * getLinearDepth() +0.000005,
 				realDistance - texDepth.b);
 			result = vec4(visibility,unpackColor(texDepth.a));
 		}
@@ -312,7 +312,6 @@ void main(void)
 	col = mix(skyBgColor, col, clarity);
 	
 	col = vec4(col.rgb , base.a);
-	
 	 
 	gl_FragColor = col;
 }

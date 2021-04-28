@@ -252,8 +252,8 @@ void main(void)
 	vec3 shadow_color=vec3(0.0,0.0,0.0);
 	
 
-	if(dot( -v_LightDirection , vNormal )  <= 0){
-		shadow_int=1.0;
+	if(dot( -v_LightDirection , vNormal )  < 0){
+		shadow_int=0.7;
 	}
 	else {
 		
