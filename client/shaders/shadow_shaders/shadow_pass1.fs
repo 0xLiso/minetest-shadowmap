@@ -1,7 +1,8 @@
 uniform sampler2D ColorMapSampler;
 varying vec4 tPos;
 
-
+// we have to check the colored shadows too, 
+// because some solid blocks are already translucent :/
  #ifdef COLORED_SHADOWS
 
 // c_precision of 128 fits within 7 base-10 digits
@@ -19,11 +20,12 @@ varying vec4 tPos;
 
 void main() {
     vec4 col = texture2D(ColorMapSampler, gl_TexCoord[0].st);
-    
-    if (col.a < 0.5) {
-        discard;
+
+    #ifndef COLORED_SHADOWS
+    if (col.a < 0.70) {
+            discard;
     }
-    
+    #endif
 
     float depth = 0.5 + tPos.z * 0.5;
     // ToDo: Liso: Apply movement on waving plants
@@ -31,11 +33,9 @@ void main() {
 
     //col.rgb = col.a == 1.0 ? vec3(1.0) : col.rgb;
     #ifdef COLORED_SHADOWS
-    	//maybe we can set some kind of color here, but it will fail in z test :(.
-    	// translucent objects must be drawed in the transparent pass
-	    //float packetColor = packColor(col.rgb*(1.0-col.a));
-	    gl_FragColor = vec4( depth, 0.0,0.0,1.0);
+        float packetColor = packColor(mix(col.rgb,vec3(0.0),col.a));
+        gl_FragColor = vec4( depth, packetColor,0.0,1.0);
     #else
-    	gl_FragColor = vec4( depth, 0.0, 0.0, 1.0);
+        gl_FragColor = vec4( depth, 0.0, 0.0, 1.0);
     #endif
 }

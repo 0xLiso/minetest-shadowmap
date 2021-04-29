@@ -18,6 +18,7 @@ uniform float animationTimer;
 	uniform float f_shadow_strength;
 	uniform float f_timeofday;
 	uniform float f_shadowfar;
+	varying float normalOffsetScale;
 #endif
 
 
@@ -61,17 +62,27 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 	#endif
 
 
+	
+	//assuming near is allways 1.0
+	float getLinearDepth() {
+		
+		//float near=1.0;
+		//float far=f_shadowfar;
+	  	//return 2.0f * near * far / (far + near - (2.0f * gl_FragCoord.z - 1.0f) * (far - near));
+	  	return  2.0f * f_shadowfar / (f_shadowfar + 1.0 - (2.0 * gl_FragCoord.z - 1.0) * (f_shadowfar - 1.0));
+
+
+
+	}
 	vec3 getLightSpacePosition()
-	{
+	{	
+		float offsetScale = (0.025* getLinearDepth()+ normalOffsetScale) ;
+		vec4 pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale*normalize(vNormal) ,1.0); 
+		
 		#ifdef SHADOWS_PSM
-			vec4 pLightSpace = m_ShadowViewProj  * vec4(worldPosition,1.0); 
 			pLightSpace = getPerspectiveFactor(pLightSpace);
-			pLightSpace.xyz = pLightSpace.xyz*0.5 +0.5;
-			return pLightSpace.xyz;
-		#else
-			vec4 pLightSpace = m_ShadowViewProj * vec4(worldPosition,1.0); 
-			return pLightSpace.xyz*0.5 +0.5;
 		#endif
+		return pLightSpace.xyz*0.5 +0.5;
 	}
 
 	//custom smoothstep implementation because it's not defined in glsl1.2
@@ -83,21 +94,11 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 	}
 
 
-	
-	//assuming near is allways 1.0
-	float getLinearDepth() {
-		//float near=1.0;
-		//float far=f_shadowfar;
-	  	//return 2.0f * near * far / (far + near - (2.0f * gl_FragCoord.z - 1.0f) * (far - near));
-	  	return 2.0f * f_shadowfar / (f_shadowfar + 1.0 - (2.0 * gl_FragCoord.z - 1.0) * (f_shadowfar - 1.0));
-
-	}
 
 	float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	{
 		float texDepth = texture2D(shadowsampler, smTexCoord.xy).r;
-		float visibility = step(0.0000005f * getLinearDepth() +0.000005,
-			realDistance - texDepth);
+		float visibility = step(0.0 ,realDistance - texDepth);
 		return visibility;
 	}
 
@@ -156,12 +157,10 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 	{
 		vec4 texDepth = texture2D(shadowsampler, smTexCoord.xy).rgba;
 
-		float visibility = step(0.0000005f * getLinearDepth() +0.000005,
-			realDistance - texDepth.r);
+		float visibility = step(0.0,realDistance - texDepth.r);
 		vec4 result = vec4(visibility,unpackColor(texDepth.g));
 		if(visibility<0.1){
-			visibility = step(0.0000005f * getLinearDepth() +0.000005,
-				realDistance - texDepth.b);
+			visibility = step(0.0,	realDistance - texDepth.b);
 			result = vec4(visibility,unpackColor(texDepth.a));
 		}
 		return result;
@@ -256,11 +255,13 @@ void main(void)
 
 #if ENABLE_DYNAMIC_SHADOWS && DRAW_TYPE!=NDT_TORCHLIKE
 	
+	vec3 nNormal =  normalize(vNormal);
 	float shadow_int=0.0;
 	vec3 shadow_color=vec3(0.0,0.0,0.0);
 	
+	float cosLight = dot( -v_LightDirection ,nNormal );
 
-	if(dot( -v_LightDirection , vNormal )  < 0){
+	if(  cosLight< 0){
 		shadow_int=1.0-nightRatio;
 	}
 	else {
@@ -271,6 +272,7 @@ void main(void)
 		   posinLightSpace.y>0.0&&posinLightSpace.y<1.0 &&
 		   posinLightSpace.z>0.0&&posinLightSpace.z<1.0)
 		{
+			
 			shadow_int=getShadow(ShadowMapSampler, posinLightSpace.xy,
 									posinLightSpace.z  );
 		#ifdef COLORED_SHADOWS
@@ -312,6 +314,6 @@ void main(void)
 	col = mix(skyBgColor, col, clarity);
 	
 	col = vec4(col.rgb , base.a);
-	 
+ 	 
 	gl_FragColor = col;
 }

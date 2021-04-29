@@ -33,6 +33,7 @@ const float fogShadingParameter = 1.0 / (1.0 - fogStart);
 	uniform float f_shadow_strength;
 	uniform float f_timeofday;
 	uniform float f_shadowfar;
+	varying float normalOffsetScale;
 #endif
 
 #if ENABLE_TONE_MAPPING
@@ -85,17 +86,23 @@ vec4 applyToneMapping(vec4 color)
 	#endif
 
 
+	//assuming near is allways 1.0
+	float getLinearDepth() {
+		//float near=1.0;
+		//float far=f_shadowfar;
+	  	//return 2.0f * near * far / (far + near - (2.0f * gl_FragCoord.z - 1.0f) * (far - near));
+	  	return 2.0f * f_shadowfar / (f_shadowfar + 1.0 - (2.0 * gl_FragCoord.z - 1.0) * (f_shadowfar - 1.0));
+
+	}
 	vec3 getLightSpacePosition()
-	{
+	{	
+		float offsetScale = (0.025* getLinearDepth()+ normalOffsetScale) ;
+		vec4 pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale*normalize(vNormal) ,1.0); 
+		
 		#ifdef SHADOWS_PSM
-			vec4 pLightSpace = m_ShadowViewProj  * vec4(worldPosition,1.0); 
 			pLightSpace = getPerspectiveFactor(pLightSpace);
-			pLightSpace.xyz = pLightSpace.xyz*0.5 +0.5;
-			return pLightSpace.xyz;
-		#else
-			vec4 pLightSpace = m_ShadowViewProj * vec4(worldPosition,1.0); 
-			return pLightSpace.xyz*0.5 +0.5;
 		#endif
+		return pLightSpace.xyz*0.5 +0.5;
 	}
 
 	//custom smoothstep implementation because it's not defined in glsl1.2
@@ -108,20 +115,11 @@ vec4 applyToneMapping(vec4 color)
 
 
 	
-	//assuming near is allways 1.0
-	float getLinearDepth() {
-		//float near=1.0;
-		//float far=f_shadowfar;
-	  	//return 2.0f * near * far / (far + near - (2.0f * gl_FragCoord.z - 1.0f) * (far - near));
-	  	return 2.0f * f_shadowfar / (f_shadowfar + 1.0 - (2.0 * gl_FragCoord.z - 1.0) * (f_shadowfar - 1.0));
-
-	}
 
 	float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	{
 		float texDepth = texture2D(shadowsampler, smTexCoord.xy).r;
-		float visibility = step(0.00000015f * getLinearDepth() +0.0000005,
-			realDistance - texDepth);
+		float visibility = step(0.0 ,realDistance - texDepth);
 		return visibility;
 	}
 
@@ -176,16 +174,15 @@ vec4 applyToneMapping(vec4 color)
 	}
 
 
+	
 	vec4 getHardShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	{
 		vec4 texDepth = texture2D(shadowsampler, smTexCoord.xy).rgba;
 
-		float visibility = step(0.00000015f * getLinearDepth() +0.0000005,
-			realDistance - texDepth.r);
+		float visibility = step(0.0,realDistance - texDepth.r);
 		vec4 result = vec4(visibility,unpackColor(texDepth.g));
 		if(visibility<0.1){
-			visibility = step(0.00000015f * getLinearDepth() +0.0000005,
-				realDistance - texDepth.b);
+			visibility = step(0.0,	realDistance - texDepth.b);
 			result = vec4(visibility,unpackColor(texDepth.a));
 		}
 		return result;

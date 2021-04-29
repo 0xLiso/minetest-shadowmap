@@ -13,6 +13,16 @@ varying mediump vec2 varTexCoord;
 centroid varying vec2 varTexCoord;
 #endif
 
+#ifdef ENABLE_DYNAMIC_SHADOWS
+	//shadow uniforms
+	uniform vec3 v_LightDirection;
+	uniform float f_textureresolution;
+	uniform mat4 m_ShadowViewProj;
+	uniform float f_shadowfar;
+
+	varying float normalOffsetScale;
+#endif
+
 varying vec3 eyeVec;
 varying float vIDiff;
 
@@ -49,5 +59,9 @@ void main(void)
 #endif
 
 	varColor = inVertexColor;
-	
+	vec3 nNormal = normalize(vNormal );
+	float cosLight = abs(dot( nNormal, v_LightDirection));
+	float texelSize = 2.0 / f_textureresolution;
+	float slopeScale = clamp( 1.0-cosLight,0.0,1.0);
+	normalOffsetScale = texelSize*slopeScale ;
 }
