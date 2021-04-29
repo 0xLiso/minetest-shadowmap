@@ -3,39 +3,23 @@ varying vec4 tPos;
 
 // we have to check the colored shadows too, 
 // because some solid blocks are already translucent :/
+// but IDK yet how to extract that info.
  #ifdef COLORED_SHADOWS
 
-// c_precision of 128 fits within 7 base-10 digits
-    const float c_precision = 128.0;
-    const float c_precisionp1 = c_precision + 1.0;
-     
-    float packColor(vec3 color) {
-       
-        return floor(color.r * c_precision + 0.5) 
-            + floor(color.b * c_precision + 0.5) * c_precisionp1
-            + floor(color.g * c_precision + 0.5) * c_precisionp1 * c_precisionp1;
-    }
+//none yet
 
 #endif
 
 void main() {
     vec4 col = texture2D(ColorMapSampler, gl_TexCoord[0].st);
 
-    #ifndef COLORED_SHADOWS
+
     if (col.a < 0.70) {
             discard;
     }
-    #endif
-
+ 
     float depth = 0.5 + tPos.z * 0.5;
     // ToDo: Liso: Apply movement on waving plants
-    // depth in [0, 1] for texture
-
-    //col.rgb = col.a == 1.0 ? vec3(1.0) : col.rgb;
-    #ifdef COLORED_SHADOWS
-        float packetColor = packColor(mix(col.rgb,vec3(0.0),col.a));
-        gl_FragColor = vec4( depth, packetColor,0.0,1.0);
-    #else
-        gl_FragColor = vec4( depth, 0.0, 0.0, 1.0);
-    #endif
+    gl_FragColor = vec4( depth, 0.0, 0.0, 1.0);
+ 
 }
