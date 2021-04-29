@@ -657,7 +657,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 		prefix = "renderMap(SHADOW SOLID): ";
 	
 	// ultraugly hack
-	const f32 camera_fov = m_camera_fov * 1.1f;
+	const f32 camera_fov = m_camera_fov * 1.5f;
 
 	u32 drawcall_count = 0;
 
