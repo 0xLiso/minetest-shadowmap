@@ -4007,7 +4007,7 @@ void Game::updateShadows(float _timeoftheday)
 		//(offsetx / abs(offsetx)) *
 					 
 		irr::core::vector3df sun_pos = irr::core::vector3df( offsetx ,
-				 offsety , offsetz );
+				 offsety , 0.0 );
 		
 
 		shadow->getDirectionalLight().setPosition(sun_pos);
