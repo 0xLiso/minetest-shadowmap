@@ -575,10 +575,6 @@ void GenericCAO::removeFromScene(bool permanent)
 		m_animated_meshnode->drop();
 		m_animated_meshnode = nullptr;
 	} else if (m_wield_meshnode) {
-		// remove mesh from shadow caster
-		if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-			RenderingEngine::get_instance()->get_shadow_renderer()->removeNodeFromShadowList(m_wield_meshnode);
-		}
 		m_wield_meshnode->remove();
 		m_wield_meshnode->drop();
 		m_wield_meshnode = nullptr;
@@ -836,8 +832,6 @@ void GenericCAO::addToScene(ITextureSource *tsrc)
 			RenderingEngine::get_scene_manager(), -1);
 		m_wield_meshnode->setItem(item, m_client,
 			(m_prop.visual == "wielditem"));
-
-
 		
 		m_wield_meshnode->setScale(m_prop.visual_size / 2.0f);
 		m_wield_meshnode->setColor(video::SColor(0xFFFFFFFF));

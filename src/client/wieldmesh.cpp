@@ -243,6 +243,14 @@ void WieldMeshSceneNode::setCube(const ContentFeatures &f,
 	changeToMesh(copy);
 	copy->drop();
 	m_meshnode->setScale(wield_scale * WIELD_SCALE_FACTOR);
+
+	// Add mesh to shadow caster
+	if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
+		RenderingEngine::get_instance()
+				->get_shadow_renderer()
+				->addNodeToShadowList(
+						m_meshnode, E_SHADOW_MODE::ESM_CAST);
+	}
 }
 
 void WieldMeshSceneNode::setExtruded(const std::string &imagename,
@@ -530,10 +538,7 @@ void WieldMeshSceneNode::changeToMesh(scene::IMesh *mesh)
 	// need to normalize normals when lighting is enabled (because of setScale())
 	m_meshnode->setMaterialFlag(video::EMF_NORMALIZE_NORMALS, m_lighting);
 	m_meshnode->setVisible(true);
-	// Add mesh to shadow caster
-	if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-		RenderingEngine::get_instance()->get_shadow_renderer()->addNodeToShadowList(m_meshnode);
-	}
+
 }
 
 void getItemMesh(Client *client, const ItemStack &item, ItemMesh *result)
