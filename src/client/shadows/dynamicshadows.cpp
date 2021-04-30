@@ -18,8 +18,8 @@ void DirectionalLight::createSplitMatrices(csmfrustum &subfrusta, const Camera *
 	camPos += look * subfrusta.zNear;
 	camPos2 += look * subfrusta.zNear;
 	float end = subfrusta.zNear + subfrusta.zFar;
-	newCenter = camPos + look * (subfrusta.zNear + 0.5f * end);
-	v3f world_center = camPos2 + look * (subfrusta.zNear + 0.5f * end);
+	newCenter = camPos + look * (subfrusta.zNear + 0.15f * end);
+	v3f world_center = camPos2 + look * (subfrusta.zNear + 0.15f * end);
 	// Create a vector to the frustum far corner
 	// @Liso: move all vars we can outside the loop.
 	float tanFovY = tanf(cam->getFovY() * 0.5f);
@@ -93,8 +93,9 @@ void DirectionalLight::update_frustum(const Camera *cam, Client *client) {
 	float wanted_range =
 		client->getEnv().getClientMap().getWantedRange() ;
 
-	//float zFar = getMaxFarValue()  > wanted_range ? wanted_range : getMaxFarValue() ;
-	float zFar = wanted_range * 1.5 ;
+	float zFar = getMaxFarValue(); // > wanted_range ? wanted_range : getMaxFarValue()
+				       
+	// float zFar = wanted_range * 1.5 ;
 	///////////////////////////////////
 	// update splits near and fars
 	//#pragma warning "check what values are in here, wanted_range vs getMaxFarValue"

@@ -160,6 +160,30 @@ void ClientMap::getBlocksInViewRange(v3s16 cam_pos_nodes,
 			p_nodes_max.Z / MAP_BLOCKSIZE + 1);
 }
 
+
+void ClientMap::getBlocksInViewRangeForShadow(
+		v3s16 cam_pos_nodes, v3s16 *p_blocks_min, v3s16 *p_blocks_max, float range )
+{
+	v3s16 box_nodes_d = range * v3s16(1, 1, 1);
+	// Define p_nodes_min/max as v3s32 because 'cam_pos_nodes -/+ box_nodes_d'
+	// can exceed the range of v3s16 when a large view range is used near the
+	// world edges.
+	v3s32 p_nodes_min(cam_pos_nodes.X - box_nodes_d.X,
+			cam_pos_nodes.Y - box_nodes_d.Y, cam_pos_nodes.Z - box_nodes_d.Z);
+	v3s32 p_nodes_max(cam_pos_nodes.X + box_nodes_d.X,
+			cam_pos_nodes.Y + box_nodes_d.Y, cam_pos_nodes.Z + box_nodes_d.Z);
+	// Take a fair amount as we will be dropping more out later
+	// Umm... these additions are a bit strange but they are needed.
+	*p_blocks_min = v3s16(p_nodes_min.X / MAP_BLOCKSIZE - 3,
+			p_nodes_min.Y / MAP_BLOCKSIZE - 3,
+			p_nodes_min.Z / MAP_BLOCKSIZE - 3);
+	*p_blocks_max = v3s16(p_nodes_max.X / MAP_BLOCKSIZE + 1,
+			p_nodes_max.Y / MAP_BLOCKSIZE + 1,
+			p_nodes_max.Z / MAP_BLOCKSIZE + 1);
+}
+
+
+
 void ClientMap::updateDrawList()
 {
 	ScopeProfiler sp(g_profiler, "CM::updateDrawList()", SPT_AVG);
@@ -682,9 +706,10 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 			continue;
 
 		float d = 0.0;
-		if (!isBlockInSight(block->getPos(), position - direction * 2, direction,
+		/*if (!isBlockInSight(block->getPos(), position - direction *4.0f,
+				    direction,
 				    camera_fov, max_distance, &d))
-			continue;
+			continue;*/
 		
 		/*
 			Get the meshbuffers of the block
@@ -779,12 +804,12 @@ void ClientMap::updateDrawListShadow(
 	v3f camera_direction = shadow_light_dir;
 	// I "fake" fov just to avoid creating a new function to handle orthografic
 	// projection.
-	f32 camera_fov = m_camera_fov * 1.1f;
+	f32 camera_fov = m_camera_fov * 1.5f;
 
 	v3s16 cam_pos_nodes = floatToInt(camera_position, BS);
 	v3s16 p_blocks_min;
 	v3s16 p_blocks_max;
-	getBlocksInViewRange(cam_pos_nodes, &p_blocks_min, &p_blocks_max);
+	getBlocksInViewRangeForShadow(cam_pos_nodes, &p_blocks_min, &p_blocks_max, shadow_range);
 
 
 	std::vector<v2s16> blocks_in_range;
@@ -845,7 +870,7 @@ void ClientMap::updateDrawListShadow(
 
 				float d = 0.0;
 				if (!isBlockInSight(block->getPos(),
-						    camera_position - camera_direction * 4,
+						    camera_position  ,
 						    camera_direction, camera_fov, range, &d))
 					continue;
 				
@@ -853,8 +878,7 @@ void ClientMap::updateDrawListShadow(
 				/*
 					Occlusion culling
 				*/
-				if ((!m_control.range_all && d > m_control.wanted_range * BS) ||
-						(occlusion_culling_enabled && isBlockOccluded(block, cam_pos_nodes))) {
+				if (occlusion_culling_enabled && isBlockOccluded(block, cam_pos_nodes)) {
 					blocks_occlusion_culled++;
 					continue;
 				}

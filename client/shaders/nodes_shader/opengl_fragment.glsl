@@ -46,37 +46,34 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	
 	#ifdef SHADOWS_PSM
-		const float bias0 = 0.95;
-		const float bias1 = 0.05; //1.0 - bias0;
-		const float zPersFactor = 0.2;
+    const float bias0 = 0.97;
+    
+    const float zPersFactor = 0.2;
 
-		vec4 getPerspectiveFactor(in vec4 shadowPosition) {
+    vec4 getPerspectiveFactor(in vec4 shadowPosition) {
+      float bias1 = 1.0 - bias0;
+      float pDistance =  sqrt(shadowPosition.x * shadowPosition.x +
+          shadowPosition.y * shadowPosition.y );
+      float pFactor = pDistance * bias0 + bias1;
+      shadowPosition.xyz *= vec3(vec2(1.0 / pFactor), zPersFactor);
 
-		  float pDistance =  sqrt(shadowPosition.x * shadowPosition.x +
-		      shadowPosition.y * shadowPosition.y );
-		  float pFactor = pDistance * bias0 + bias1;
-		  shadowPosition.xyz *= vec3(vec2(1.0 / pFactor), zPersFactor);
-
-		  return shadowPosition;
-		}
+      return shadowPosition;
+    }
 	#endif
 
 
 	
 	//assuming near is allways 1.0
 	float getLinearDepth() {
-		
 		//float near=1.0;
 		//float far=f_shadowfar;
 	  	//return 2.0f * near * far / (far + near - (2.0f * gl_FragCoord.z - 1.0f) * (far - near));
 	  	return  2.0f * f_shadowfar / (f_shadowfar + 1.0 - (2.0 * gl_FragCoord.z - 1.0) * (f_shadowfar - 1.0));
-
-
-
 	}
+
 	vec3 getLightSpacePosition()
 	{	
-		float offsetScale = (0.025* getLinearDepth()+ normalOffsetScale) ;
+		float offsetScale = (0.03* getLinearDepth()+ normalOffsetScale) ;
 		vec4 pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale*normalize(vNormal) ,1.0); 
 		
 		#ifdef SHADOWS_PSM
@@ -261,7 +258,7 @@ void main(void)
 	
 	float cosLight = dot( -v_LightDirection ,nNormal );
 
-	if(  cosLight< 0){
+	if(  cosLight<= 0){
 		shadow_int=1.0-nightRatio;
 	}
 	else {

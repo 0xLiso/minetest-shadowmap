@@ -368,8 +368,8 @@ void ShadowRenderer::renderShadowSplit(irr::video::ITexture *target,
 
 			// IDK if we need the back face
 			// culling...
-			// material.BackfaceCulling = true;
-			// material.FrontfaceCulling = false;
+			 material.BackfaceCulling = false;
+			 material.FrontfaceCulling = false;
 			//material.PolygonOffsetFactor = -1;
 			//material.PolygonOffsetDirection = video::EPO_BACK;
 			material.PolygonOffsetDepthBias = 2.0 * 4.8e-7;

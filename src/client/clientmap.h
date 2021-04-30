@@ -119,6 +119,8 @@ public:
 
 	void getBlocksInViewRange(v3s16 cam_pos_nodes,
 		v3s16 *p_blocks_min, v3s16 *p_blocks_max);
+	void getBlocksInViewRangeForShadow(v3s16 cam_pos_nodes, v3s16 *p_blocks_min,
+			v3s16 *p_blocks_max, float range);
 	void updateDrawList();
 	void updateDrawListShadow(
 			v3f shadow_light_pos, v3f shadow_light_dir, float shadow_range);
