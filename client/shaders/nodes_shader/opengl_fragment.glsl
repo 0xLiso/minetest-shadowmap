@@ -4,7 +4,6 @@ uniform vec4 skyBgColor;
 uniform float fogDistance;
 uniform vec3 eyePosition;
 
-
 // The cameraOffset is the current center of the visible world.
 uniform vec3 cameraOffset;
 uniform float animationTimer;
@@ -71,15 +70,31 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 	  	return  2.0f * f_shadowfar / (f_shadowfar + 1.0 - (2.0 * gl_FragCoord.z - 1.0) * (f_shadowfar - 1.0));
 	}
 
+	//assuming near is allways 1.0
+	float getLinearLength() {
+		//float near=1.0;
+		//float far=f_shadowfar;
+	  	//return 2.0f * near * far / (far + near - (2.0f * gl_FragCoord.z - 1.0f) * (far - near));
+	  	return length( 2.0f * f_shadowfar / (f_shadowfar + 1.0 - (2.0 * gl_FragCoord - 1.0) * (f_shadowfar - 1.0)) );
+	}
+
 	vec3 getLightSpacePosition()
 	{	
-		float offsetScale = (0.03* getLinearDepth()+ normalOffsetScale) ;
-		vec4 pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale*normalize(vNormal) ,1.0); 
-		
+		vec4 pLightSpace;
+		//some NDT have normals to 0, so we need to handle it :(
+		if(length(vNormal)==0){
+			pLightSpace = m_ShadowViewProj  * vec4(worldPosition+0.000000005  ,1.0); 
+		}
+		else{
+			float offsetScale = (0.03* getLinearDepth()+ normalOffsetScale) ;
+			pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale*normalize(vNormal) ,1.0); 
+		}
+
 		#ifdef SHADOWS_PSM
 			pLightSpace = getPerspectiveFactor(pLightSpace);
 		#endif
 		return pLightSpace.xyz*0.5 +0.5;
+		
 	}
 
 	//custom smoothstep implementation because it's not defined in glsl1.2
@@ -281,16 +296,19 @@ void main(void)
 
 			shadow_int*=1.0-nightRatio;
 		}
+
+			shadow_int*= 1.0 - mtsmoothstep(0.7,0.9, length(posinLightSpace-vec3(0.5)));
+
 	}
-	float adj_shadow_strength = mtsmoothstep(0.20,0.25,
+	float adj_shadow_strength = f_shadow_strength * mtsmoothstep(0.20,0.25,
 		f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday) );
 
 	
-	shadow_int *= 1.0 - mtsmoothstep(f_shadowfar*0.5,f_shadowfar,vPosition.z);
-	shadow_int  = 1.0 - (shadow_int*f_shadow_strength*adj_shadow_strength);
-	shadow_color*=adj_shadow_strength;
 	
-	col.rgb=shadow_int*col.rgb + ( shadow_color*shadow_int*0.25);
+	shadow_int  = 1.0 - (shadow_int*adj_shadow_strength);
+	shadow_color *= adj_shadow_strength * shadow_int;
+	
+	col.rgb=shadow_int*col.rgb + ( shadow_color*0.25);
 	
 #endif
 
@@ -311,6 +329,6 @@ void main(void)
 	col = mix(skyBgColor, col, clarity);
 	
 	col = vec4(col.rgb , base.a);
- 	 
+
 	gl_FragColor = col;
 }
