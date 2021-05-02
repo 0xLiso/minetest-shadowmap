@@ -175,11 +175,12 @@ void main(void)
 
 	varColor = clamp(color, 0.0, 1.0);
 
-
+#ifdef ENABLE_DYNAMIC_SHADOWS
 	vec3 nNormal = normalize(vNormal );
 	float cosLight = abs(dot( nNormal, v_LightDirection));
 	float texelSize = 2.0 / f_textureresolution;
 	float slopeScale = clamp( 1.0-cosLight,0.0,1.0);
 	normalOffsetScale = texelSize*slopeScale ;
+#endif
 
 }

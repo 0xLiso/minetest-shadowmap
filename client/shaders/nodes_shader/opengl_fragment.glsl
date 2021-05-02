@@ -306,9 +306,9 @@ void main(void)
 	
 	
 	shadow_int  = 1.0 - (shadow_int*adj_shadow_strength);
-	shadow_color *= adj_shadow_strength * shadow_int;
+	shadow_color *= adj_shadow_strength;
 	
-	col.rgb=shadow_int*col.rgb + ( shadow_color*0.25);
+	col.rgb=mix(shadow_int*col.rgb,shadow_color,1.0-shadow_int);
 	
 #endif
 
