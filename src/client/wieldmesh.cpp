@@ -226,9 +226,14 @@ WieldMeshSceneNode::WieldMeshSceneNode(scene::ISceneManager *mgr, s32 id, bool l
 WieldMeshSceneNode::~WieldMeshSceneNode()
 {
 	sanity_check(g_extrusion_mesh_cache);
+	/*
+	* FixMe Liso: IDK hwo to know when the wieldsmesh is an entity droped in ground or
+handheld entity.
+	* And this causes wrong shadows
 	if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
 		RenderingEngine::get_instance()->get_shadow_renderer()->removeNodeFromShadowList(m_meshnode);
 	}
+	*/
 	if (g_extrusion_mesh_cache->drop())
 		g_extrusion_mesh_cache = nullptr;
 }
@@ -243,7 +248,9 @@ void WieldMeshSceneNode::setCube(const ContentFeatures &f,
 	changeToMesh(copy);
 	copy->drop();
 	m_meshnode->setScale(wield_scale * WIELD_SCALE_FACTOR);
-
+	/*
+	* FixMe Liso: IDK hwo to know when the wieldsmesh is an entity droped in ground or handheld entity.
+	* And this causes wrong shadows
 	// Add mesh to shadow caster
 	if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
 		RenderingEngine::get_instance()
@@ -251,6 +258,8 @@ void WieldMeshSceneNode::setCube(const ContentFeatures &f,
 				->addNodeToShadowList(
 						m_meshnode, E_SHADOW_MODE::ESM_CAST);
 	}
+
+	*/
 }
 
 void WieldMeshSceneNode::setExtruded(const std::string &imagename,
