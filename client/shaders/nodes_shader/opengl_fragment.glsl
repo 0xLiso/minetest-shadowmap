@@ -14,10 +14,9 @@ uniform float animationTimer;
 	uniform vec3 v_LightDirection;
 	uniform float f_textureresolution;
 	uniform mat4 m_ShadowViewProj;
-	uniform float f_shadow_strength;
-	uniform float f_timeofday;
 	uniform float f_shadowfar;
 	varying float normalOffsetScale;
+	varying float adj_shadow_strength;
 #endif
 
 
@@ -267,11 +266,11 @@ void main(void)
 
 #if ENABLE_DYNAMIC_SHADOWS && DRAW_TYPE!=NDT_TORCHLIKE
 	
-	vec3 nNormal =  normalize(vNormal);
+	 
 	float shadow_int=0.0;
 	vec3 shadow_color=vec3(0.0,0.0,0.0);
 	
-	float cosLight = dot( -v_LightDirection ,nNormal );
+	float cosLight = dot( -v_LightDirection ,vNormal );
 
 	if(  cosLight<= 0){
 		shadow_int=1.0-nightRatio;
@@ -285,30 +284,28 @@ void main(void)
 		   posinLightSpace.z>0.0&&posinLightSpace.z<1.0)
 		{
 			
-			shadow_int=getShadow(ShadowMapSampler, posinLightSpace.xy,
-									posinLightSpace.z  );
+			
 		#ifdef COLORED_SHADOWS
 			vec4 visibility=getShadowColor(ShadowMapSampler, posinLightSpace.xy,
 									posinLightSpace.z  );			
 			shadow_int=visibility.r;
 			shadow_color=visibility.gba;
+		#else
+			shadow_int=getShadow(ShadowMapSampler, posinLightSpace.xy,
+									posinLightSpace.z  );
 		#endif
 
 			shadow_int*=1.0-nightRatio;
 		}
 
-			shadow_int*= 1.0 - mtsmoothstep(0.7,0.9, length(posinLightSpace-vec3(0.5)));
+			//shadow_int*= 1.0 - mtsmoothstep(0.7,0.9, length(posinLightSpace-vec3(0.5)));
 
 	}
-	float adj_shadow_strength = f_shadow_strength * mtsmoothstep(0.20,0.25,
-		f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday) );
 
-	
-	
 	shadow_int  = 1.0 - (shadow_int*adj_shadow_strength);
-	shadow_color *= adj_shadow_strength;
+	shadow_color *= adj_shadow_strength ;
 	
-	col.rgb=mix(shadow_int*col.rgb,shadow_color,1.0-shadow_int);
+	col.rgb=col.rgb*shadow_int+shadow_color;
 	
 #endif
 
