@@ -828,13 +828,9 @@ void ClientMap::updateDrawListShadow(
 	// allways occlusion
 	const bool occlusion_culling_enabled = true; 
 
-	for (auto i = p_blocks_min.X; i < p_blocks_max.X; i++) {
-		for (auto j = p_blocks_min.Z; j < p_blocks_max.Z; j++) {
-			v2s16 to_draw(i, j);
-			const auto sector_it = m_sectors.find(to_draw);
-			if (sector_it == m_sectors.end())
-				continue;
-			MapSector *sector = sector_it->second;
+	for (auto &sector_it : m_sectors) {
+						
+			MapSector *sector = sector_it.second;
 			if (!sector)
 				continue;
 			v2s16 sp = sector->getPos();
@@ -853,11 +849,11 @@ void ClientMap::updateDrawListShadow(
 			for (MapBlock *block : sectorblocks) {
 				// if the block is already in the draw_list, just continue
 				// with other.
-				if (m_drawlist_shadow.find(block->getPos()) !=
+				/*if (m_drawlist_shadow.find(block->getPos()) !=
 						m_drawlist_shadow.end())
 					continue;
 
-				/*
+				
 					Compare block position to camera position, skip
 					if not seen on display
 				*/
@@ -895,8 +891,8 @@ void ClientMap::updateDrawListShadow(
 		
 		if (sector_blocks_drawn != 0)
 			m_last_drawn_sectors.insert(sp);
-		}
 	}
+	 
 	//@Liso check this measurements
 	g_profiler->avg("SHADOW MapBlock meshes in range [#]", blocks_in_range_with_mesh);
 	g_profiler->avg("SHADOW MapBlocks occlusion culled [#]", blocks_occlusion_culled);
