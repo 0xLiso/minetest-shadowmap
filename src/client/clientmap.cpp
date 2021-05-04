@@ -681,7 +681,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 		prefix = "renderMap(SHADOW SOLID): ";
 	
 	// ultraugly hack
-	const f32 camera_fov = m_camera_fov * 1.5f;
+	//const f32 camera_fov = m_camera_fov * 1.5f;
 
 	u32 drawcall_count = 0;
 
@@ -705,8 +705,8 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 		if (!block->mesh)
 			continue;
 
-		float d = 0.0;
-		/*if (!isBlockInSight(block->getPos(), position - direction *4.0f,
+		/*float d = 0.0;
+		if (!isBlockInSight(block->getPos(), position - direction *4.0f,
 				    direction,
 				    camera_fov, max_distance, &d))
 			continue;*/

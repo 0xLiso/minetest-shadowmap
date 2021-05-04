@@ -4008,10 +4008,8 @@ void Game::updateShadows(float _timeoftheday)
 		float theta = 1.4835; //85%		3.14f /2.0f; // from 90 degrees +- 15 degrees should be ok.
 		float offsety = sin(phi)   * offset_constant * sin(theta);
 		float offsetx = cos(phi)   * offset_constant * sin(theta);
-		float offsetz =  cos(theta) * offset_constant; 
-
-		//(offsetx / abs(offsetx)) *
-					 
+		//float offsetz =  cos(theta) * offset_constant; 
+			 
 		irr::core::vector3df sun_pos = irr::core::vector3df( offsetx ,
 				 offsety , 0.0 );
 		
