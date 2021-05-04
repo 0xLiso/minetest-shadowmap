@@ -6,34 +6,34 @@ using v3f = irr::core::vector3df;
 using m4f = irr::core::matrix4;
 
 
-void DirectionalLight::createSplitMatrices(csmfrustum &subfrusta, const Camera *cam) {
+void DirectionalLight::createSplitMatrices(const Camera *cam) {
 	float radius;
 	v3f newCenter;
 	v3f look = cam->getDirection();
-	look.normalize();
+	//look.normalize();
 	v3f camPos2 = cam->getPosition();
 	v3f camPos = v3f(camPos2.X - cam->getOffset().X * BS,
 					 camPos2.Y - cam->getOffset().Y * BS,
-					 camPos2.Z - cam->getOffset().Z * BS);  //= cam->getCameraNode()->getPosition();
-	camPos += look * subfrusta.zNear;
-	camPos2 += look * subfrusta.zNear;
-	float end = subfrusta.zNear + subfrusta.zFar;
-	newCenter = camPos + look * (subfrusta.zNear + 0.15f * end);
-	v3f world_center = camPos2 + look * (subfrusta.zNear + 0.15f * end);
+					 camPos2.Z - cam->getOffset().Z * BS); 
+	camPos += look * shadow_frustum.zNear;
+	camPos2 += look * shadow_frustum.zNear;
+	float end = shadow_frustum.zNear + shadow_frustum.zFar;
+	newCenter = camPos + look * (shadow_frustum.zNear + 0.15f * end);
+	v3f world_center = camPos2 + look * (shadow_frustum.zNear + 0.15f * end);
 	// Create a vector to the frustum far corner
 	// @Liso: move all vars we can outside the loop.
 	float tanFovY = tanf(cam->getFovY() * 0.5f);
 	float tanFovX = tanf(cam->getFovX() * 0.5f);
 
-	v3f viewUp = cam->getCameraNode()->getUpVector();
-	viewUp.normalize();
+	const v3f &viewUp = cam->getCameraNode()->getUpVector();
+	//viewUp.normalize();
 
 	v3f viewRight = look.crossProduct(viewUp);
-	viewRight.normalize();
+	//viewRight.normalize();
 
 	v3f farCorner = look + viewRight * tanFovX + viewUp * tanFovY;
 	// Compute the frustumBoundingSphere radius
-	v3f boundVec = (camPos + farCorner * subfrusta.zFar) - newCenter;
+	v3f boundVec = (camPos + farCorner * shadow_frustum.zFar) - newCenter;
 	radius = boundVec.getLength() * 2.0f;
 	//boundVec.getLength();
 	float vvolume = radius * 2.0f;
@@ -44,8 +44,7 @@ void DirectionalLight::createSplitMatrices(csmfrustum &subfrusta, const Camera *
 
 	m4f mLookAt, mLookAtInv;
 
-	mLookAt.buildCameraLookAtMatrixLH(
-		v3f(0.0f, 0.0f, 0.0f), -direction, v3f(0.0f, 1.0f, 0.0f));
+	mLookAt.buildCameraLookAtMatrixLH(v3zero, -direction, v3Yone);
 
 	mLookAt *= mTexelScaling;
 	mLookAtInv = mLookAt;
@@ -61,84 +60,51 @@ void DirectionalLight::createSplitMatrices(csmfrustum &subfrusta, const Camera *
 	v3f eye_displacement = direction * vvolume;
 
 	// we must compute the viewmat with the position - the camera offset
-	// but the subfrusta position must be the actual world position
+	// but the shadow_frustum position must be the actual world position
 	v3f eye = frustumCenter - eye_displacement;
-	subfrusta.position = world_center - eye_displacement;
-	subfrusta.length = 2.0f * vvolume;
-	subfrusta.csmViewMat.buildCameraLookAtMatrixLH(
-		eye, frustumCenter, v3f(0.0f, 1.0f, 0.0f).normalize());
-	subfrusta.csmProjOrthMat.buildProjectionMatrixOrthoLH(
-		subfrusta.length, subfrusta.length, -subfrusta.length, subfrusta.length);
+	shadow_frustum.position = world_center - eye_displacement;
+	shadow_frustum.length = 2.0f * vvolume;
+	shadow_frustum.ViewMat.buildCameraLookAtMatrixLH(eye, frustumCenter, v3Yone);
+	shadow_frustum.ProjOrthMat.buildProjectionMatrixOrthoLH(
+		shadow_frustum.length, shadow_frustum.length,
+															-shadow_frustum.length, shadow_frustum.length);
 }
 DirectionalLight::DirectionalLight(const irr::u32 shadowMapResolution,
-								   const irr::core::vector3df &position, irr::video::SColorf lightColor,
-								   irr::f32 farValue, irr::u8 nSplits) :
+								   const irr::core::vector3df &position,
+								   irr::video::SColorf lightColor,
+								   irr::f32 farValue):
 	diffuseColor(lightColor),
 	farPlane(farValue   ),
 	mapRes(shadowMapResolution),
-	pos(position),
-	nsplits(nSplits) {
-	for (size_t i = 0; i < csm_frustum.size(); i++) {
-		csm_frustum[i].id = i;
-	}
+	pos(position) {
+
+	v3zero = irr::core::vector3df(0.0f, 0.0f, 0.0f);
+	v3Yone = irr::core::vector3df(0.0f, 1.0f, 0.0f);
+	
 }
 void DirectionalLight::update_frustum(const Camera *cam, Client *client) {
 
 	should_update_map_shadow = true;
 	float zNear = cam->getCameraNode()->getNearValue();
-	/*float zFar = cam->getCameraNode()->getFarValue() > getMaxFarValue()
-					 ? getMaxFarValue()
-					 : cam->getCameraNode()->getFarValue();
-					 */
-	float wanted_range =
-		client->getEnv().getClientMap().getWantedRange() ;
-
-	float zFar = getMaxFarValue(); // > wanted_range ? wanted_range : getMaxFarValue()
-				       
-	// float zFar = wanted_range * 1.5 ;
+	float zFar = getMaxFarValue();				       
+	
 	///////////////////////////////////
 	// update splits near and fars
-	//#pragma warning "check what values are in here, wanted_range vs getMaxFarValue"
-	float nd = zNear;
-	float fd = zFar ;
+	shadow_frustum.zNear = zNear;
+	shadow_frustum.zFar = zFar;
 
-	float lambda = 0.90f;
-	float ratio = (zFar / zNear);
-
-
-	// @Liso: ok, there is a huge problem with the extremely high structures in MT,
-	// so we need to add huge offset to the zNear
-	// right now, I´ve only find this hack to minimize it.
-	csm_frustum[0].zNear = nd   ;
-	size_t maxSplits = 1;
-	for (size_t i = 1; i < maxSplits; i++) {
-		float si = i / (float)maxSplits;
-
-		// Practical Split Scheme:
-		// https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
-		float t_near = lambda * (nd * powf(ratio, si)) +
-					   (1 - lambda) * (nd + (fd - nd) * si);
-		float t_far = t_near * 1.05f;
-		csm_frustum[i].zNear = t_near;
-		csm_frustum[i - (size_t)1].zFar = t_far;
-	}
-
-	csm_frustum[maxSplits - (size_t)1].zFar = fd;
-
-	for (int i = 0; i < nsplits; i++) {
-		createSplitMatrices(csm_frustum[i], cam);
-		//yes, i know this is wrong, but it´s just an approximation to test the concept.
-		client->getEnv().getClientMap().updateDrawListShadow(
-			csm_frustum[i].position, getDirection(), csm_frustum[i].length);
-
-	}
+	// update shadow frustum	
+	createSplitMatrices(cam);
+	//get the draw list for shadows
+	client->getEnv().getClientMap().updateDrawListShadow(
+			getPosition(), getDirection(), shadow_frustum.length);
 	should_update_map_shadow = true;
 
 }
 
-void DirectionalLight::setPosition(const irr::core::vector3df &position) {
-	pos = position;
-	direction = -position;
+void DirectionalLight::setDirection(const irr::core::vector3df &dir)
+{
+	direction = -dir;
 	direction.normalize();
 }
 
@@ -146,20 +112,20 @@ const irr::core::vector3df &DirectionalLight::getDirection() {
 	return direction;
 }
 
-const irr::core::vector3df &DirectionalLight::getPosition(int n_split) {
-	return csm_frustum[n_split].position;
+const irr::core::vector3df &DirectionalLight::getPosition( ) {
+	return shadow_frustum.position;
 }
 
-const irr::core::matrix4 &DirectionalLight::getViewMatrix(int id) const {
-	return csm_frustum[id].csmViewMat;
+const irr::core::matrix4 &DirectionalLight::getViewMatrix( ) const {
+	return shadow_frustum.ViewMat;
 }
 
-const irr::core::matrix4 &DirectionalLight::getProjectionMatrix(int id) const {
-	return csm_frustum[id].csmProjOrthMat;
+const irr::core::matrix4 &DirectionalLight::getProjectionMatrix( ) const {
+	return shadow_frustum.ProjOrthMat;
 }
 
-irr::core::matrix4 DirectionalLight::getViewProjMatrix(int id) {
-	return csm_frustum[id].csmProjOrthMat * csm_frustum[id].csmViewMat;
+irr::core::matrix4 DirectionalLight::getViewProjMatrix() {
+	return shadow_frustum.ProjOrthMat * shadow_frustum.ViewMat;
 }
 
 irr::f32 DirectionalLight::getMaxFarValue() const {
@@ -178,11 +144,3 @@ irr::u32 DirectionalLight::getMapResolution() const {
 	return mapRes;
 }
 
-
-
-
-void DirectionalLight::getSplitDistances(float splitArray[4]) {
-	for (size_t i = 0; i < csm_frustum.size(); i++) {
-		splitArray[i] = csm_frustum[i].zFar;
-	}
-}

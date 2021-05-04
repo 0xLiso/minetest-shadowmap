@@ -10,18 +10,10 @@
 
 enum E_SHADOW_MODE : u8 {
     ESM_RECEIVE = 0,
-    ESM_CAST,
     ESM_BOTH,
-    ESM_EXCLUDE,
-    ESM_COUNT
 };
 
 
-enum E_SHADOW_TEXTURE : u8 {
-    SM_CLIENTMAP0 = 0,
-    SM_CLIENTMAP1,
-    SM_CLIENTMAP2
-};
 
 
 struct NodeToApply {
@@ -43,7 +35,6 @@ class ShadowRenderer {
 
     ~ShadowRenderer();
 
-
     void initialize();
 
     /// Adds a directional light shadow map (Usually just one (the sun) except in
@@ -53,9 +44,8 @@ class ShadowRenderer {
     size_t getDirectionalLightCount() const;
     irr::f32 getMaxShadowFar() const;
     /// Adds a shadow to the scene node.
-    /// The shadow mode can be ESM_BOTH, ESM_CAST, or ESM_RECEIVE.
+    /// The shadow mode can be ESM_BOTH, or ESM_RECEIVE.
     /// ESM_BOTH casts and receives shadows
-    /// ESM_CAST only casts shadows, and is unaffected by shadows.
     /// ESM_RECEIVE only receives but does not cast shadows.
     ///
     void addNodeToShadowList(irr::scene::ISceneNode *node,
@@ -64,7 +54,7 @@ class ShadowRenderer {
 
     void setClearColor(irr::video::SColor ClearColor);
 
-    /// Returns the device that this ShadowRenderer was initialized with.
+    /// Returns the device that ShadowRenderer was initialized with.
     irr::IrrlichtDevice *getIrrlichtDevice();
 
     irr::scene::ISceneManager *getSceneManager();
@@ -81,12 +71,11 @@ class ShadowRenderer {
     float getTimeofDay() const { return _time_day; }
 
   private:
-    irr::video::ITexture *getSMTexture(
-        const std::string &shadowMapName, irr::video::ECOLOR_FORMAT texture_format,
-        bool forcecreation = false);
+    irr::video::ITexture *getSMTexture(const std::string &shadowMapName, 
+                                        irr::video::ECOLOR_FORMAT texture_format,
+                                        bool forcecreation = false);
 
-    void renderShadowSplit(irr::video::ITexture *target, DirectionalLight &light,
-                           int nSplit,
+    void renderShadowMap(irr::video::ITexture *target, DirectionalLight &light,
                            irr::scene::E_SCENE_NODE_RENDER_PASS pass = irr::scene::ESNRP_SOLID);
     void renderShadowObjects(irr::video::ITexture *target, DirectionalLight &light);
     void mixShadowsQuad();

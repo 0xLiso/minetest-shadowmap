@@ -293,8 +293,8 @@ public:
 
             ShadowRenderer *shadow = RenderingEngine::get_instance()->get_shadow_renderer();
 
-            irr::core::matrix4 shadowViewProj = shadow->getDirectionalLight().getProjectionMatrix(0);
-	        shadowViewProj *= shadow->getDirectionalLight().getViewMatrix(0);
+            irr::core::matrix4 shadowViewProj = shadow->getDirectionalLight().getProjectionMatrix();
+	        shadowViewProj *= shadow->getDirectionalLight().getViewMatrix();
 
             services->setPixelShaderConstant(
                 services->getPixelShaderConstantID("m_ShadowViewProj"),

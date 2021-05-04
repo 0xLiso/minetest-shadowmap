@@ -79,15 +79,14 @@ void ShadowRenderer::initialize() {
 						? irr::video::ECOLOR_FORMAT::ECF_G32R32F
 						: irr::video::ECOLOR_FORMAT::ECF_G16R16F;
 
-	_nSplits =  E_SHADOW_RENDER_MODE::ERM_SHADOWMAP;
+	
 }
 
 size_t ShadowRenderer::addDirectionalLight() {
 
 	_light_list.push_back(DirectionalLight(_shadow_map_texture_size,
 										   irr::core::vector3df(0.f, 0.f, 0.f),
-										   video::SColor(255, 255, 255, 255), _shadow_map_max_distance,
-										   _nSplits));
+										   video::SColor(255, 255, 255, 255), _shadow_map_max_distance));
 	return _light_list.size() - 1;
 }
 
@@ -222,16 +221,13 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 
 				_driver->setRenderTarget(renderTargets[0], true, true,
 				irr::video::SColor(255, 255, 255, 255));
-				renderShadowSplit(renderTargets[0], light, 0);
+				renderShadowMap(renderTargets[0], light );
 
 				if (_shadow_map_colored) {
-					//_driver->setRenderTarget(0, true, true);
-					_driver->setRenderTarget(shadowMapTextureColors, true,
-						false,
+					_driver->setRenderTarget(shadowMapTextureColors, true,false,
 						irr::video::SColor(255, 255, 255, 255));
 				}
-				renderShadowSplit(shadowMapTextureColors, light, 0,
-								  irr::scene::ESNRP_TRANSPARENT);
+				renderShadowMap(shadowMapTextureColors, light,irr::scene::ESNRP_TRANSPARENT);
 				_driver->setRenderTarget(0, false, false);
 			}
 
@@ -274,7 +270,7 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 										 shadowMapTextureFinal->getSize().Width,
 										 shadowMapTextureFinal->getSize().Height));
 
-			_driver->draw2DImage(renderTargets[E_SHADOW_TEXTURE::SM_CLIENTMAP0],
+			_driver->draw2DImage(renderTargets[0],
 								 irr::core::rect<s32>(0, 50 + 128, 128, 128 + 50 + 128),
 								 irr::core::rect<s32>(0, 0, renderTargets[0]->getSize().Width,
 										 renderTargets[0]->getSize().Height));
@@ -331,19 +327,14 @@ irr::video::ITexture *ShadowRenderer::getSMTexture(const std::string &shadowMapN
 	return shadowMapTexture;
 }
 
-void ShadowRenderer::renderShadowSplit(irr::video::ITexture *target,
-									   DirectionalLight &light, int nSplit,
+void ShadowRenderer::renderShadowMap(irr::video::ITexture *target,
+									   DirectionalLight &light, 
 									   irr::scene::E_SCENE_NODE_RENDER_PASS pass) {
 
-	_driver->setTransform(irr::video::ETS_VIEW, light.getViewMatrix(nSplit));
-	_driver->setTransform(irr::video::ETS_PROJECTION,
-						  light.getProjectionMatrix(nSplit));
-	_shadow_depth_cb->idx = nSplit;
-
-
-
+	_driver->setTransform(irr::video::ETS_VIEW, light.getViewMatrix());
+	_driver->setTransform(irr::video::ETS_PROJECTION, light.getProjectionMatrix());
+	
 	/// Render all shadow casters
-	///
 	///
 	for (const auto &shadow_node : ShadowNodeArray) {
 		// If it's the Map, we have to handle it
@@ -366,8 +357,8 @@ void ShadowRenderer::renderShadowSplit(irr::video::ITexture *target,
 			}
 
 
-			// IDK if we need the back face
-			// culling...
+			// we HAVE TO render back and front faces
+			// so we disable both culling...
 			 material.BackfaceCulling = false;
 			 material.FrontfaceCulling = false;
 			//material.PolygonOffsetFactor = -1;
@@ -377,11 +368,9 @@ void ShadowRenderer::renderShadowSplit(irr::video::ITexture *target,
 
 			if (_shadow_map_colored && pass != irr::scene::ESNRP_SOLID) {
 				material.MaterialType = (irr::video::E_MATERIAL_TYPE)depth_shader_trans;
-				//material.FrontfaceCulling = false;
 			} else {
 				material.MaterialType = (irr::video::E_MATERIAL_TYPE)depth_shader;
 			}
-
 
 			map_node->OnAnimate(_device->getTimer()->getTime());
 
@@ -389,14 +378,9 @@ void ShadowRenderer::renderShadowSplit(irr::video::ITexture *target,
 								  map_node->getAbsoluteTransformation());
 
 			map_node->renderMapShadows(_driver, material, pass,
-									   light.getPosition(nSplit),
+									   light.getPosition(),
 									   light.getDirection(),
 									   _shadow_map_max_distance * BS, false);
-
-			// restore material changes.
-
-			// material.BackfaceCulling = true;
-			// material.FrontfaceCulling = false;
 			break;
 		} // end clientMap render
 	}
@@ -408,20 +392,18 @@ void ShadowRenderer::renderShadowObjects(
 
 
 	_driver->setTransform(irr::video::ETS_VIEW,
-						  light.getViewMatrix(E_SHADOW_TEXTURE::SM_CLIENTMAP0));
+						  light.getViewMatrix( ));
 	_driver->setTransform(irr::video::ETS_PROJECTION,
-						  light.getProjectionMatrix(E_SHADOW_TEXTURE::SM_CLIENTMAP0));
-	_shadow_depth_cb->idx = E_SHADOW_TEXTURE::SM_CLIENTMAP0;
+						  light.getProjectionMatrix( ));
 
 
 	for (const auto &shadow_node : ShadowNodeArray) {
 		// we only take care of the shadow casters
-		if (shadow_node.shadowMode == ESM_RECEIVE ||
-				shadow_node.shadowMode == ESM_EXCLUDE ||
-				!shadow_node.node)
-			continue;
-		if (std::string(shadow_node.node->getName()) == "ClientMap")
-			continue;
+		if (shadow_node.shadowMode == ESM_RECEIVE || 
+			!shadow_node.node ||
+			std::string(shadow_node.node->getName()) == "ClientMap")
+				continue;
+
 		// render other objects
 		irr::u32 n_node_materials = shadow_node.node->getMaterialCount();
 		std::vector<irr::s32> BufferMaterialList;
@@ -431,8 +413,7 @@ void ShadowRenderer::renderShadowObjects(
 		// (aka shader)
 		// and replace it by our "depth" shader
 		for (u32 m = 0; m < n_node_materials; m++) {
-			BufferMaterialList.push_back(
-				shadow_node.node->getMaterial(m).MaterialType);
+			BufferMaterialList.push_back(shadow_node.node->getMaterial(m).MaterialType);
 
 			auto &current_mat = shadow_node.node->getMaterial(m);
 			current_mat.setTexture(3, shadowMapTextureFinal);

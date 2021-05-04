@@ -3834,14 +3834,20 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	if (runData.update_draw_list_timer >= 0.2
 			|| runData.update_draw_list_last_cam_dir.getDistanceFrom(camera_direction) > 0.2
 			|| m_camera_offset_changed) {
-		runData.update_draw_list_timer = 0;
-		client->getEnv().getClientMap().updateDrawList();
-		runData.update_draw_list_last_cam_dir = camera_direction;
+
 
 		/*
 		 * Update Shadows
 		 */
-		updateShadows(time_of_day_smooth);
+		if (runData.update_draw_list_timer >= 0.2)
+			updateShadows(time_of_day_smooth);
+
+
+		runData.update_draw_list_timer = 0;
+		client->getEnv().getClientMap().updateDrawList();
+		runData.update_draw_list_last_cam_dir = camera_direction;
+
+		
 
 	}
 	
@@ -4010,7 +4016,7 @@ void Game::updateShadows(float _timeoftheday)
 				 offsety , 0.0 );
 		
 
-		shadow->getDirectionalLight().setPosition(sun_pos);
+		shadow->getDirectionalLight().setDirection(sun_pos);
 		shadow->setTimeOfDay(_timeoftheday);
 		if (isDay) {
 			shadow->getDirectionalLight().update_frustum(camera, client);

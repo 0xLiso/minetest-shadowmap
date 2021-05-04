@@ -82,7 +82,7 @@ void RenderingCore::draw3D()
 	shadow_renderer->setClearColor(skycolor);
 	shadow_renderer->update();
 
-	// we handle the draw stage
+	// we are going handle the draw stage
 	// smgr->drawAll();
 	driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
 	if (!show_hud)
