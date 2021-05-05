@@ -34,9 +34,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "serverlist.h"
 #include "mapgen/mapgen.h"
 #include "settings.h"
-
-#include <IFileArchive.h>
-#include <IFileSystem.h>
+#include "client/client.h"
 #include "client/renderingengine.h"
 #include "network/networkprotocol.h"
 
@@ -399,7 +397,8 @@ int ModApiMainMenu::l_show_keys_menu(lua_State *L)
 	GUIEngine* engine = getGuiEngine(L);
 	sanity_check(engine != NULL);
 
-	GUIKeyChangeMenu *kmenu = new GUIKeyChangeMenu(RenderingEngine::get_gui_env(),
+	GUIKeyChangeMenu *kmenu = new GUIKeyChangeMenu(
+			engine->m_rendering_engine->get_gui_env(),
 			engine->m_parent,
 			-1,
 			engine->m_menumanager,
@@ -630,74 +629,7 @@ int ModApiMainMenu::l_extract_zip(lua_State *L)
 
 	if (ModApiMainMenu::mayModifyPath(absolute_destination)) {
 		fs::CreateAllDirs(absolute_destination);
-
-		io::IFileSystem *fs = RenderingEngine::get_filesystem();
-
-		if (!fs->addFileArchive(zipfile, false, false, io::EFAT_ZIP)) {
-			lua_pushboolean(L,false);
-			return 1;
-		}
-
-		sanity_check(fs->getFileArchiveCount() > 0);
-
-		/**********************************************************************/
-		/* WARNING this is not threadsafe!!                                   */
-		/**********************************************************************/
-		io::IFileArchive* opened_zip =
-			fs->getFileArchive(fs->getFileArchiveCount()-1);
-
-		const io::IFileList* files_in_zip = opened_zip->getFileList();
-
-		unsigned int number_of_files = files_in_zip->getFileCount();
-
-		for (unsigned int i=0; i < number_of_files; i++) {
-			std::string fullpath = destination;
-			fullpath += DIR_DELIM;
-			fullpath += files_in_zip->getFullFileName(i).c_str();
-			std::string fullpath_dir = fs::RemoveLastPathComponent(fullpath);
-
-			if (!files_in_zip->isDirectory(i)) {
-				if (!fs::PathExists(fullpath_dir) && !fs::CreateAllDirs(fullpath_dir)) {
-					fs->removeFileArchive(fs->getFileArchiveCount()-1);
-					lua_pushboolean(L,false);
-					return 1;
-				}
-
-				io::IReadFile* toread = opened_zip->createAndOpenFile(i);
-
-				FILE *targetfile = fopen(fullpath.c_str(),"wb");
-
-				if (targetfile == NULL) {
-					fs->removeFileArchive(fs->getFileArchiveCount()-1);
-					lua_pushboolean(L,false);
-					return 1;
-				}
-
-				char read_buffer[1024];
-				long total_read = 0;
-
-				while (total_read < toread->getSize()) {
-
-					unsigned int bytes_read =
-							toread->read(read_buffer,sizeof(read_buffer));
-					if ((bytes_read == 0 ) ||
-						(fwrite(read_buffer, 1, bytes_read, targetfile) != bytes_read))
-					{
-						fclose(targetfile);
-						fs->removeFileArchive(fs->getFileArchiveCount()-1);
-						lua_pushboolean(L,false);
-						return 1;
-					}
-					total_read += bytes_read;
-				}
-
-				fclose(targetfile);
-			}
-
-		}
-
-		fs->removeFileArchive(fs->getFileArchiveCount()-1);
-		lua_pushboolean(L,true);
+		lua_pushboolean(L, getClient(L)->extractZipFile(zipfile, destination));
 		return 1;
 	}
 
@@ -763,7 +695,7 @@ int ModApiMainMenu::l_show_path_select_dialog(lua_State *L)
 	bool is_file_select = readParam<bool>(L, 3);
 
 	GUIFileSelectMenu* fileOpenMenu =
-		new GUIFileSelectMenu(RenderingEngine::get_gui_env(),
+		new GUIFileSelectMenu(engine->m_rendering_engine->get_gui_env(),
 				engine->m_parent,
 				-1,
 				engine->m_menumanager,
@@ -859,7 +791,7 @@ int ModApiMainMenu::l_get_screen_info(lua_State *L)
 	lua_pushnumber(L,RenderingEngine::getDisplayDensity());
 	lua_settable(L, top);
 
-	const v2u32 &window_size = RenderingEngine::get_instance()->getWindowSize();
+	const v2u32 &window_size = RenderingEngine::getWindowSize();
 	lua_pushstring(L,"window_width");
 	lua_pushnumber(L, window_size.X);
 	lua_settable(L, top);

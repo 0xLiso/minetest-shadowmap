@@ -88,7 +88,7 @@ class ShadowRenderer {
     irr::video::IVideoDriver *_driver{nullptr};    
     Client *_client{nullptr};
     irr::core::dimension2du _screenRTT_resolution;
-    irr::core::array<irr::video::ITexture *> renderTargets;
+    irr::video::ITexture *shadowMapClientMap{nullptr};
     irr::video::ITexture *shadowMapTextureFinal{nullptr};
     irr::video::ITexture *shadowMapTextureDynamicObjects{nullptr};
     irr::video::ITexture *shadowMapTextureColors{nullptr};

@@ -38,17 +38,34 @@ ShadowRenderer::~ShadowRenderer() {
 		delete _shadow_depth_cb;
 	if (_shadow_mix_cb)
 		delete _shadow_mix_cb;
-
+	ShadowNodeArray.clear();
+	_light_list.clear();
 	// we don't have to delete the textures in renderTargets
+	/*
+	if (shadowMapTextureDynamicObjects) {
+		delete shadowMapTextureDynamicObjects;
+		shadowMapTextureDynamicObjects = nullptr;
+	}
+
+	if (shadowMapTextureFinal) {
+		delete shadowMapTextureFinal;
+		shadowMapTextureFinal = nullptr;
+	}
+	if (shadowMapTextureColors) {
+		delete shadowMapTextureColors;
+		shadowMapTextureColors = nullptr;
+	}
+	if (shadowMapClientMap) {
+		delete shadowMapClientMap;
+		shadowMapClientMap = nullptr;
+	}
+	*/
 }
 
 void ShadowRenderer::initialize() {
-	bool tempTexFlagMipMaps =
-		_driver->getTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS);
-	bool tempTexFlag32 =
-		_driver->getTextureCreationFlag(irr::video::ETCF_ALWAYS_32_BIT);
-	_driver->setTextureCreationFlag(
-		irr::video::ETCF_CREATE_MIP_MAPS, tempTexFlagMipMaps);
+	bool tempTexFlagMipMaps = _driver->getTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS);
+	bool tempTexFlag32 = _driver->getTextureCreationFlag(irr::video::ETCF_ALWAYS_32_BIT);
+	_driver->setTextureCreationFlag(irr::video::ETCF_CREATE_MIP_MAPS, tempTexFlagMipMaps);
 	_driver->setTextureCreationFlag(irr::video::ETCF_ALWAYS_32_BIT, tempTexFlag32);
 
 	irr::video::IGPUProgrammingServices *gpu = _driver->getGPUProgrammingServices();
@@ -56,17 +73,11 @@ void ShadowRenderer::initialize() {
 	// we need glsl
 	if (_shadows_enabled && gpu &&
 			(_driver->getDriverType() == irr::video::EDT_OPENGL &&
-			 _driver->queryFeature(
-				 irr::video::EVDF_ARB_GLSL))) {
-
+			 _driver->queryFeature( irr::video::EVDF_ARB_GLSL))) {
 		createShaders();
-
 	} else {
 		_shadows_enabled = false;
-
-		_device->getLogger()->log(
-			"Shadows: GLSL Shader not supported on this system.",
-			ELL_WARNING);
+		_device->getLogger()->log("Shadows: GLSL Shader not supported on this system.",	ELL_WARNING);
 		return;
 	}
 
@@ -109,8 +120,7 @@ irr::f32 ShadowRenderer::getMaxShadowFar() const
 	}
 	return 0.0f;
 }
-void ShadowRenderer::addNodeToShadowList(
-	irr::scene::ISceneNode *node, E_SHADOW_MODE shadowMode) {
+void ShadowRenderer::addNodeToShadowList(irr::scene::ISceneNode *node, E_SHADOW_MODE shadowMode) {
 	ShadowNodeArray.push_back(NodeToApply(node, shadowMode));
 }
 
@@ -143,10 +153,6 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 		return;
 	}
 
-
-
-
-
 	if (!shadowMapTextureDynamicObjects) {
 
 		shadowMapTextureDynamicObjects = getSMTexture(
@@ -155,31 +161,19 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 											 _texture_format, true);
 	}
 
-	if (renderTargets.empty()) {
+	if (!shadowMapClientMap) {
+		std::string shadowMapName(
+			std::string("shadow_clientmap_") +
+			std::to_string(_shadow_map_texture_size));
 
-		for (s32 i = 0; i < _nSplits; i++) {
-
-			std::string shadowMapName(
-				std::string("shadow_") +
-				std::to_string(i) + "_" +
-				std::to_string(_shadow_map_texture_size));
-
-
-			renderTargets.push_back(getSMTexture(
-										shadowMapName,
-				_shadow_map_colored ? _texture_format_color : _texture_format,
-				true));
-		}
-
-
+		shadowMapClientMap = getSMTexture( shadowMapName,
+			_shadow_map_colored ? _texture_format_color : _texture_format, true) ;
 	}
 
 	if (_shadow_map_colored && !shadowMapTextureColors) {
 		shadowMapTextureColors = getSMTexture(
-				std::string("shadow_colored_") +
-						std::to_string(_shadow_map_texture_size),
-				_shadow_map_colored ? _texture_format_color : _texture_format,
-				true);
+				std::string("shadow_colored_") + std::to_string(_shadow_map_texture_size),
+				_shadow_map_colored ? _texture_format_color : _texture_format, true);
 	}
 
 	// The merge all shadowmaps texture
@@ -219,9 +213,9 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 			if (light.should_update_map_shadow) {
 				light.should_update_map_shadow = false;
 
-				_driver->setRenderTarget(renderTargets[0], true, true,
+				_driver->setRenderTarget(shadowMapClientMap, true, true,
 				irr::video::SColor(255, 255, 255, 255));
-				renderShadowMap(renderTargets[0], light );
+				renderShadowMap(shadowMapClientMap, light);
 
 				if (_shadow_map_colored) {
 					_driver->setRenderTarget(shadowMapTextureColors, true,false,
@@ -241,7 +235,7 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 			// in order to avoid too many map shadow renders,
 			// we should make a second pass to mix clientmap shadows and entities
 			// shadows :(
-			_screen_quad->getMaterial().setTexture(0, renderTargets[0]);
+			_screen_quad->getMaterial().setTexture(0, shadowMapClientMap);
 			// dynamic objs shadow texture.
 			if (_shadow_map_colored) {
 				_screen_quad->getMaterial().setTexture(
@@ -270,10 +264,10 @@ void ShadowRenderer::update(irr::video::ITexture *outputTarget) {
 										 shadowMapTextureFinal->getSize().Width,
 										 shadowMapTextureFinal->getSize().Height));
 
-			_driver->draw2DImage(renderTargets[0],
+			_driver->draw2DImage(shadowMapClientMap,
 								 irr::core::rect<s32>(0, 50 + 128, 128, 128 + 50 + 128),
-								 irr::core::rect<s32>(0, 0, renderTargets[0]->getSize().Width,
-										 renderTargets[0]->getSize().Height));
+								 irr::core::rect<s32>(0, 0,shadowMapClientMap->getSize().Width,
+									shadowMapClientMap->getSize().Height));
 			_driver->draw2DImage(shadowMapTextureDynamicObjects,
 								 irr::core::rect<s32>(
 									 0, 128 + 50 + 128, 128, 128 + 50 + 128 + 128),

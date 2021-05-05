@@ -289,53 +289,61 @@ public:
 
 
         // Set Shadow shader uniform
-        if (b_shadow_map_enabled && RenderingEngine::get_instance()->is_renderingcore_ready()) {
+        if (b_shadow_map_enabled) {
+			
+            ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
+			if (shadow) {
 
-            ShadowRenderer *shadow = RenderingEngine::get_instance()->get_shadow_renderer();
+				irr::core::matrix4 shadowViewProj =
+						shadow->getDirectionalLight()
+								.getProjectionMatrix();
+				shadowViewProj *= shadow->getDirectionalLight().getViewMatrix();
 
-            irr::core::matrix4 shadowViewProj = shadow->getDirectionalLight().getProjectionMatrix();
-	        shadowViewProj *= shadow->getDirectionalLight().getViewMatrix();
+				services->setPixelShaderConstant(
+						services->getPixelShaderConstantID(
+								"m_ShadowViewProj"),
+						*reinterpret_cast<float(*)[16]>(
+								shadowViewProj.pointer()),
+						16);
 
-            services->setPixelShaderConstant(
-                services->getPixelShaderConstantID("m_ShadowViewProj"),
-                *reinterpret_cast<float(*)[16]>(shadowViewProj.pointer()),
-                16);
+				float v_LightDirection[3];
 
+				shadow->getDirectionalLight().getDirection().getAs3Values(
+						v_LightDirection);
+				services->setPixelShaderConstant(
+						services->getPixelShaderConstantID(
+								"v_LightDirection"),
+						*reinterpret_cast<float(*)[3]>(v_LightDirection),
+						3);
 
-            float v_LightDirection[3];
+				float TextureResolution = (float)shadow->getDirectionalLight()
+									  .getMapResolution();
+				services->setPixelShaderConstant(
+						services->getPixelShaderConstantID(
+								"f_textureresolution"),
+						&TextureResolution, 1);
 
-            shadow->getDirectionalLight().getDirection().getAs3Values(v_LightDirection);
-            services->setPixelShaderConstant(
-                services->getPixelShaderConstantID("v_LightDirection"),
-                *reinterpret_cast<float(*)[3]>(v_LightDirection),
-                3);
+				float ShadowStrengh = (float)shadow->getShadowStrengh();
+				services->setPixelShaderConstant(
+						services->getPixelShaderConstantID(
+								"f_shadow_strength"),
+						&ShadowStrengh, 1);
 
-            float TextureResolution = (float)shadow->getDirectionalLight().getMapResolution();
-            services->setPixelShaderConstant(
-                services->getPixelShaderConstantID("f_textureresolution"),
-                &TextureResolution,
-                1);
+				float timeofDay = (float)shadow->getTimeofDay();
+				services->setPixelShaderConstant(
+						services->getPixelShaderConstantID("f_timeofday"),
+						&timeofDay, 1);
 
-            float ShadowStrengh = (float)shadow->getShadowStrengh();
-            services->setPixelShaderConstant(
-                services->getPixelShaderConstantID("f_shadow_strength"),
-                &ShadowStrengh, 1);
+				float shadowFar = shadow->getMaxShadowFar();
+				services->setPixelShaderConstant(
+						services->getPixelShaderConstantID("f_shadowfar"),
+						&shadowFar, 1);
 
-            float timeofDay = (float)shadow->getTimeofDay();
-            services->setPixelShaderConstant(
-                services->getPixelShaderConstantID("f_timeofday"), &timeofDay,
-                1);
-
-
-            float shadowFar = shadow->getMaxShadowFar();
-	        services->setPixelShaderConstant(
-			    services->getPixelShaderConstantID("f_shadowfar"), &shadowFar,
-			    1);
-	    
-            /// I dont like using this hardcoded value. maybe something like MAX_TEXTURE -1 or somthing like that??
-            s32 TextureLayerID = 3;
-            m_shadow_texture.set(&TextureLayerID, services);
-
+				/// I dont like using this hardcoded value. maybe something like
+				/// MAX_TEXTURE -1 or somthing like that??
+				s32 TextureLayerID = 3;
+				m_shadow_texture.set(&TextureLayerID, services);
+			}
         }
 
 

@@ -64,14 +64,16 @@ void MeshBufListList::add(scene::IMeshBuffer *buf, v3s16 position, u8 layer)
 
 ClientMap::ClientMap(
 		Client *client,
+		RenderingEngine *rendering_engine,
 		MapDrawControl &control,
 		s32 id
 ):
 	Map(client),
-	scene::ISceneNode(RenderingEngine::get_scene_manager()->getRootSceneNode(),
-		RenderingEngine::get_scene_manager(), id),
+	scene::ISceneNode(rendering_engine->get_scene_manager()->getRootSceneNode(),
+		rendering_engine->get_scene_manager(), id),
 	m_client(client),
-	m_control(control)
+	m_control(control),
+	m_rendering_engine(rendering_engine)
 {
 /*
 	 * @Liso: Sadly C++ doesn't have introspection, so the only way we have to know
@@ -124,12 +126,9 @@ void ClientMap::OnRegisterSceneNode()
 	 * @Liso We need to add the ClientMap to the Shadow List here.
 	 * Just to allow ShadowRenderer to know that it is a new node
 	 */
-	if (!m_added_to_shadow_renderer &&
-			RenderingEngine::get_instance()->is_renderingcore_ready()) {
+	if (!m_added_to_shadow_renderer) {
 		m_added_to_shadow_renderer = true;
-		RenderingEngine::get_instance()
-				->get_shadow_renderer()
-				->addNodeToShadowList(this);
+		m_rendering_engine->get_shadow_renderer()->addNodeToShadowList(this);
 	}
 }
 
@@ -358,7 +357,7 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 		v3f block_pos_r = intToFloat(block->getPosRelative() + MAP_BLOCKSIZE / 2, BS);
 		float d = camera_position.getDistanceFrom(block_pos_r);
 		d = MYMAX(0,d - BLOCK_MAX_RADIUS);
-		
+
 		// Mesh animation
 		if (pass == scene::ESNRP_SOLID) {
 			//MutexAutoLock lock(block->mesh_mutex);
@@ -435,14 +434,13 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 				return;
 			}
 			//pass the shadow map texture to the buffer texture
-			if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-				ShadowRenderer *shadow = RenderingEngine::get_instance()->get_shadow_renderer();
-				if (shadow->is_active()) {
-					list.m.TextureLayer[3].Texture = shadow->get_texture();
-					list.m.TextureLayer[3].TextureWrapU = irr::video::E_TEXTURE_CLAMP::ETC_CLAMP_TO_EDGE;
-					list.m.TextureLayer[3].TextureWrapV = irr::video::E_TEXTURE_CLAMP::ETC_CLAMP_TO_EDGE; 
-				}
+			ShadowRenderer *shadow = m_rendering_engine->get_shadow_renderer();
+			if (shadow && shadow->is_active()) {
+				list.m.TextureLayer[3].Texture = shadow->get_texture();
+				list.m.TextureLayer[3].TextureWrapU = irr::video::E_TEXTURE_CLAMP::ETC_CLAMP_TO_EDGE;
+				list.m.TextureLayer[3].TextureWrapV = irr::video::E_TEXTURE_CLAMP::ETC_CLAMP_TO_EDGE; 
 			}
+			
 			driver->setMaterial(list.m);
 
 			drawcall_count += list.bufs.size();
