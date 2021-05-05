@@ -47,7 +47,7 @@ protected:
 	Minimap *mapper;
 	Hud *hud;
 
-	ShadowRenderer *shadow_renderer;
+	ShadowRenderer *shadow_renderer{nullptr};
 
 	void updateScreenSize();
 	virtual void initTextures() {}

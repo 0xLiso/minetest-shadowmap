@@ -28,21 +28,17 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 RenderingCore::RenderingCore(IrrlichtDevice *_device, Client *_client, Hud *_hud)
 	: device(_device), driver(device->getVideoDriver()), smgr(device->getSceneManager()),
 	guienv(device->getGUIEnvironment()), client(_client), camera(client->getCamera()),
-	mapper(client->getMinimap()), hud(_hud)
+		mapper(client->getMinimap()), hud(_hud),
+		shadow_renderer(new ShadowRenderer(device, client))
 {
 	screensize = driver->getScreenSize();
 	virtual_size = screensize;
-
-	shadow_renderer = new ShadowRenderer(device, client);
 }
 
 RenderingCore::~RenderingCore()
 {
 	clearTextures();
-	if (shadow_renderer) {
-		delete shadow_renderer;
-		shadow_renderer = nullptr;
-	};
+	delete shadow_renderer;
 }
 
 void RenderingCore::initialize()
