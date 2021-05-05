@@ -646,7 +646,7 @@ ShaderInfo ShaderSource::generateShader(const std::string &name,
 	if (use_gles) {
 		shaders_header << R"(
 			#version 100
-			)";
+		)";
 		vertex_header = R"(
 			precision mediump float;
 
