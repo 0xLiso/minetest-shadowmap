@@ -95,7 +95,7 @@ void ShadowRenderer::initialize() {
 
 size_t ShadowRenderer::addDirectionalLight() {
 
-	_light_list.push_back(DirectionalLight(_shadow_map_texture_size,
+	_light_list.emplace_back(DirectionalLight(_shadow_map_texture_size,
 										   irr::core::vector3df(0.f, 0.f, 0.f),
 										   video::SColor(255, 255, 255, 255), _shadow_map_max_distance));
 	return _light_list.size() - 1;
@@ -121,7 +121,7 @@ irr::f32 ShadowRenderer::getMaxShadowFar() const
 	return 0.0f;
 }
 void ShadowRenderer::addNodeToShadowList(irr::scene::ISceneNode *node, E_SHADOW_MODE shadowMode) {
-	ShadowNodeArray.push_back(NodeToApply(node, shadowMode));
+	ShadowNodeArray.emplace_back(NodeToApply(node, shadowMode));
 }
 
 void ShadowRenderer::removeNodeFromShadowList(irr::scene::ISceneNode *node) {
