@@ -221,7 +221,7 @@ local function formspec(tabview, name, tabdata)
 					.. dump(core.settings:get_bool("enable_waving_plants")) .. "]"..
 			"label[8.25,3.0;" .. fgettext("Dynamic shadows: ") .. "]" ..
 			"dropdown[8.25,3.5;3.5;dd_shadows;" .. dd_options.shadow_levels[1] .. ";"
-				.. getSettingIndex.ShadowsMapping() .. "]" 
+					.. getSettingIndex.ShadowsMapping() .. "]"
 	else
 		tab_string = tab_string ..
 			"label[8.38,0.7;" .. core.colorize("#888888",
@@ -299,7 +299,6 @@ local function handle_settings_buttons(this, fields, tabname, tabdata)
 		core.settings:set("enable_waving_plants", fields["cb_waving_plants"])
 		return true
 	end
-	
 	if fields["btn_change_keys"] then
 		core.show_keys_menu()
 		return true
@@ -380,7 +379,7 @@ local function handle_settings_buttons(this, fields, tabname, tabdata)
 			core.settings:set("shadow_map_texture_32bit", "true")
 			core.settings:set("shadow_filters", "1")
 			core.settings:set("shadow_map_color", "false")
-			core.settings:set("shadow_psm", "true")	
+			core.settings:set("shadow_psm", "true")
 		elseif fields["dd_shadows"] == labels.shadow_levels[3] then
 			core.settings:set("shadow_map_max_distance", "120")
 			core.settings:set("shadow_map_texture_size", "1024")
@@ -408,7 +407,7 @@ local function handle_settings_buttons(this, fields, tabname, tabdata)
 			core.settings:set("shadow_map_texture_32bit", "true")
 			core.settings:set("shadow_filters", "2")
 			core.settings:set("shadow_map_color", "true")
-			core.settings:set("shadow_psm", "true")	
+			core.settings:set("shadow_psm", "true")
 		end
 	end
 
