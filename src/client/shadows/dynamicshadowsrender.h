@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include <irrlicht.h>
+#include <irrlichttypes.h>
 
 #include "client/shadows/dynamicshadows.h"
 #include "client/shadows/shadowsshadercallbacks.h"
