@@ -72,10 +72,11 @@ void ShadowRenderer::initialize() {
 
 	// we need glsl
 	if (_shadows_enabled && gpu &&
-			(_driver->getDriverType() == irr::video::EDT_OPENGL &&
-			 _driver->queryFeature( irr::video::EVDF_ARB_GLSL))) {
+		_driver->queryFeature( irr::video::EVDF_ARB_GLSL))
+	{
 		createShaders();
-	} else {
+	} else 
+	{
 		_shadows_enabled = false;
 		_device->getLogger()->log("Shadows: GLSL Shader not supported on this system.",	ELL_WARNING);
 		return;
