@@ -2,9 +2,8 @@
 
 #include <string>
 #include <vector>
-#include <irrlicht.h>
+#include "irrlichttypes.h"
 #include <cmath>
-#include <irrlicht.h>
 #include "client/camera.h"
 #include "client/client.h"
 
