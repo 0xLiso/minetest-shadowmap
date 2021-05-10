@@ -270,8 +270,13 @@ void main(void)
 	float shadow_int=0.0;
 	vec3 shadow_color=vec3(0.0,0.0,0.0);
 	
-	float cosLight = dot( -v_LightDirection ,vNormal );
-
+	//check if the surface doesn't have normal, like billboards
+	float cosLight=1.0;
+	if(length(vNormal)!=0){
+		 cosLight = dot( -v_LightDirection ,vNormal );
+	}
+	
+	//if the surface is pointing backwards light, it's in shadow
 	if(  cosLight<= 0){
 		shadow_int=1.0-nightRatio;
 	}
