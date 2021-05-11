@@ -5,8 +5,6 @@
 #include <irrlicht.h>
 #include <cassert>
 
-
-
 class ShadowDepthShaderCB : public irr::video::IShaderConstantSetCallBack
 {
 public:
@@ -14,11 +12,10 @@ public:
 
 	void OnSetConstants(irr::video::IMaterialRendererServices *services,
 			irr::s32 userData) override;
-	
+
 	irr::f32 MaxFar{2048.0f}, MapRes{1024.0f};
 	int idx{0};
 };
-
 
 class CSMDirectionalShadowShaderCB : public irr::video::IShaderConstantSetCallBack
 {
@@ -28,7 +25,7 @@ public:
 	void OnSetConstants(irr::video::IMaterialRendererServices *services,
 			irr::s32 userData) override;
 
-	//@Liso: I have to clear this bunch of vars	 
+	//@Liso: I have to clear this bunch of vars
 	irr::core::matrix4 invWorld;
 	irr::video::SColorf LightColour;
 	irr::core::matrix4 mLightProj0, mLightProj1, mLightProj2;

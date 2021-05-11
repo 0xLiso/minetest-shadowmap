@@ -72,8 +72,8 @@ ClientMap::ClientMap(
 	scene::ISceneNode(rendering_engine->get_scene_manager()->getRootSceneNode(),
 		rendering_engine->get_scene_manager(), id),
 	m_client(client),
-	m_control(control),
-	m_rendering_engine(rendering_engine)
+	m_rendering_engine(rendering_engine),
+	m_control(control)
 {
 /*
 	 * @Liso: Sadly C++ doesn't have introspection, so the only way we have to know
