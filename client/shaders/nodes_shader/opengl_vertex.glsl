@@ -25,7 +25,6 @@ varying mediump vec2 varTexCoord;
 #else
 centroid varying vec2 varTexCoord;
 #endif
-
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	//shadow uniforms
 	uniform vec3 v_LightDirection;
@@ -46,7 +45,6 @@ varying float nightRatio;
 const vec3 artificialLight = vec3(1.04, 1.04, 1.04);
 const float e = 2.718281828459;
 const float BS = 10.0;
-
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 //custom smoothstep implementation because it's not defined in glsl1.2
@@ -78,6 +76,7 @@ float smoothTriangleWave(float x)
 
 // OpenGL < 4.3 does not support continued preprocessor lines
 #if (MATERIAL_TYPE == TILE_MATERIAL_WAVING_LIQUID_TRANSPARENT || MATERIAL_TYPE == TILE_MATERIAL_WAVING_LIQUID_OPAQUE || MATERIAL_TYPE == TILE_MATERIAL_WAVING_LIQUID_BASIC) && ENABLE_WAVING_WATER
+
 //
 // Simple, fast noise function.
 // See: https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
@@ -109,6 +108,7 @@ float snoise(vec3 p)
 
 	return o4.y * d.y + o4.x * (1.0 - d.y);
 }
+
 #endif
 
  
@@ -174,7 +174,11 @@ void main(void)
 	// the brightness, so now we have to multiply these
 	// colors with the color of the incoming light.
 	// The pre-baked colors are halved to prevent overflow.
-	vec4 color;
+#ifdef GL_ES
+	vec4 color = inVertexColor.bgra;
+#else
+	vec4 color = inVertexColor;
+#endif
 	// The alpha gives the ratio of sunlight in the incoming light.
 	nightRatio = 1.0 - inVertexColor.a;
 	color.rgb = inVertexColor.rgb * (inVertexColor.a * dayLight.rgb +
@@ -188,7 +192,6 @@ void main(void)
 		0.07 * brightness);
 
 	varColor = clamp(color, 0.0, 1.0);
-
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	vec3 nNormal = normalize(vNormal );
 	float cosLight = abs(dot( nNormal, v_LightDirection));

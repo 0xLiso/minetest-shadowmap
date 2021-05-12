@@ -55,7 +55,7 @@ float directional_ambient(vec3 normal)
 
 void main(void)
 {
-	varTexCoord = inTexCoord0.st;
+	varTexCoord = (mTexture * inTexCoord0).st;
 	gl_Position = mWorldViewProj * inVertexPosition;
 
 	vPosition = gl_Position.xyz;
@@ -68,11 +68,16 @@ void main(void)
 #else
 	// This is intentional comparison with zero without any margin.
 	// If normal is not equal to zero exactly, then we assume it's a valid, just not normalized vector
-	vIDiff = length(inVertexNormal) == 0.0 ? 1.0 : directional_ambient(normalize(inVertexNormal));
+	vIDiff = length(inVertexNormal) == 0.0
+		? 1.0
+		: directional_ambient(normalize(inVertexNormal));
 #endif
 
+#ifdef GL_ES
+	varColor = inVertexColor.bgra;
+#else
 	varColor = inVertexColor;
-
+#endif
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	vec3 nNormal = normalize(vNormal );
 	float cosLight = abs(dot( nNormal, v_LightDirection));
