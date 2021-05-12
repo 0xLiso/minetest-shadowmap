@@ -10,7 +10,7 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 	float radius;
 	v3f newCenter;
 	v3f look = cam->getDirection();
-	// look.normalize();
+	
 	v3f camPos2 = cam->getPosition();
 	v3f camPos = v3f(camPos2.X - cam->getOffset().X * BS,
 			camPos2.Y - cam->getOffset().Y * BS,
@@ -63,11 +63,11 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 	// but the shadow_frustum position must be the actual world position
 	v3f eye = frustumCenter - eye_displacement;
 	shadow_frustum.position = world_center - eye_displacement;
-	shadow_frustum.length = 2.0f * vvolume;
+	shadow_frustum.length =  vvolume;
 	shadow_frustum.ViewMat.buildCameraLookAtMatrixLH(eye, frustumCenter, v3Yone);
 	shadow_frustum.ProjOrthMat.buildProjectionMatrixOrthoLH(shadow_frustum.length,
 			shadow_frustum.length, -shadow_frustum.length,
-			shadow_frustum.length);
+			shadow_frustum.length,false);
 }
 DirectionalLight::DirectionalLight(const irr::u32 shadowMapResolution,
 		const irr::core::vector3df &position, irr::video::SColorf lightColor,
