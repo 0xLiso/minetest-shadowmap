@@ -33,6 +33,8 @@ const float fogShadingParameter = 1.0 / (1.0 - fogStart);
 	uniform float f_shadowfar;
 	varying float normalOffsetScale;
 	varying float adj_shadow_strength;
+	varying float cosLight;
+	varying float f_normal_length;
 #endif
 
 #if ENABLE_TONE_MAPPING
@@ -95,13 +97,21 @@ vec4 applyToneMapping(vec4 color)
 
 	vec3 getLightSpacePosition()
 	{	
-		float offsetScale = (0.03* getLinearDepth()+ normalOffsetScale) ;
-		vec4 pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale*normalize(vNormal) ,1.0); 
-		
+		vec4 pLightSpace;
+		//some NDT have normals to 0, so we need to handle it :(
+		if(f_normal_length<0.01){
+			pLightSpace = m_ShadowViewProj  * vec4(worldPosition+0.000000005  ,1.0); 
+		}
+		else{
+			float offsetScale = (0.03* getLinearDepth()+ normalOffsetScale) ;
+			pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale* normalize(vNormal) ,1.0); 
+		}
+
 		#ifdef SHADOWS_PSM
 			pLightSpace = getPerspectiveFactor(pLightSpace);
 		#endif
 		return pLightSpace.xyz*0.5 +0.5;
+		
 	}
 
 
@@ -248,17 +258,13 @@ void main(void)
 	float shadow_int=0.0;
 	vec3 shadow_color=vec3(0.0,0.0,0.0);
 	
-
-	float cosLight = dot( -v_LightDirection ,vNormal );
-
-	 {
+	//check if the surface doesn't have normal, like billboards
+	//if the surface is pointing backwards light, it's in shadow
+	
+	{
+		
 		vec3 posinLightSpace=getLightSpacePosition( );
 
-		if(posinLightSpace.x>0.0&&posinLightSpace.x<1.0 &&
-		   posinLightSpace.y>0.0&&posinLightSpace.y<1.0 &&
-		   posinLightSpace.z>0.0&&posinLightSpace.z<1.0)
-		{
-			
 		#ifdef COLORED_SHADOWS
 			vec4 visibility=getShadowColor(ShadowMapSampler, posinLightSpace.xy,
 									posinLightSpace.z  );			
@@ -268,10 +274,14 @@ void main(void)
 			shadow_int=getShadow(ShadowMapSampler, posinLightSpace.xy,
 									posinLightSpace.z  );
 		#endif
+
 			//shadow_int*= 1.0 - mtsmoothstep(0.7,0.9, length(posinLightSpace-vec3(0.5)));
-		}
-	 
+
 	}
+	if( f_normal_length!=0 && cosLight<= 0){
+		shadow_int=clamp(shadow_int + (0.3 - cosLight),0.0,1.0);
+	}
+
 	shadow_int  = 1.0 - (shadow_int*adj_shadow_strength);
 	shadow_color *= adj_shadow_strength ;
 	
@@ -295,5 +305,6 @@ void main(void)
 	float clarity = clamp(fogShadingParameter
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
 	col = mix(skyBgColor, col, clarity);
+	 
 	gl_FragColor = vec4(col.rgb, base.a);
 }

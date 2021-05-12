@@ -17,6 +17,8 @@ uniform float animationTimer;
 	uniform float f_shadowfar;
 	varying float normalOffsetScale;
 	varying float adj_shadow_strength;
+	varying float cosLight;
+	varying float f_normal_length;
 #endif
 
 
@@ -81,13 +83,19 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 	{	
 		vec4 pLightSpace;
 		//some NDT have normals to 0, so we need to handle it :(
-		if(length(vNormal)==0){
+
+		#if DRAW_TYPE==NDT_PLANTLIKE
+
+			pLightSpace = m_ShadowViewProj  * vec4(worldPosition ,1.0); 
+		#else
+		if(f_normal_length<0.01){
 			pLightSpace = m_ShadowViewProj  * vec4(worldPosition+0.000000005  ,1.0); 
 		}
 		else{
 			float offsetScale = (0.03* getLinearDepth()+ normalOffsetScale) ;
 			pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale*normalize(vNormal) ,1.0); 
 		}
+		#endif
 
 		#ifdef SHADOWS_PSM
 			pLightSpace = getPerspectiveFactor(pLightSpace);
@@ -271,22 +279,15 @@ void main(void)
 	vec3 shadow_color=vec3(0.0,0.0,0.0);
 	
 	//check if the surface doesn't have normal, like billboards
-	float cosLight=1.0;
-	if(length(vNormal)!=0){
-		 cosLight = dot( -v_LightDirection ,vNormal );
-	}
-	
 	//if the surface is pointing backwards light, it's in shadow
-	if(  cosLight<= 0){
-		shadow_int=1.0-nightRatio;
-	}
-	else {
+	
+	{
 		
 		vec3 posinLightSpace=getLightSpacePosition( );
 
-		if(posinLightSpace.x>0.0&&posinLightSpace.x<1.0 &&
+		/*if(posinLightSpace.x>0.0&&posinLightSpace.x<1.0 &&
 		   posinLightSpace.y>0.0&&posinLightSpace.y<1.0 &&
-		   posinLightSpace.z>0.0&&posinLightSpace.z<1.0)
+		   posinLightSpace.z>0.0&&posinLightSpace.z<1.0)*/
 		{
 			
 			
@@ -307,8 +308,13 @@ void main(void)
 
 	}
 
+	if( f_normal_length!=0 && cosLight<= 0){
+		shadow_int=clamp(shadow_int+(0.3 - cosLight)-nightRatio,0.0,1.0);
+	}
+
 	shadow_int  = 1.0 - (shadow_int*adj_shadow_strength);
 	shadow_color *= adj_shadow_strength ;
+	
 	
 	col.rgb=col.rgb*shadow_int+shadow_color;
 	

@@ -21,9 +21,10 @@ centroid varying vec2 varTexCoord;
 	uniform float f_shadowfar;
 	uniform float f_shadow_strength;
 	uniform float f_timeofday;
-
+	varying float cosLight;
 	varying float normalOffsetScale;
 	varying float adj_shadow_strength;
+	varying float f_normal_length;
 #endif
 
 varying vec3 eyeVec;
@@ -79,12 +80,14 @@ void main(void)
 	varColor = inVertexColor;
 #endif
 #ifdef ENABLE_DYNAMIC_SHADOWS
-	vec3 nNormal = normalize(vNormal );
-	float cosLight = abs(dot( nNormal, v_LightDirection));
+	vNormal = normalize(gl_NormalMatrix*vNormal );
+	vec3 nNormal = vNormal ;
+	cosLight = dot( nNormal,  normalize(gl_NormalMatrix*-v_LightDirection));
 	float texelSize = 2.0 / f_textureresolution;
-	float slopeScale = clamp( 1.0-cosLight,0.0,1.0);
+	float slopeScale = clamp( 1.0-abs(cosLight),0.0,1.0);
 	normalOffsetScale = texelSize*slopeScale ;
 	adj_shadow_strength = f_shadow_strength * mtsmoothstep(0.20,0.25,
 		f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday) );
+	f_normal_length = length(nNormal);
 #endif
 }
