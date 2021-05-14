@@ -606,9 +606,13 @@ shadow_map_texture_size (Shadow map texture size) int 1024 128 8192
 #    This can cause much more artifacts in the shadow.
 shadow_map_texture_32bit (Shadow map texture in 32 bits) bool true
 
+#    Enable poisson disk filtering. 
+#    On true uses poisson disk to make "soft shadows". 
+#    On false uses PCF filtering.
+shadow_poisson_filter (Poisson filtering) bool true
 
-#   Define PCF quality
-#   This simulates the soft shadows effect by applying a PCF
+#   Define shadow filtering quality
+#   This simulates the soft shadows effect by applying a PCF or poisson disk
 #   but it also use a more resources.
 shadow_filters (Shadow filter quality) enum 1 0,1,2
 

@@ -754,12 +754,17 @@ ShaderInfo ShaderSource::generateShader(const std::string &name,
 		if (g_settings->getBool("shadow_map_color")) {
 			shaders_header << "#define COLORED_SHADOWS 1\n";
 		}
-
+		
+		if (g_settings->getBool("shadow_poisson_filter")) {
+			shaders_header << "#define POISSON_FILTER 1\n";
+		}
 		if (g_settings->getBool("shadow_psm")) {
 			shaders_header << "#define SHADOWS_PSM 1\n";
 		}
 		s32 shadow_filter = g_settings->getS32("shadow_filters");
 		shaders_header << "#define SHADOW_FILTER " << shadow_filter << "\n";
+
+		
 
     	}
 

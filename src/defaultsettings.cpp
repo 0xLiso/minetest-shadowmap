@@ -270,7 +270,8 @@ void set_default_settings()
     settings->setDefault("shadow_map_texture_32bit", "true");
     settings->setDefault("shadow_map_color", "false");
     settings->setDefault("shadow_filters", "1");
-    settings->setDefault("shadow_psm", "false");
+    settings->setDefault("shadow_psm", "true");
+	settings->setDefault("shadow_poisson_filter", "true");
 
 	// Input
 	settings->setDefault("invert_mouse", "false");
