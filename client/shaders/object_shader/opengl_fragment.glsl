@@ -71,9 +71,9 @@ vec4 applyToneMapping(vec4 color)
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	
 	#ifdef SHADOWS_PSM
-    const float bias0 = 0.97;
+    const float bias0 = 0.94;
     
-    const float zPersFactor = 0.2;
+    const float zPersFactor = 0.25;
 
     vec4 getPerspectiveFactor(in vec4 shadowPosition) {
       float bias1 = 1.0 - bias0;
