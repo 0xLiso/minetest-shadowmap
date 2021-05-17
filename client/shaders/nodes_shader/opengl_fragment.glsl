@@ -92,7 +92,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 			pLightSpace = m_ShadowViewProj  * vec4(worldPosition+0.000000005  ,1.0); 
 		}
 		else{
-			float offsetScale = (0.03* getLinearDepth()+ normalOffsetScale) ;
+			float offsetScale = (0.025* getLinearDepth()+ normalOffsetScale) ;
 			pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale*normalize(vNormal) ,1.0); 
 		}
 		#endif
@@ -123,18 +123,18 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 		const float c_precision = 128.0;
 		const float c_precisionp1 = c_precision + 1.0;
 		
-		float packColor(vec3 color) {
-		
-			return floor(color.r * c_precision + 0.5) 
-				+ floor(color.b * c_precision + 0.5) * c_precisionp1
-				+ floor(color.g * c_precision + 0.5) * c_precisionp1 * c_precisionp1;
-		}
+		  float packColor(vec3 color) {
+		       
+		        return floor(color.b * c_precision + 0.5) 
+		            + floor(color.g * c_precision + 0.5) * c_precisionp1
+		            + floor(color.r * c_precision + 0.5) * c_precisionp1 * c_precisionp1;
+		    }
 
 		vec3 unpackColor(float value) {
 			vec3 color;
-			color.r = mod(value, c_precisionp1) / c_precision;
-			color.b = mod(floor(value / c_precisionp1), c_precisionp1) / c_precision;
-			color.g = floor(value / (c_precisionp1 * c_precisionp1)) / c_precision;
+			color.b = mod(value, c_precisionp1) / c_precision;
+			color.g = mod(floor(value / c_precisionp1), c_precisionp1) / c_precision;
+			color.r = floor(value / (c_precisionp1 * c_precisionp1)) / c_precision;
 			return color;
 		}
 		
@@ -143,7 +143,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 			vec4 texDepth = texture2D(shadowsampler, smTexCoord.xy).rgba;
 
 			float visibility = step(0.0,realDistance - texDepth.r);
-			vec4 result = vec4(visibility,unpackColor(texDepth.g));
+			vec4 result = vec4(visibility,vec3(0.0,0.0,0.0));//unpackColor(texDepth.g));
 			if(visibility<0.1){
 				visibility = step(0.0,	realDistance - texDepth.b);
 				result = vec4(visibility,unpackColor(texDepth.a));
@@ -239,7 +239,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 			vec2 clampedpos;
 			vec4 visibility=vec4(0.0);
 
-			float texture_size= 1/(f_textureresolution*0.5);
+			float texture_size= 1/(f_textureresolution*0.15);
 			#if SHADOW_FILTER == 2
 				#define PCFBOUND 3.5
 				#define PCFSAMPLES 64.0
@@ -257,7 +257,6 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 			{
 				clampedpos = poissonDisk[x]*texture_size + smTexCoord.xy;
 				visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
-
 			}
 			
 			return visibility/PCFSAMPLES;
@@ -269,7 +268,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 		vec2 clampedpos;
 		float visibility=0.0;
 
-		float texture_size= 1/(f_textureresolution*0.5);
+		float texture_size= 1/(f_textureresolution*0.15);
 		#if SHADOW_FILTER == 2
 			#define PCFBOUND 3.5
 			#define PCFSAMPLES 64.0
@@ -322,8 +321,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 				for (x = -PCFBOUND ; x <=PCFBOUND ; x+=1.0)
 			{
 				clampedpos = vec2(x,y)*texture_size + smTexCoord.xy;
-				visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
-
+				visibility=getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
 			}
 			
 			return visibility/PCFSAMPLES;

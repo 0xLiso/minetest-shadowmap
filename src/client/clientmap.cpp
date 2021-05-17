@@ -751,7 +751,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 	for (auto &lists : drawbufs.lists) {
 		for (MeshBufList &list : lists) {
 			// Check and abort if the machine is swapping a lot
-			if (draw.getTimerTime() > 2000) {
+			if (draw.getTimerTime() > 1000) {
 				infostream << "ClientMap::renderMapShadows(): Rendering "
 					      "took "
 					      ">2s, "

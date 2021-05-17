@@ -10,9 +10,9 @@ varying vec4 tPos;
      
     float packColor(vec3 color) {
        
-        return floor(color.r * c_precision + 0.5) 
-            + floor(color.b * c_precision + 0.5) * c_precisionp1
-            + floor(color.g * c_precision + 0.5) * c_precisionp1 * c_precisionp1;
+        return floor(color.b * c_precision + 0.5) 
+            + floor(color.g * c_precision + 0.5) * c_precisionp1
+            + floor(color.r * c_precision + 0.5) * c_precisionp1 * c_precisionp1;
     }
 
 #endif
@@ -31,7 +31,7 @@ void main() {
 
     //col.rgb = col.a == 1.0 ? vec3(1.0) : col.rgb;
     #ifdef COLORED_SHADOWS
-	    float packetColor = packColor(mix(col.rgb,vec3(0.0),(col.a)));
+	    float packetColor = packColor(mix(col.rgb,vec3(0.0),col.a ));
 	    gl_FragColor = vec4( depth, packetColor,0.0,1.0);
     #else
     	gl_FragColor = vec4( depth, 0.0, 0.0, 1.0);
