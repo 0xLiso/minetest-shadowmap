@@ -48,13 +48,14 @@ const float e = 2.718281828459;
 const float BS = 10.0;
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-//custom smoothstep implementation because it's not defined in glsl1.2
-//	https://docs.gl/sl4/smoothstep
-float mtsmoothstep(in float edge0, in float edge1, in float x ){
-	float t;
-    t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
-    return t * t * (3.0 - 2.0 * t);
-}
+	//custom smoothstep implementation because it's not defined in glsl1.2
+	//	https://docs.gl/sl4/smoothstep
+	float mtsmoothstep(in float edge0, in float edge1, in float x )
+	{
+		float t;
+		t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+		return t * t * (3.0 - 2.0 * t);
+	}
 #endif
 
 
@@ -164,10 +165,8 @@ void main(void)
 #else
 	gl_Position = mWorldViewProj * inVertexPosition;
 #endif
-
 	
 	vPosition = gl_Position.xyz;
-
 	eyeVec = -(mWorldView * inVertexPosition).xyz;
 	vNormal = inVertexNormal;
 	// Calculate color.

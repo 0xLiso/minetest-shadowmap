@@ -34,13 +34,13 @@ const float e = 2.718281828459;
 const float BS = 10.0;
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-//custom smoothstep implementation because it's not defined in glsl1.2
-//	https://docs.gl/sl4/smoothstep
-float mtsmoothstep(in float edge0, in float edge1, in float x ){
-	float t;
-    t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
-    return t * t * (3.0 - 2.0 * t);
-}
+	//custom smoothstep implementation because it's not defined in glsl1.2
+	//	https://docs.gl/sl4/smoothstep
+	float mtsmoothstep(in float edge0, in float edge1, in float x ){
+		float t;
+		t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+		return t * t * (3.0 - 2.0 * t);
+	}
 #endif
 
 
@@ -86,8 +86,7 @@ void main(void)
 	float texelSize = 2.0 / f_textureresolution;
 	float slopeScale = clamp( 1.0-abs(cosLight),0.0,1.0);
 	normalOffsetScale = texelSize*slopeScale ;
-	adj_shadow_strength = f_shadow_strength * mtsmoothstep(0.20,0.25,
-		f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday) );
+	adj_shadow_strength = f_shadow_strength * mtsmoothstep(0.20,0.25,f_timeofday)*(1.0-mtsmoothstep(0.7,0.8,f_timeofday));
 	f_normal_length = length(nNormal);
 #endif
 }
