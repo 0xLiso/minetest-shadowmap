@@ -181,8 +181,8 @@ void main(void)
 	vec4 color = inVertexColor;
 #endif
 	// The alpha gives the ratio of sunlight in the incoming light.
-	nightRatio = 1.0 - inVertexColor.a;
-	color.rgb = inVertexColor.rgb * (inVertexColor.a * dayLight.rgb +
+	nightRatio = 1.0 - color.a;
+	color.rgb = color.rgb * (color.a * dayLight.rgb +
 		nightRatio * artificialLight.rgb) * 2.0;
 	color.a = 1.0;
 
