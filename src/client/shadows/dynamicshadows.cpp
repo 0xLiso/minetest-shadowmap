@@ -19,8 +19,8 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 	camPos += look * shadow_frustum.zNear;
 	camPos2 += look * shadow_frustum.zNear;
 	float end = shadow_frustum.zNear + shadow_frustum.zFar;
-	newCenter = camPos + look * (shadow_frustum.zNear + 0.1f * end);
-	v3f world_center = camPos2 + look * (shadow_frustum.zNear + 0.1f * end);
+	newCenter = camPos + look * (shadow_frustum.zNear + 0.05f * end);
+	v3f world_center = camPos2 + look * (shadow_frustum.zNear + 0.05f * end);
 	// Create a vector to the frustum far corner
 	// @Liso: move all vars we can outside the loop.
 	float tanFovY = tanf(cam->getFovY() * 0.5f);

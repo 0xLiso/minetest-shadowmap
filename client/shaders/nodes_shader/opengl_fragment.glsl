@@ -76,7 +76,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 			}
 			else
 			{
-				float offsetScale = (0.025* getLinearDepth()+ normalOffsetScale) ;
+				float offsetScale = (0.015 * getLinearDepth()+ normalOffsetScale) ;
 				pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale*normalize(vNormal) ,1.0); 
 			}
 		#endif
@@ -201,7 +201,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 				vec2 clampedpos;
 				vec4 visibility=vec4(0.0);
 
-				float texture_size= 1/(f_textureresolution*0.15);
+				float texture_size= 1/(f_textureresolution*0.25);
 				#if SHADOW_FILTER == 2
 					#define PCFBOUND 3.5
 					#define PCFSAMPLES 64.0
@@ -230,7 +230,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 				vec2 clampedpos;
 				float visibility=0.0;
 
-				float texture_size= 1/(f_textureresolution*0.15);
+				float texture_size= 1/(f_textureresolution*0.25);
 				#if SHADOW_FILTER == 2
 					#define PCFBOUND 3.5
 					#define PCFSAMPLES 64.0
