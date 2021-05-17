@@ -372,7 +372,6 @@ local function handle_settings_buttons(this, fields, tabname, tabdata)
 		core.settings:set("enable_dynamic_shadows", "true")
 		core.settings:set("shadow_strength", "0.35")
 		core.settings:set("shadow_poisson_filter", "true")
-		core.settings:set("shadow_psm", "true")
 		if fields["dd_shadows"] == labels.shadow_levels[2] then
 			core.settings:set("shadow_map_max_distance", "80")
 			core.settings:set("shadow_map_texture_size", "512")

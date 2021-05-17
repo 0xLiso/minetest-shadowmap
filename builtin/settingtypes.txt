@@ -622,12 +622,6 @@ shadow_filters (Shadow filter quality) enum 1 0,1,2
 shadow_map_color (Colored shadows) bool false
 
 
-#    Enable Perspective Shadow Mapping. 
-#    On true enable PSM. 
-#    This is expensive.
-shadow_psm (PSM shadows) bool false
-
-
 [**Advanced]
 
 #    Arm inertia, gives a more realistic movement of
