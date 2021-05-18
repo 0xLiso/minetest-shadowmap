@@ -142,6 +142,8 @@ bool MyEventReceiver::OnEvent(const SEvent &event)
 		if (event.JoystickEvent != joystick_we_listen_for)
 			return false;
 		*/
+		if (!joystick)
+			return false;
 		return joystick->handleEvent(event.JoystickEvent);
 	} else if (event.EventType == irr::EET_MOUSE_INPUT_EVENT) {
 		// Handle mouse events

@@ -663,6 +663,8 @@ const char *RenderingEngine::getVideoDriverFriendlyName(irr::video::E_DRIVER_TYP
 	return driver_names[type];
 }
 
+ 
+
 #ifndef __ANDROID__
 #if defined(XORG_USED)
 

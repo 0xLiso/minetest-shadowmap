@@ -24,6 +24,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <IMeshManipulator.h>
 #include <IAnimatedMeshSceneNode.h>
 #include "client/client.h"
+#include "client/renderingengine.h"
 #include "client/sound.h"
 #include "client/tile.h"
 #include "util/basic_macros.h"
@@ -556,12 +557,20 @@ void GenericCAO::removeFromScene(bool permanent)
 
 		clearParentAttachment();
 	}
-
+	ShadowRenderer *m_shadow = RenderingEngine::get_shadow_renderer();
 	if (m_meshnode) {
+		// remove mesh from shadow caster
+		if (m_shadow) {
+			m_shadow->removeNodeFromShadowList(m_meshnode);
+		}
 		m_meshnode->remove();
 		m_meshnode->drop();
 		m_meshnode = nullptr;
 	} else if (m_animated_meshnode)	{
+		// remove mesh from shadow caster
+		if (m_shadow) {
+			m_shadow->removeNodeFromShadowList(m_animated_meshnode);
+		}
 		m_animated_meshnode->remove();
 		m_animated_meshnode->drop();
 		m_animated_meshnode = nullptr;
@@ -570,12 +579,20 @@ void GenericCAO::removeFromScene(bool permanent)
 		m_wield_meshnode->drop();
 		m_wield_meshnode = nullptr;
 	} else if (m_spritenode) {
+		// remove mesh from shadow caster
+		if (m_shadow) {
+			m_shadow->removeNodeFromShadowList(m_spritenode);
+		}
 		m_spritenode->remove();
 		m_spritenode->drop();
 		m_spritenode = nullptr;
 	}
 
 	if (m_matrixnode) {
+		// remove mesh from shadow caster
+		if (m_shadow) {
+			m_shadow->removeNodeFromShadowList(m_matrixnode);
+		}
 		m_matrixnode->remove();
 		m_matrixnode->drop();
 		m_matrixnode = nullptr;
@@ -604,7 +621,7 @@ void GenericCAO::addToScene(ITextureSource *tsrc, scene::ISceneManager *smgr)
 		return;
 
 	infostream << "GenericCAO::addToScene(): " << m_prop.visual << std::endl;
-
+	ShadowRenderer *m_shadow = RenderingEngine::get_shadow_renderer();
 	if (m_enable_shaders) {
 		IShaderSource *shader_source = m_client->getShaderSource();
 		MaterialType material_type;
@@ -657,6 +674,9 @@ void GenericCAO::addToScene(ITextureSource *tsrc, scene::ISceneManager *smgr)
 			const float tys = 1.0 / 1;
 			setBillboardTextureMatrix(m_spritenode,
 					txs, tys, 0, 0);
+		}
+		if (m_shadow) {
+			m_shadow->addNodeToShadowList(m_spritenode);
 		}
 	} else if (m_prop.visual == "upright_sprite") {
 		grabMatrixNode();
@@ -728,6 +748,11 @@ void GenericCAO::addToScene(ITextureSource *tsrc, scene::ISceneManager *smgr)
 			buf->drop();
 		}
 		m_meshnode = m_smgr->addMeshSceneNode(mesh, m_matrixnode);
+		//Add mesh to shadow caster
+		if (m_shadow) {
+			m_shadow->addNodeToShadowList(m_meshnode);
+
+		}
 		m_meshnode->grab();
 		mesh->drop();
 		// Set it to use the materials of the meshbuffers directly.
@@ -737,6 +762,10 @@ void GenericCAO::addToScene(ITextureSource *tsrc, scene::ISceneManager *smgr)
 		grabMatrixNode();
 		scene::IMesh *mesh = createCubeMesh(v3f(BS,BS,BS));
 		m_meshnode = m_smgr->addMeshSceneNode(mesh, m_matrixnode);
+		// Add mesh to shadow caster
+		if (m_shadow) {
+			m_shadow->addNodeToShadowList(m_meshnode);
+		}
 		m_meshnode->grab();
 		mesh->drop();
 
@@ -750,6 +779,10 @@ void GenericCAO::addToScene(ITextureSource *tsrc, scene::ISceneManager *smgr)
 		scene::IAnimatedMesh *mesh = m_client->getMesh(m_prop.mesh, true);
 		if (mesh) {
 			m_animated_meshnode = m_smgr->addAnimatedMeshSceneNode(mesh, m_matrixnode);
+			// Add mesh to shadow caster
+			if (m_shadow) {
+				m_shadow->addNodeToShadowList(m_animated_meshnode);
+			}
 			m_animated_meshnode->grab();
 			mesh->drop(); // The scene node took hold of it
 

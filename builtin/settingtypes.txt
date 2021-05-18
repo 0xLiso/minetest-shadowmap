@@ -582,6 +582,46 @@ enable_waving_leaves (Waving leaves) bool false
 #    Requires shaders to be enabled.
 enable_waving_plants (Waving plants) bool false
 
+[***Dynamic shadows]
+
+#    Set to true to enable Shadow Mapping.
+#    Requires shaders to be enabled
+enable_dynamic_shadows (Dynamic shadows) bool false
+
+
+#    Set the shadow strength.
+#    Lower value means lighter shadows, higher value means darker shadows.
+shadow_strength (Shadow strength) float 0.25 0.05 1.0
+
+#    Max distance to render shadows. 
+shadow_map_max_distance (Shadow map max distance in blocks to render shadows) float 120.0 10.0 2000.0
+
+#    Texture size to render on. 
+#    This must be a power of 2 number    (128,256,512,1024,2048,4096,8192)
+#    Bigger number creates better shadows, but it is also more expensive.
+shadow_map_texture_size (Shadow map texture size) int 1024 128 8192
+
+#    Sets Texture quality to 32 bits. 
+#    On false, 16 bits texture will be used. 
+#    This can cause much more artifacts in the shadow.
+shadow_map_texture_32bit (Shadow map texture in 32 bits) bool true
+
+#    Enable poisson disk filtering. 
+#    On true uses poisson disk to make "soft shadows". 
+#    On false uses PCF filtering.
+shadow_poisson_filter (Poisson filtering) bool true
+
+#   Define shadow filtering quality
+#   This simulates the soft shadows effect by applying a PCF or poisson disk
+#   but it also use a more resources.
+shadow_filters (Shadow filter quality) enum 1 0,1,2
+
+#    Enable colored shadows. 
+#    On true translucent block casts colored shadows. 
+#    This is expensive.
+shadow_map_color (Colored shadows) bool false
+
+
 [**Advanced]
 
 #    Arm inertia, gives a more realistic movement of

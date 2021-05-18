@@ -20,7 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #pragma once
 #include "irrlichttypes_extrabloated.h"
-
+#include "client/shadows/dynamicshadowsrender.h"
 class Camera;
 class Client;
 class Hud;
@@ -47,6 +47,8 @@ protected:
 	Minimap *mapper;
 	Hud *hud;
 
+	ShadowRenderer *shadow_renderer{nullptr};
+
 	void updateScreenSize();
 	virtual void initTextures() {}
 	virtual void clearTextures() {}
@@ -72,4 +74,6 @@ public:
 			bool _draw_wield_tool, bool _draw_crosshair);
 
 	inline v2u32 getVirtualSize() const { return virtual_size; }
+
+	ShadowRenderer *get_shadow_renderer() { return shadow_renderer; };
 };
