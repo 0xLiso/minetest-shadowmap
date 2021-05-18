@@ -70,13 +70,13 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 		#if DRAW_TYPE==NDT_PLANTLIKE
 			pLightSpace = m_ShadowViewProj  * vec4(worldPosition ,1.0); 
 		#else
-			if(f_normal_length<0.01)
+			if(f_normal_length==0)
 			{
-				pLightSpace = m_ShadowViewProj  * vec4(worldPosition+0.000000005  ,1.0); 
+				pLightSpace = m_ShadowViewProj  * vec4(worldPosition+0.00005  ,1.0); 
 			}
 			else
 			{
-				float offsetScale = (0.015 * getLinearDepth()+ normalOffsetScale) ;
+				float offsetScale = (0.0055 * getLinearDepth()+ normalOffsetScale) ;
 				pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale*normalize(vNormal) ,1.0); 
 			}
 		#endif
@@ -201,7 +201,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 				vec2 clampedpos;
 				vec4 visibility=vec4(0.0);
 
-				float texture_size= 1/(f_textureresolution*0.25);
+				float texture_size= 1/(f_textureresolution*0.5);
 				#if SHADOW_FILTER == 2
 					#define PCFBOUND 3.5
 					#define PCFSAMPLES 64.0
@@ -262,7 +262,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 				vec2 clampedpos;
 				vec4 visibility=vec4(0.0);
 
-				float texture_size= 1/(f_textureresolution*0.5);
+				float texture_size= 1/(f_textureresolution*0.25);
 				#if SHADOW_FILTER == 2
 					#define PCFBOUND 3.5
 					#define PCFSAMPLES 64.0
@@ -280,7 +280,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 				for (x = -PCFBOUND ; x <=PCFBOUND ; x+=1.0)
 				{
 					clampedpos = vec2(x,y)*texture_size + smTexCoord.xy;
-					visibility=getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
+					visibility+=getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
 				}
 				
 				return visibility/PCFSAMPLES;
@@ -291,7 +291,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 				vec2 clampedpos;
 				float visibility=0.0;
 
-				float texture_size= 1/(f_textureresolution*0.5);
+				float texture_size= 1/(f_textureresolution*0.25);
 				#if SHADOW_FILTER == 2
 					#define PCFBOUND 3.5
 					#define PCFSAMPLES 64.0
@@ -391,7 +391,7 @@ void main(void)
 
 	if( f_normal_length!=0 && cosLight<= 0)
 	{
-		shadow_int=clamp(shadow_int+(0.3 - cosLight)-nightRatio,0.0,1.0);
+		shadow_int =clamp(shadow_int + 0.3 + abs(cosLight)-nightRatio,0.0,1.0);
 	}
 
 	shadow_int  = 1.0 - (shadow_int*adj_shadow_strength);

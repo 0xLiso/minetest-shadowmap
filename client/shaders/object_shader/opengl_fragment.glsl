@@ -95,13 +95,13 @@ vec4 applyToneMapping(vec4 color)
 		#if DRAW_TYPE==NDT_PLANTLIKE
 			pLightSpace = m_ShadowViewProj  * vec4(worldPosition ,1.0); 
 		#else
-			if(f_normal_length<0.01)
+			if(f_normal_length==0)
 			{
-				pLightSpace = m_ShadowViewProj  * vec4(worldPosition+0.000000005  ,1.0); 
+				pLightSpace = m_ShadowViewProj  * vec4(worldPosition+0.00005  ,1.0); 
 			}
 			else
 			{
-				float offsetScale = (0.015 * getLinearDepth()+ normalOffsetScale) ;
+				float offsetScale = (0.005 * getLinearDepth()+ normalOffsetScale) ;
 				pLightSpace = m_ShadowViewProj  * vec4(worldPosition+  offsetScale*normalize(vNormal) ,1.0); 
 			}
 		#endif

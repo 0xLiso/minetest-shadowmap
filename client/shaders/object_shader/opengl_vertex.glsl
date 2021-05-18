@@ -80,9 +80,8 @@ void main(void)
 	varColor = inVertexColor;
 #endif
 #ifdef ENABLE_DYNAMIC_SHADOWS
-	vNormal = normalize(gl_NormalMatrix*vNormal );
-	vec3 nNormal = vNormal ;
-	cosLight = dot( nNormal,  normalize(gl_NormalMatrix*-v_LightDirection));
+	vec3 nNormal = normalize(vNormal ) ;
+	cosLight = dot( nNormal,  normalize(-v_LightDirection));
 	float texelSize = 2.0 / f_textureresolution;
 	float slopeScale = clamp( 1.0-abs(cosLight),0.0,1.0);
 	normalOffsetScale = texelSize*slopeScale ;
