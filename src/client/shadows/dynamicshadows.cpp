@@ -10,8 +10,7 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 	float radius;
 	v3f newCenter;
 	v3f look = cam->getDirection();
-	look.Y = 0.0f;
-	look.normalize();
+
 	v3f camPos2 = cam->getPosition();
 	v3f camPos = v3f(camPos2.X - cam->getOffset().X * BS,
 			camPos2.Y - cam->getOffset().Y * BS,

@@ -381,7 +381,7 @@ void ShadowRenderer::renderShadowMap(irr::video::ITexture *target,
 			// we HAVE TO render back and front faces
 			// so we disable both culling...
 			material.BackfaceCulling = false;
-			material.FrontfaceCulling = false;
+			material.FrontfaceCulling = true;
 			// material.PolygonOffsetFactor = -1;
 			// material.PolygonOffsetDirection = video::EPO_BACK;
 			material.PolygonOffsetDepthBias = 2.0 * 4.8e-7;
@@ -442,7 +442,7 @@ void ShadowRenderer::renderShadowObjects(
 					current_mat.BackfaceCulling ? true : false,
 					current_mat.FrontfaceCulling ? true : false));
 			current_mat.BackfaceCulling = false;
-			current_mat.FrontfaceCulling = false;
+			current_mat.FrontfaceCulling = true;
 
 			current_mat.PolygonOffsetDepthBias = 2.0 * 4.8e-7;
 			current_mat.PolygonOffsetSlopeScale = -1.f;
