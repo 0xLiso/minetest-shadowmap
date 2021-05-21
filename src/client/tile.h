@@ -27,7 +27,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <SMaterial.h>
 #include "util/numeric.h"
 #include "config.h"
-#include "settings.h"
 
 #if ENABLE_GLES
 #include <IVideoDriver.h>

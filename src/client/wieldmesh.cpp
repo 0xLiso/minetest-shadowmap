@@ -29,7 +29,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "mapblock_mesh.h"
 #include "client/meshgen/collector.h"
 #include "client/tile.h"
-#include "client/renderingengine.h"
 #include "log.h"
 #include "util/numeric.h"
 #include <map>
@@ -226,14 +225,9 @@ WieldMeshSceneNode::WieldMeshSceneNode(scene::ISceneManager *mgr, s32 id, bool l
 WieldMeshSceneNode::~WieldMeshSceneNode()
 {
 	sanity_check(g_extrusion_mesh_cache);
-	/*
-	* FixMe Liso: IDK hwo to know when the wieldsmesh is an entity droped in ground or
-handheld entity.
-	* And this causes wrong shadows
-	if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-		RenderingEngine::get_instance()->get_shadow_renderer()->removeNodeFromShadowList(m_meshnode);
-	}
-	*/
+
+	// TODO removeNodeFromShadowList missing here
+
 	if (g_extrusion_mesh_cache->drop())
 		g_extrusion_mesh_cache = nullptr;
 }
@@ -248,18 +242,6 @@ void WieldMeshSceneNode::setCube(const ContentFeatures &f,
 	changeToMesh(copy);
 	copy->drop();
 	m_meshnode->setScale(wield_scale * WIELD_SCALE_FACTOR);
-	/*
-	* FixMe Liso: IDK hwo to know when the wieldsmesh is an entity droped in ground or handheld entity.
-	* And this causes wrong shadows
-	// Add mesh to shadow caster
-	if (RenderingEngine::get_instance()->is_renderingcore_ready()) {
-		RenderingEngine::get_instance()
-				->get_shadow_renderer()
-				->addNodeToShadowList(
-						m_meshnode, E_SHADOW_MODE::ESM_CAST);
-	}
-
-	*/
 }
 
 void WieldMeshSceneNode::setExtruded(const std::string &imagename,
@@ -482,6 +464,8 @@ void WieldMeshSceneNode::setItem(const ItemStack &item, Client *client, bool che
 
 	// no wield mesh found
 	changeToMesh(nullptr);
+
+	// TODO should call addNodeToShadowList in this function but before return (not just here)
 }
 
 void WieldMeshSceneNode::setColor(video::SColor c)
@@ -548,7 +532,6 @@ void WieldMeshSceneNode::changeToMesh(scene::IMesh *mesh)
 	// need to normalize normals when lighting is enabled (because of setScale())
 	m_meshnode->setMaterialFlag(video::EMF_NORMALIZE_NORMALS, m_lighting);
 	m_meshnode->setVisible(true);
-
 }
 
 void getItemMesh(Client *client, const ItemStack &item, ItemMesh *result)

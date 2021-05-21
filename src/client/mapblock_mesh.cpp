@@ -866,7 +866,7 @@ static void updateFastFaceRow(
 			g_settings->getBool("shadow_psm");
 
 	v3s16 p = startpos;
-	
+
 	u16 continuous_tiles_count = 1;
 
 	bool makes_face = false;
@@ -903,7 +903,7 @@ static void updateFastFaceRow(
 					waving,
 					next_tile);
 
-			if (force_not_tiling ==false
+			if (!force_not_tiling
 					&& next_makes_face == makes_face
 					&& next_p_corrected == p_corrected + translate_dir
 					&& next_face_dir_corrected == face_dir_corrected

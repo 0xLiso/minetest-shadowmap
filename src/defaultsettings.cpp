@@ -262,15 +262,15 @@ void set_default_settings()
 	settings->setDefault("enable_waving_leaves", "false");
 	settings->setDefault("enable_waving_plants", "false");
 
-    // Effects Shadows
-    settings->setDefault("enable_dynamic_shadows", "false");
-    settings->setDefault("shadow_strength", "0.25");
-    settings->setDefault("shadow_map_max_distance", "200.0");
-    settings->setDefault("shadow_map_texture_size", "2048");
-    settings->setDefault("shadow_map_texture_32bit", "true");
-    settings->setDefault("shadow_map_color", "false");
-    settings->setDefault("shadow_filters", "1");
-    settings->setDefault("shadow_psm", "true");
+	// Effects Shadows
+	settings->setDefault("enable_dynamic_shadows", "false");
+	settings->setDefault("shadow_strength", "0.25");
+	settings->setDefault("shadow_map_max_distance", "200.0");
+	settings->setDefault("shadow_map_texture_size", "2048");
+	settings->setDefault("shadow_map_texture_32bit", "true");
+	settings->setDefault("shadow_map_color", "false");
+	settings->setDefault("shadow_filters", "1");
+	settings->setDefault("shadow_psm", "true");
 	settings->setDefault("shadow_poisson_filter", "true");
 
 	// Input

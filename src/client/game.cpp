@@ -739,7 +739,8 @@ protected:
 	void updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 			const CameraOrientation &cam);
 
-	void updateShadows(float _timeoftheday);
+	void updateShadows();
+
 	// Misc
 	void limitFps(FpsControl *fps_timings, f32 *dtime);
 
@@ -3840,16 +3841,9 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 		runData.update_draw_list_timer = 0;
 		client->getEnv().getClientMap().updateDrawList();
 		runData.update_draw_list_last_cam_dir = camera_direction;
-		
-		/*
-		 * Update Shadows
-		 */
-		updateShadows(time_of_day_smooth);
 
-		
-
+		updateShadows();
 	}
-	
 
 	m_game_ui->update(*stats, client, draw_control, cam, runData.pointed_old, gui_chat_console, dtime);
 
@@ -3982,42 +3976,33 @@ inline void Game::updateProfilerGraphs(ProfilerGraph *graph)
 /****************************************************************************
  * Shadows
  *****************************************************************************/
-void Game::updateShadows(float _timeoftheday)
+void Game::updateShadows()
 {
 	ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
 	if (!shadow)
 		return;
-	if (shadow->getDirectionalLightCount() == 0) {
-		shadow->addDirectionalLight();
-	}
 
-	//time of the day
-	//0 ->00:00
-	//1 -> 23_59
+	float timeoftheday = runData.time_of_day_smooth - 0.2f;
+	bool isDay = timeoftheday > 0.0f && timeoftheday < 0.6f;
 
-	float timeoftheday = _timeoftheday - 0.2f;
-	bool isDay = false;
-	if (timeoftheday > 0.0f && timeoftheday < 0.6f)
-		isDay = true;
-	
-	//@Liso: can we  add a z offset in the confgiuration??
+	// @Liso: can we  add a z offset in the configuration??
 	// https://image2.slideserve.com/4889289/spherical-coordinates-l.jpg
-	const float offset_constant=10000.0f;
+	const float offset_constant = 10000.0f;
 	float phi = timeoftheday * 5.0f;
-	float theta = 1.4835; //85%		3.14f /2.0f; // from 90 degrees +- 15 degrees should be ok.
-	float offsety = sin(phi)   * offset_constant * sin(theta);
-	float offsetx = cos(phi)   * offset_constant * sin(theta);
-	//float offsetz =  cos(theta) * offset_constant; 
-			 
-	irr::core::vector3df sun_pos = irr::core::vector3df(offsetx, offsety, 0.0);
-		
+	float theta = 1.4835f; //85%  3.14f /2.0f; // from 90 degrees +- 15 degrees should be ok.
+	float offsety = sinf(phi) * offset_constant * sinf(theta);
+	float offsetx = cosf(phi) * offset_constant * sinf(theta);
+	//float offsetz = cosf(theta) * offset_constant;
 
+	v3f sun_pos(offsetx, offsety, 0.0f);
+
+	if (shadow->getDirectionalLightCount() == 0)
+		shadow->addDirectionalLight();
 	shadow->getDirectionalLight().setDirection(sun_pos);
-	shadow->setTimeOfDay(_timeoftheday);
-	if (isDay) {
+	shadow->setTimeOfDay(runData.time_of_day_smooth);
+	if (isDay)
 		shadow->getDirectionalLight().update_frustum(camera, client);
-	}
-	 
+
 }
 
 /****************************************************************************
