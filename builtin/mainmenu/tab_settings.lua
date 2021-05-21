@@ -44,7 +44,7 @@ local labels = {
 		fgettext("4x"),
 		fgettext("8x")
 	},
-	shadow_levels={
+	shadow_levels = {
 		fgettext("Disabled"),
 		fgettext("Ultra Low"),
 		fgettext("Low"),
@@ -77,7 +77,7 @@ local dd_options = {
 	},
 	shadow_levels = {
 		table.concat(labels.shadow_levels, ","),
-		{ "0","1","2","3","4","5" }
+		{ "0", "1", "2", "3", "4", "5" }
 	}
 }
 
@@ -123,7 +123,7 @@ local getSettingIndex = {
 		end
 		return 1
 	end,
-	ShadowsMapping = function()
+	ShadowMapping = function()
 		local shadow_setting = core.settings:get("shadow_levels")
 		for i = 1, #dd_options.shadow_levels[2] do
 			if shadow_setting == dd_options.shadow_levels[2][i] then
@@ -221,7 +221,7 @@ local function formspec(tabview, name, tabdata)
 					.. dump(core.settings:get_bool("enable_waving_plants")) .. "]"..
 			"label[8.25,3.0;" .. fgettext("Dynamic shadows: ") .. "]" ..
 			"dropdown[8.25,3.5;3.5;dd_shadows;" .. dd_options.shadow_levels[1] .. ";"
-					.. getSettingIndex.ShadowsMapping() .. "]"
+					.. getSettingIndex.ShadowMapping() .. "]"
 	else
 		tab_string = tab_string ..
 			"label[8.38,0.7;" .. core.colorize("#888888",
@@ -371,37 +371,20 @@ local function handle_settings_buttons(this, fields, tabname, tabdata)
 	else
 		core.settings:set("enable_dynamic_shadows", "true")
 		core.settings:set("shadow_strength", "0.35")
-		core.settings:set("shadow_poisson_filter", "true")
-		if fields["dd_shadows"] == labels.shadow_levels[2] then
-			core.settings:set("shadow_map_max_distance", "80")
-			core.settings:set("shadow_map_texture_size", "512")
-			core.settings:set("shadow_map_texture_32bit", "true")
-			core.settings:set("shadow_filters", "1")
-			core.settings:set("shadow_map_color", "false")
-		elseif fields["dd_shadows"] == labels.shadow_levels[3] then
-			core.settings:set("shadow_map_max_distance", "120")
-			core.settings:set("shadow_map_texture_size", "1024")
-			core.settings:set("shadow_map_texture_32bit", "true")
-			core.settings:set("shadow_filters", "1")
-			core.settings:set("shadow_map_color", "false")
-		elseif fields["dd_shadows"] == labels.shadow_levels[4] then
-			core.settings:set("shadow_map_max_distance", "350")
-			core.settings:set("shadow_map_texture_size", "2048")
-			core.settings:set("shadow_map_texture_32bit", "true")
-			core.settings:set("shadow_filters", "1")
-			core.settings:set("shadow_map_color", "false")
-		elseif fields["dd_shadows"] == labels.shadow_levels[5] then
-			core.settings:set("shadow_map_max_distance", "450")
-			core.settings:set("shadow_map_texture_size", "4096")
-			core.settings:set("shadow_map_texture_32bit", "true")
-			core.settings:set("shadow_filters", "2")
-			core.settings:set("shadow_map_color", "true")
-		elseif fields["dd_shadows"] == labels.shadow_levels[6] then
-			core.settings:set("shadow_map_max_distance", "800")
-			core.settings:set("shadow_map_texture_size", "8192")
-			core.settings:set("shadow_map_texture_32bit", "true")
-			core.settings:set("shadow_filters", "2")
-			core.settings:set("shadow_map_color", "true")
+		local shadow_presets = {
+			[2] = { 80,  512,  "true", 1, "false" },
+			[3] = { 120, 1024, "true", 1, "false" },
+			[4] = { 350, 2048, "true", 1, "false" },
+			[5] = { 450, 4096, "true", 2,  "true" },
+			[6] = { 800, 8192, "true", 2,  "true" },
+		}
+		local s = shadow_presets[table.indexof(labels.shadow_levels, fields["dd_shadows"])]
+		if s then
+			core.settings:set("shadow_map_max_distance", s[1])
+			core.settings:set("shadow_map_texture_size", s[2])
+			core.settings:set("shadow_map_texture_32bit", s[3])
+			core.settings:set("shadow_filters", s[4])
+			core.settings:set("shadow_map_color", s[5])
 		end
 	end
 
