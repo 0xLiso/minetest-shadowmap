@@ -357,8 +357,6 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 			Get the meshbuffers of the block
 		*/
 		{
-			//MutexAutoLock lock(block->mesh_mutex);
-
 			MapBlockMesh *mapBlockMesh = block->mesh;
 			assert(mapBlockMesh);
 
@@ -405,7 +403,7 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 		for (MeshBufList &list : lists) {
 			// Check and abort if the machine is swapping a lot
 			if (draw.getTimerTime() > 2000) {
-				infostream << "ClientMap::renderMap(): Rendering took >2s, " <<
+				infostream << "ClientMap::renderMap(): Rendering took >1s, " <<
 						"returning." << std::endl;
 				return;
 			}
@@ -769,9 +767,6 @@ void ClientMap::updateDrawListShadow(
 		block->refDrop();
 	}
 	m_drawlist_shadow.clear();
-
-	if (m_drawlist_shadow.empty())
-		m_drawlist_shadow = m_drawlist;
 
 	// Number of blocks currently loaded by the client
 	u32 blocks_loaded = 0;
