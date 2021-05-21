@@ -25,11 +25,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <string>
 #include "irrlichttypes_extrabloated.h"
 #include "debug.h"
-
-//we need the full definition of RenderingCore
 #include "client/render/core.h"
-
-//ShadowMaping stuff
+// include the shadow mapper classes too
 #include "client/shadows/dynamicshadowsrender.h"
 
 
@@ -120,10 +117,9 @@ public:
 		return m_device->run();
 	}
 
+	// FIXME: this is still global when it shouldn't be
 	static ShadowRenderer *get_shadow_renderer()	
 	{
-		//sanity_check(s_singleton && s_singleton->core);
-
 		if (s_singleton && s_singleton->core)
 			return s_singleton->core->get_shadow_renderer();
 		return nullptr;
