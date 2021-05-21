@@ -110,8 +110,10 @@ vec4 getHardShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 
 	float visibility = step(0.0, realDistance - texDepth.r);
 	vec4 result = vec4(visibility, vec3(0.0,0.0,0.0));//unpackColor(texDepth.g));
-	if (visibility < 0.1)
-		visibility = step(0.0, realDistance(texDepth.a));
+	if (visibility < 0.1) {
+		visibility = step(0.0,	realDistance - texDepth.b);
+		result = vec4(visibility, unpackColor(texDepth.a));
+	}
 	return result;
 }
 
@@ -387,8 +389,7 @@ void main(void)
 	float clarity = clamp(fogShadingParameter
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
 	col = mix(skyBgColor, col, clarity);
-	
-	col = vec4(col.rgb , base.a);
+	col = vec4(col.rgb, base.a);
 
 	gl_FragColor = col;
 }
