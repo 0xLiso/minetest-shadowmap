@@ -370,7 +370,7 @@ local function handle_settings_buttons(this, fields, tabname, tabdata)
 		core.settings:set("enable_dynamic_shadows", "false")
 	else
 		core.settings:set("enable_dynamic_shadows", "true")
-		core.settings:set("shadow_strength", "0.35")
+		core.settings:set("shadow_strength", "0.2")
 		local shadow_presets = {
 			[2] = { 80,  512,  "true", 1, "false" },
 			[3] = { 120, 1024, "true", 1, "false" },

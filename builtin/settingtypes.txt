@@ -590,7 +590,7 @@ enable_dynamic_shadows (Dynamic shadows) bool false
 
 #    Set the shadow strength.
 #    Lower value means lighter shadows, higher value means darker shadows.
-shadow_strength (Shadow strength) float 0.25 0.05 1.0
+shadow_strength (Shadow strength) float 0.2 0.05 1.0
 
 #    Maximum distance to render shadows.
 shadow_map_max_distance (Shadow map max distance in nodes to render shadows) float 120.0 10.0 2000.0
