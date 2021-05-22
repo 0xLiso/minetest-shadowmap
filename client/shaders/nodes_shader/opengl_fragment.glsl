@@ -143,7 +143,7 @@ float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 #else
 	#define PCFBOUND 0.0
 	// why?
-	#ifdef defined(POISSON_FILTER) && !defined(COLORED_SHADOWS)
+	#if defined(POISSON_FILTER) && !defined(COLORED_SHADOWS)
 		#define PCFSAMPLES 4.0
 	#else
 		#define PCFSAMPLES 1.0
