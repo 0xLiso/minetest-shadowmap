@@ -69,14 +69,14 @@ vec4 applyToneMapping(vec4 color)
 #endif
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-const float bias0 = 0.94;
-const float zPersFactor = 0.25;
+const float bias0 = 0.95;
+const float zPersFactor = 0.2;
+const float bias1 = 1.0 - bias0;
 
 vec4 getPerspectiveFactor(in vec4 shadowPosition)
 {
-	float bias1 = 1.0 - bias0;
-	float pDistance = sqrt(shadowPosition.x * shadowPosition.x +
-			shadowPosition.y * shadowPosition.y );
+
+	float pDistance = length(shadowPosition.xy);
 	float pFactor = pDistance * bias0 + bias1;
 	shadowPosition.xyz *= vec3(vec2(1.0 / pFactor), zPersFactor);
 
@@ -97,15 +97,17 @@ vec3 getLightSpacePosition()
 	pLightSpace = m_ShadowViewProj * vec4(worldPosition, 1.0);
 	#else
 	if (f_normal_length == 0) {
-		pLightSpace = m_ShadowViewProj * vec4(worldPosition + 0.00005, 1.0);
+		pLightSpace = m_ShadowViewProj * vec4(worldPosition + 0.0005, 1.0);
 	} else {
-		float offsetScale = (0.005 * getLinearDepth() + normalOffsetScale);
+		float offsetScale = (0.0055 * getLinearDepth() + normalOffsetScale);
+		// ^ why is this different?
 		pLightSpace = m_ShadowViewProj * vec4(worldPosition + offsetScale * normalize(vNormal), 1.0);
 	}
 	#endif
 	pLightSpace = getPerspectiveFactor(pLightSpace);
 	return pLightSpace.xyz * 0.5 + 0.5;
 }
+
 
 #ifdef COLORED_SHADOWS
 
@@ -360,14 +362,13 @@ void main(void)
 	shadow_int = getShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
 #endif
 
-	if (f_normal_length != 0 && cosLight <= 0) {
-		shadow_int = clamp(shadow_int + 0.3 - cosLight, 0.0, 1.0);
+	if (f_normal_length != 0 && cosLight <= 0.0) {
+		shadow_int = clamp(shadow_int + 0.3 - abs(cosLight), 0.0, 1.0);
 	}
 
 	shadow_int = 1.0 - (shadow_int * adj_shadow_strength);
-	shadow_color *= adj_shadow_strength;
-
-	col.rgb = col.rgb * shadow_int + shadow_color;
+	
+	col.rgb = mix(shadow_color,col.rgb,shadow_int)*shadow_int;
 #endif
 
 

@@ -82,8 +82,8 @@ void main(void)
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	vec3 nNormal = normalize(vNormal);
-	cosLight = dot(nNormal, normalize(-v_LightDirection));
-	float texelSize = 2.0 / f_textureresolution;
+	cosLight = dot(vNormal, -v_LightDirection);
+	float texelSize = 256.0/f_textureresolution + 1.0 / f_textureresolution;
 	float slopeScale = clamp(1.0 - abs(cosLight), 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
 	adj_shadow_strength = f_shadow_strength *

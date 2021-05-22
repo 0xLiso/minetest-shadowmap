@@ -44,14 +44,14 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-const float bias0 = 0.94;
-const float zPersFactor = 0.25;
+const float bias0 = 0.95;
+const float zPersFactor = 0.2;
+const float bias1 = 1.0 - bias0;
 
 vec4 getPerspectiveFactor(in vec4 shadowPosition)
 {
-	float bias1 = 1.0 - bias0;
-	float pDistance = sqrt(shadowPosition.x * shadowPosition.x +
-			shadowPosition.y * shadowPosition.y );
+
+	float pDistance = length(shadowPosition.xy);
 	float pFactor = pDistance * bias0 + bias1;
 	shadowPosition.xyz *= vec3(vec2(1.0 / pFactor), zPersFactor);
 
@@ -72,7 +72,7 @@ vec3 getLightSpacePosition()
 	pLightSpace = m_ShadowViewProj * vec4(worldPosition, 1.0);
 	#else
 	if (f_normal_length == 0) {
-		pLightSpace = m_ShadowViewProj * vec4(worldPosition + 0.00005, 1.0);
+		pLightSpace = m_ShadowViewProj * vec4(worldPosition + 0.0005, 1.0);
 	} else {
 		float offsetScale = (0.0055 * getLinearDepth() + normalOffsetScale);
 		// ^ why is this different?
@@ -360,10 +360,7 @@ void main(void)
 	vec3 shadow_color = vec3(0.0, 0.0, 0.0);
 	vec3 posLightSpace = getLightSpacePosition();
 
-	if (posLightSpace.x > 0.0 && posLightSpace.x < 1.0 &&
-	   posLightSpace.y > 0.0 && posLightSpace.y < 1.0 &&
-	   posLightSpace.z > 0.0 && posLightSpace.z < 1.0)
-	{
+	
 #ifdef COLORED_SHADOWS
 		vec4 visibility = getShadowColor(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
 		shadow_int = visibility.r;
@@ -372,16 +369,15 @@ void main(void)
 		shadow_int = getShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
 #endif
 		shadow_int *= 1.0 - nightRatio;
-	}
 
-	if (f_normal_length != 0 && cosLight <= 0) {
+
+	if (f_normal_length != 0 && cosLight <= 0.0) {
 		shadow_int = clamp(shadow_int + 0.3 + abs(cosLight) - nightRatio, 0.0, 1.0);
 	}
 
 	shadow_int = 1.0 - (shadow_int * adj_shadow_strength);
-	shadow_color *= adj_shadow_strength;
-
-	col.rgb = col.rgb * shadow_int + shadow_color;
+	
+	col.rgb = mix(shadow_color,col.rgb,shadow_int)*shadow_int;
 #endif
 
 #if ENABLE_TONE_MAPPING
