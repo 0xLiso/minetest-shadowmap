@@ -74,7 +74,8 @@ vec3 getLightSpacePosition()
 	if (f_normal_length == 0) {
 		pLightSpace = m_ShadowViewProj * vec4(worldPosition + 0.00005, 1.0);
 	} else {
-		float offsetScale = (0.005 * getLinearDepth() + normalOffsetScale) ;
+		float offsetScale = (0.0055 * getLinearDepth() + normalOffsetScale);
+		// ^ why is this different?
 		pLightSpace = m_ShadowViewProj * vec4(worldPosition + offsetScale * normalize(vNormal), 1.0);
 	}
 	#endif
@@ -133,10 +134,20 @@ float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	#define PCFSAMPLES 64.0
 #elif SHADOW_FILTER == 1
 	#define PCFBOUND 1.5
-	#define PCFSAMPLES 16.0
+	// why?
+	#if defined(POISSON_FILTER) && !defined(COLORED_SHADOWS)
+		#define PCFSAMPLES 32.0
+	#else
+		#define PCFSAMPLES 16.0
+	#endif
 #else
 	#define PCFBOUND 0.0
-	#define PCFSAMPLES 1.0
+	// why?
+	#ifdef defined(POISSON_FILTER) && !defined(COLORED_SHADOWS)
+		#define PCFSAMPLES 4.0
+	#else
+		#define PCFSAMPLES 1.0
+	#endif
 #endif
 
 #ifdef POISSON_FILTER
@@ -233,7 +244,7 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	vec2 clampedpos;
 	float visibility = 0.0;
 
-	float texture_size = 1/ (f_textureresolution * 0.25);
+	float texture_size = 1 / (f_textureresolution * 0.25);
 	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
 	int end_offset = int(PCFSAMPLES) + init_offset;
 
