@@ -751,7 +751,7 @@ void ClientMap::updateDrawListShadow(
 	v3f camera_direction = shadow_light_dir;
 	// I "fake" fov just to avoid creating a new function to handle orthographic
 	// projection.
-	f32 camera_fov = m_camera_fov * 1.5f;
+	f32 camera_fov = m_camera_fov * 1.9f;
 
 	v3s16 cam_pos_nodes = floatToInt(camera_position, BS);
 	v3s16 p_blocks_min;
@@ -765,6 +765,9 @@ void ClientMap::updateDrawListShadow(
 		block->refDrop();
 	}
 	m_drawlist_shadow.clear();
+	//we need to append the blocks from the camera pov. because sometimes
+	//they are not inside the light frustum and it creates glitches
+	m_drawlist_shadow = m_drawlist;
 
 	// Number of blocks currently loaded by the client
 	u32 blocks_loaded = 0;
