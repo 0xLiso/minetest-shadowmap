@@ -222,7 +222,7 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	vec4 visibility = vec4(0.0);
 
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
-	int init_offset = int(floor(mod(((smTexCoord.x * f_textureresolution) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
+	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
 	int end_offset = int(PCFSAMPLES) + init_offset;
 
 	for (int x = init_offset; x < end_offset; x++) {
@@ -241,7 +241,7 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	float visibility = 0.0;
 
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
-	int init_offset = int(floor(mod(((smTexCoord.x * f_textureresolution) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
+	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
 	int end_offset = int(PCFSAMPLES) + init_offset;
 
 	for (int x = init_offset; x < end_offset; x++) {
@@ -368,7 +368,7 @@ void main(void)
 
 
 	if (f_normal_length != 0 && cosLight <= 0.0) {
-		shadow_int = clamp(shadow_int + 0.3 + abs(cosLight) - nightRatio, 0.0, 1.0);
+		shadow_int = clamp(shadow_int + 0.5 + abs(cosLight) - nightRatio, 0.0, 1.0);
 	}
 
 	shadow_int = 1.0 - (shadow_int * adj_shadow_strength);
