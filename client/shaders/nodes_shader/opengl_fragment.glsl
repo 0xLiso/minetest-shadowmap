@@ -44,7 +44,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-const float bias0 = 0.95;
+const float bias0 = 0.85;
 const float zPersFactor = 0.2;
 const float bias1 = 1.0 - bias0;
 
@@ -71,13 +71,9 @@ vec3 getLightSpacePosition()
 	#if DRAW_TYPE == NDT_PLANTLIKE
 	pLightSpace = m_ShadowViewProj * vec4(worldPosition, 1.0);
 	#else
-	if (f_normal_length == 0) {
-		pLightSpace = m_ShadowViewProj * vec4(worldPosition + 0.0005, 1.0);
-	} else {
-		float offsetScale = (0.0055 * getLinearDepth() + normalOffsetScale);
-		// ^ why is this different?
-		pLightSpace = m_ShadowViewProj * vec4(worldPosition + offsetScale * normalize(vNormal), 1.0);
-	}
+	float offsetScale = (0.0057 * getLinearDepth() + normalOffsetScale);
+	// ^ why is this different?
+	pLightSpace = m_ShadowViewProj * vec4(worldPosition + offsetScale * normalize(vNormal), 1.0);
 	#endif
 	pLightSpace = getPerspectiveFactor(pLightSpace);
 	return pLightSpace.xyz * 0.5 + 0.5;
@@ -225,8 +221,8 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	vec2 clampedpos;
 	vec4 visibility = vec4(0.0);
 
-	float texture_size = 1 / (f_textureresolution * 0.25);
-	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
+	float texture_size = 1.0 / (f_textureresolution * 0.5);
+	int init_offset = int(floor(mod(((smTexCoord.x * f_textureresolution) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
 	int end_offset = int(PCFSAMPLES) + init_offset;
 
 	for (int x = init_offset; x < end_offset; x++) {
@@ -244,8 +240,8 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	vec2 clampedpos;
 	float visibility = 0.0;
 
-	float texture_size = 1 / (f_textureresolution * 0.25);
-	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
+	float texture_size = 1.0 / (f_textureresolution * 0.5);
+	int init_offset = int(floor(mod(((smTexCoord.x * f_textureresolution) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
 	int end_offset = int(PCFSAMPLES) + init_offset;
 
 	for (int x = init_offset; x < end_offset; x++) {
@@ -268,7 +264,7 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	vec2 clampedpos;
 	vec4 visibility = vec4(0.0);
 
-	float texture_size = 1 / (f_textureresolution * 0.25);
+	float texture_size = 1.0 / (f_textureresolution * 0.5);
 	float y, x;
 	// basic PCF filter
 	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
@@ -286,7 +282,7 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	vec2 clampedpos;
 	float visibility = 0.0;
 
-	float texture_size = 1 / (f_textureresolution * 0.25);
+	float texture_size = 1.0 / (f_textureresolution * 0.5);
 	float y, x;
 	// basic PCF filter
 	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
