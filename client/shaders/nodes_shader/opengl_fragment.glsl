@@ -225,7 +225,7 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	vec2 clampedpos;
 	vec4 visibility = vec4(0.0);
 
-	float texture_size = 1 / (f_textureresolution * 0.5);
+	float texture_size = 1 / (f_textureresolution * 0.25);
 	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
 	int end_offset = int(PCFSAMPLES) + init_offset;
 
