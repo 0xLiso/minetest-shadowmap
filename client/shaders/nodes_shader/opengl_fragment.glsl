@@ -44,7 +44,7 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-const float bias0 = 0.85;
+const float bias0 = 0.95;
 const float zPersFactor = 0.2;
 const float bias1 = 1.0 - bias0;
 

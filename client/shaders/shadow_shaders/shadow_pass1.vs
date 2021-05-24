@@ -2,7 +2,7 @@ uniform mat4 LightMVP; // world matrix
 varying vec4 tPos;
 
 #ifdef SHADOWS_PSM
-const float bias0 = 0.85;
+const float bias0 = 0.95;
 const float zPersFactor = 0.2;
 const float bias1 = 1.0 - bias0;
 

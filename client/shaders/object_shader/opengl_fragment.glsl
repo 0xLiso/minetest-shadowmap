@@ -69,7 +69,7 @@ vec4 applyToneMapping(vec4 color)
 #endif
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-const float bias0 = 0.85;
+const float bias0 = 0.95;
 const float zPersFactor = 0.2;
 const float bias1 = 1.0 - bias0;
 
@@ -92,7 +92,8 @@ float getLinearDepth()
 vec3 getLightSpacePosition()
 {
 	vec4 pLightSpace;
-	pLightSpace = m_ShadowViewProj * vec4(worldPosition +0.35 , 1.0);
+	float normalBias =0.005*cosLight+normalOffsetScale ;
+	pLightSpace = m_ShadowViewProj * vec4(worldPosition + normalBias, 1.0);
 	pLightSpace = getPerspectiveFactor(pLightSpace);
 	return pLightSpace.xyz * 0.5 + 0.5;
 }
@@ -351,8 +352,8 @@ void main(void)
 	shadow_int = getShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
 #endif
 
-	if (f_normal_length != 0 && cosLight < -0.1) {
-		shadow_int = 1.0;
+	if (f_normal_length != 0 && cosLight <= 0.001) {
+		shadow_int = clamp(shadow_int + 0.5 * abs(cosLight), 0.0, 1.0);
 	}
 	
 
