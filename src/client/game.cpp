@@ -4007,9 +4007,9 @@ void Game::updateShadows()
 	float theta = 1.4835f; //85%  3.14f /2.0f; // from 90 degrees +- 15 degrees should be ok.
 	float offsety = sinf(phi) * offset_constant * sinf(theta);
 	float offsetx = cosf(phi) * offset_constant * sinf(theta);
-	//float offsetz = cosf(theta) * offset_constant;
+	float offsetz = offsety / 2; // this hack gives nice diagonal shadows, closer to reality
 
-	v3f sun_pos(offsetx, offsety, 0.0f);
+	v3f sun_pos(offsetx, offsety, offsetz);
 
 	if (shadow->getDirectionalLightCount() == 0)
 		shadow->addDirectionalLight();
