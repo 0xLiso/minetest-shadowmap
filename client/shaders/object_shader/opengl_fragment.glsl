@@ -92,14 +92,7 @@ float getLinearDepth()
 vec3 getLightSpacePosition()
 {
 	vec4 pLightSpace;
-	// some drawtypes have zero normals, so we need to handle it :(
-	if (f_normal_length == 0) {
-		pLightSpace = m_ShadowViewProj * vec4( 0.0057* getLinearDepth() +worldPosition, 1.0);
-	} else {
-		float offsetScale = (0.0055 * getLinearDepth() + normalOffsetScale);
-		// ^ why is this different?
-		pLightSpace = m_ShadowViewProj * vec4(worldPosition + offsetScale * normalize(vNormal), 1.0);
-	}
+	pLightSpace = m_ShadowViewProj * vec4(worldPosition +0.35 , 1.0);
 	pLightSpace = getPerspectiveFactor(pLightSpace);
 	return pLightSpace.xyz * 0.5 + 0.5;
 }
@@ -341,7 +334,7 @@ void main(void)
 #endif
 
 	color = base.rgb;
-	vec4 col = vec4(color.rgb, base.a);
+	vec4 col = vec4(color.rgb, base.a); 
 	col.rgb *= varColor.rgb;
 	col.rgb *= emissiveColor.rgb * vIDiff;
 
@@ -358,15 +351,17 @@ void main(void)
 	shadow_int = getShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
 #endif
 
-	if (f_normal_length != 0 && cosLight <= 0.1) {
-		shadow_int = clamp(shadow_int + 0.5 - abs(cosLight), 0.0, 1.0);
+	if (f_normal_length != 0 && cosLight < -0.1) {
+		shadow_int = 1.0;
 	}
+	
 
 	shadow_int = 1.0 - (shadow_int * adj_shadow_strength);
-	
+
 	col.rgb = mix(shadow_color,col.rgb,shadow_int)*shadow_int;
 #endif
 
+	
 
 #if ENABLE_TONE_MAPPING
 	col = applyToneMapping(col);
@@ -384,6 +379,6 @@ void main(void)
 	float clarity = clamp(fogShadingParameter
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
 	col = mix(skyBgColor, col, clarity);
-
+	 
 	gl_FragColor = vec4(col.rgb, base.a);
 }

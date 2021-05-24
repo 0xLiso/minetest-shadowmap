@@ -441,11 +441,11 @@ void ShadowRenderer::renderShadowObjects(
 			/**/ BufferMaterialCullingList.push_back(std::make_pair<bool, bool>(
 					current_mat.BackfaceCulling ? true : false,
 					current_mat.FrontfaceCulling ? true : false));
-			current_mat.BackfaceCulling = false;
+			current_mat.BackfaceCulling = true;
 			current_mat.FrontfaceCulling = false;
 
-			current_mat.PolygonOffsetDepthBias = 2.0 * 4.8e-7;
-			current_mat.PolygonOffsetSlopeScale = -1.f;
+			current_mat.PolygonOffsetDepthBias = 1.0 * 2.8e-6;
+			//current_mat.PolygonOffsetSlopeScale = -1.f;
 		}
 
 		m_driver->setTransform(irr::video::ETS_WORLD,
