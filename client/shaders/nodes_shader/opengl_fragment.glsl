@@ -44,8 +44,8 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-const float bias0 = 0.95;
-const float zPersFactor = 0.2;
+const float bias0 = 0.9;
+const float zPersFactor = 0.5;
 const float bias1 = 1.0 - bias0;
 
 vec4 getPerspectiveFactor(in vec4 shadowPosition)
@@ -53,6 +53,7 @@ vec4 getPerspectiveFactor(in vec4 shadowPosition)
 
 	float pDistance = length(shadowPosition.xy);
 	float pFactor = pDistance * bias0 + bias1;
+	pFactor+=1e-6;
 	shadowPosition.xyz *= vec3(vec2(1.0 / pFactor), zPersFactor);
 
 	return shadowPosition;

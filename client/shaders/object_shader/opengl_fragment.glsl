@@ -69,8 +69,8 @@ vec4 applyToneMapping(vec4 color)
 #endif
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-const float bias0 = 0.95;
-const float zPersFactor = 0.2;
+const float bias0 = 0.9;
+const float zPersFactor = 0.5;
 const float bias1 = 1.0 - bias0;
 
 vec4 getPerspectiveFactor(in vec4 shadowPosition)
@@ -78,6 +78,7 @@ vec4 getPerspectiveFactor(in vec4 shadowPosition)
 
 	float pDistance = length(shadowPosition.xy);
 	float pFactor = pDistance * bias0 + bias1;
+	//pFactor+=1e-6;
 	shadowPosition.xyz *= vec3(vec2(1.0 / pFactor), zPersFactor);
 
 	return shadowPosition;
@@ -92,8 +93,8 @@ float getLinearDepth()
 vec3 getLightSpacePosition()
 {
 	vec4 pLightSpace;
-	float normalBias =0.005*cosLight+normalOffsetScale ;
-	pLightSpace = m_ShadowViewProj * vec4(worldPosition + normalBias, 1.0);
+	float normalBias =0.0005*getLinearDepth()*cosLight+normalOffsetScale ;
+	pLightSpace = m_ShadowViewProj * vec4(worldPosition + normalBias*normalize(vNormal), 1.0);
 	pLightSpace = getPerspectiveFactor(pLightSpace);
 	return pLightSpace.xyz * 0.5 + 0.5;
 }
@@ -139,7 +140,7 @@ vec4 getHardShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 {
 	float texDepth = texture2D(shadowsampler, smTexCoord.xy).r;
-	float visibility = step(0.0, realDistance - texDepth);
+	float visibility = step(0.0, (realDistance-7e-5) - texDepth);
 	return visibility;
 }
 
