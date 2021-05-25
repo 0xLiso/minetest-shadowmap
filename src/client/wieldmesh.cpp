@@ -33,6 +33,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/numeric.h"
 #include <map>
 #include <IMeshManipulator.h>
+#include "client/renderingengine.h"
 
 #define WIELD_SCALE_FACTOR 30.0
 #define WIELD_SCALE_FACTOR_EXTRUDED 40.0
@@ -220,14 +221,19 @@ WieldMeshSceneNode::WieldMeshSceneNode(scene::ISceneManager *mgr, s32 id, bool l
 	m_meshnode->setReadOnlyMaterials(false);
 	m_meshnode->setVisible(false);
 	dummymesh->drop(); // m_meshnode grabbed it
+	//initialize shadow manager.
+	m_shadow = RenderingEngine::get_shadow_renderer();
 }
 
 WieldMeshSceneNode::~WieldMeshSceneNode()
 {
 	sanity_check(g_extrusion_mesh_cache);
 
-	// TODO removeNodeFromShadowList missing here
-
+	//Remove node from shadow casters
+	if (m_shadow) 
+	{
+		m_shadow->removeNodeFromShadowList(m_meshnode);
+	}
 	if (g_extrusion_mesh_cache->drop())
 		g_extrusion_mesh_cache = nullptr;
 }
@@ -242,6 +248,8 @@ void WieldMeshSceneNode::setCube(const ContentFeatures &f,
 	changeToMesh(copy);
 	copy->drop();
 	m_meshnode->setScale(wield_scale * WIELD_SCALE_FACTOR);
+
+
 }
 
 void WieldMeshSceneNode::setExtruded(const std::string &imagename,
@@ -461,11 +469,8 @@ void WieldMeshSceneNode::setItem(const ItemStack &item, Client *client, bool che
 		m_colors.emplace_back(true, video::SColor(0xFFFFFFFF));
 		return;
 	}
-
 	// no wield mesh found
 	changeToMesh(nullptr);
-
-	// TODO should call addNodeToShadowList in this function but before return (not just here)
 }
 
 void WieldMeshSceneNode::setColor(video::SColor c)
@@ -519,6 +524,7 @@ void WieldMeshSceneNode::render()
 
 void WieldMeshSceneNode::changeToMesh(scene::IMesh *mesh)
 {
+	
 	if (!mesh) {
 		scene::IMesh *dummymesh = g_extrusion_mesh_cache->createCube();
 		m_meshnode->setVisible(false);
@@ -532,6 +538,12 @@ void WieldMeshSceneNode::changeToMesh(scene::IMesh *mesh)
 	// need to normalize normals when lighting is enabled (because of setScale())
 	m_meshnode->setMaterialFlag(video::EMF_NORMALIZE_NORMALS, m_lighting);
 	m_meshnode->setVisible(true);
+	
+	// Add mesh to shadow caster
+	if (m_shadow) 
+	{
+		m_shadow->addNodeToShadowList(m_meshnode);
+	}
 }
 
 void getItemMesh(Client *client, const ItemStack &item, ItemMesh *result)
