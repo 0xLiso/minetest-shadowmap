@@ -368,8 +368,8 @@ void main(void)
 		shadow_int *= 1.0 - nightRatio;
 
 
-	if (f_normal_length != 0 && cosLight <= 0.0) {
-		shadow_int = clamp(shadow_int + 0.5 + abs(cosLight) - nightRatio, 0.0, 1.0);
+	if (f_normal_length != 0 && cosLight < 0.0) {
+		shadow_int = clamp(1.0-nightRatio, 0.0, 1.0);
 	}
 
 	shadow_int = 1.0 - (shadow_int * adj_shadow_strength);
