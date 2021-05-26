@@ -3982,13 +3982,22 @@ void Game::updateShadows()
 	if (!shadow)
 		return;
 
-	float timeoftheday = runData.time_of_day_smooth - 0.2f;
-	bool isDay = timeoftheday > 0.0f && timeoftheday < 0.6f;
+	float timeoftheday = client->getEnv().getTimeOfDayF();
+	bool isDay = timeoftheday > 0.2f && timeoftheday < 0.8f;
+	if (isDay)
+		timeoftheday -= 0.2f;
+	else {
+		if (timeoftheday >= 0.8f) {
+			timeoftheday -= 0.8f;
+		} else {
+			timeoftheday += 0.2f;
+		}
+	}
 
 	// @Liso: can we  add a z offset in the configuration??
 	// https://image2.slideserve.com/4889289/spherical-coordinates-l.jpg
 	const float offset_constant = 10000.0f;
-	float phi = timeoftheday * 5.0f;
+	float phi = isDay?timeoftheday * 5.0f:timeoftheday*(5.0f*6.0f/4.0f);
 	float theta = 1.4835f; //85%  3.14f /2.0f; // from 90 degrees +- 15 degrees should be ok.
 	float offsety = sinf(phi) * offset_constant * sinf(theta);
 	float offsetx = cosf(phi) * offset_constant * sinf(theta);
@@ -3999,10 +4008,9 @@ void Game::updateShadows()
 	if (shadow->getDirectionalLightCount() == 0)
 		shadow->addDirectionalLight();
 	shadow->getDirectionalLight().setDirection(sun_pos);
-	shadow->setTimeOfDay(runData.time_of_day_smooth);
-	if (isDay)
-		shadow->getDirectionalLight().update_frustum(camera, client);
-
+	shadow->setTimeOfDay(client->getEnv().getTimeOfDayF());
+	
+	shadow->getDirectionalLight().update_frustum(camera, client);
 }
 
 /****************************************************************************

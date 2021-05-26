@@ -197,9 +197,20 @@ void main(void)
 	float texelSize = 768.0/f_textureresolution + 1.0 / f_textureresolution;
 	float slopeScale = clamp(1.0 - abs(cosLight), 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
-	adj_shadow_strength = f_shadow_strength *
+	
+	if(f_timeofday<0.2){
+		adj_shadow_strength =f_shadow_strength * 0.5;
+
+		adj_shadow_strength *= 	(1.0 - mtsmoothstep(0.18, 0.2, f_timeofday));
+	}else if(f_timeofday>=0.8){
+		adj_shadow_strength =f_shadow_strength * 0.5;
+
+		adj_shadow_strength *= 	mtsmoothstep(0.8, 0.83, f_timeofday);
+	}else{
+		adj_shadow_strength = f_shadow_strength *
 		mtsmoothstep(0.20, 0.25, f_timeofday) *
 		(1.0 - mtsmoothstep(0.7, 0.8, f_timeofday));
+	}
 	f_normal_length = length(vNormal);
 #endif
 
