@@ -43,6 +43,8 @@ public:
 	DirectionalLight &getDirectionalLight(irr::u32 index = 0);
 	size_t getDirectionalLightCount() const;
 	irr::f32 getMaxShadowFar() const;
+
+	float getUpdateDelta() const;
 	/// Adds a shadow to the scene node.
 	/// The shadow mode can be ESM_BOTH, or ESM_RECEIVE.
 	/// ESM_BOTH casts and receives shadows
@@ -100,6 +102,7 @@ private:
 	float m_shadow_map_max_distance{4096.0f}; // arbitrary 4096 blocks
 	float m_shadow_map_texture_size{2048.0f};
 	float m_time_day{false};
+	float m_update_delta{0.2f};
 	int m_shadow_samples{4};
 	bool m_shadow_map_texture_32bit{true};
 	bool m_shadows_enabled{false};

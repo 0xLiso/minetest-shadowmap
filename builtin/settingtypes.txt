@@ -593,7 +593,7 @@ enable_dynamic_shadows (Dynamic shadows) bool false
 shadow_strength (Shadow strength) float 0.2 0.05 1.0
 
 #    Maximum distance to render shadows.
-shadow_map_max_distance (Shadow map max distance in nodes to render shadows) float 120.0 10.0 2000.0
+shadow_map_max_distance (Shadow map max distance in nodes to render shadows) float 120.0 10.0 1000.0
 
 #    Texture size to render the shadow map on.
 #    This must be a power of two.
@@ -618,6 +618,11 @@ shadow_filters (Shadow filter quality) enum 1 0,1,2
 #    On true translucent nodes cast colored shadows. This is expensive.
 shadow_map_color (Colored shadows) bool false
 
+
+#    Set the shadow update time.
+#    Lower value means shadows and map updates faster, but it consume more resources.
+#    minimun value 0.001 seconds max value 0.2 seconds
+shadow_update_time (Map update time) float 0.2 0.001 0.2
 
 [**Advanced]
 

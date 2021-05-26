@@ -3707,6 +3707,12 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	float time_brightness = decode_light_f((float)daynight_ratio / 1000.0);
 	float direct_brightness;
 	bool sunlight_seen;
+	float update_draw_list_timer_delta = 0.2;
+
+	ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
+	if (shadow) {
+		update_draw_list_timer_delta = shadow->getUpdateDelta();
+	}
 
 	if (m_cache_enable_noclip && m_cache_enable_free_move) {
 		direct_brightness = time_brightness;
@@ -3834,7 +3840,7 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	runData.update_draw_list_timer += dtime;
 
 	v3f camera_direction = camera->getDirection();
-	if (runData.update_draw_list_timer >= 0.2
+	if (runData.update_draw_list_timer >= update_draw_list_timer_delta
 			|| runData.update_draw_list_last_cam_dir.getDistanceFrom(camera_direction) > 0.2
 			|| m_camera_offset_changed) {
 

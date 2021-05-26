@@ -27,7 +27,8 @@ ShadowRenderer::ShadowRenderer(irr::IrrlichtDevice *irrlichtDevice, Client *clie
 	m_shadow_map_texture_32bit = g_settings->getBool("shadow_map_texture_32bit");
 	m_shadow_map_colored = g_settings->getBool("shadow_map_color");
 	m_shadow_samples = g_settings->getS32("shadow_filters");
-	m_shadow_psm = g_settings->getBool("shadow_psm");
+	m_shadow_psm = true;
+	m_update_delta = g_settings->getFloat("shadow_update_time");
 }
 
 ShadowRenderer::~ShadowRenderer()
@@ -91,6 +92,12 @@ void ShadowRenderer::initialize()
 	m_texture_format_color = m_shadow_map_texture_32bit
 						 ? irr::video::ECOLOR_FORMAT::ECF_G32R32F
 						 : irr::video::ECOLOR_FORMAT::ECF_G16R16F;
+}
+
+
+float ShadowRenderer::getUpdateDelta() const
+{
+	return m_update_delta;
 }
 
 size_t ShadowRenderer::addDirectionalLight()
