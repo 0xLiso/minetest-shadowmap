@@ -42,6 +42,7 @@ varying float nightRatio;
 const float fogStart = FOG_START;
 const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
+const float softShadowRadius = 5.0;
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 const float bias0 = 0.9;
@@ -246,7 +247,7 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	int end_offset = int(PCFSAMPLES) + init_offset;
 
 	for (int x = init_offset; x < end_offset; x++) {
-		clampedpos = poissonDisk[x] * texture_size + smTexCoord.xy;
+		clampedpos = poissonDisk[x] * texture_size * softShadowRadius  + smTexCoord.xy;
 		visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
 	}
 
@@ -288,7 +289,7 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	// basic PCF filter
 	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
 	for (x = -PCFBOUND; x <= PCFBOUND; x += 1.0) {
-		clampedpos = vec2(x,y) * texture_size + smTexCoord.xy;
+		clampedpos = vec2(x,y) * texture_size * softShadowRadius / PCFBOUND + smTexCoord.xy;
 		visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
 	}
 
