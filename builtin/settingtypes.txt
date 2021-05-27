@@ -624,10 +624,10 @@ shadow_map_color (Colored shadows) bool false
 #    Minimun value 0.001 seconds max value 0.2 seconds
 shadow_update_time (Map update time) float 0.2 0.001 0.2
 
-#    Set the soft shadow radious size.
+#    Set the soft shadow radius size.
 #    Lower values mean sharper shadows bigger values softer.
 #    Minimun value 1.0 and max value 5.0 
-shadow_soft_radious (Soft shadow radious) float 1.0 1.0 5.0
+shadow_soft_radius (Soft shadow radius) float 1.0 1.0 5.0
 
 [**Advanced]
 

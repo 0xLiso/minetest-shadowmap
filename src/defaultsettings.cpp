@@ -273,7 +273,7 @@ void set_default_settings()
 	settings->setDefault("shadow_psm", "true");
 	settings->setDefault("shadow_poisson_filter", "true");
 	settings->setDefault("shadow_update_time", "0.2");
-	settings->setDefault("shadow_soft_radious", "1.0");
+	settings->setDefault("shadow_soft_radius", "1.0");
 
 	// Input
 	settings->setDefault("invert_mouse", "false");
