@@ -105,6 +105,9 @@ public:
 		ITextureSource *tsrc);
 	const video::SColorf &getCurrentStarColor() const { return m_star_color; }
 
+	void setSkyBodyOrbitTilt(float tilt) { m_sky_body_orbit_tilt = tilt; }
+	float getSkyBodyOrbitTilt() const { return m_sky_body_orbit_tilt; }
+
 private:
 	aabb3f m_box;
 	video::SMaterial m_materials[SKY_MATERIAL_COUNT];
@@ -159,6 +162,7 @@ private:
 	bool m_directional_colored_fog;
 	bool m_in_clouds = true; // Prevent duplicating bools to remember old values
 	bool m_enable_shaders = false;
+	float m_sky_body_orbit_tilt = 0.0f;
 
 	video::SColorf m_bgcolor_bright_f = video::SColorf(1.0f, 1.0f, 1.0f, 1.0f);
 	video::SColorf m_skycolor_bright_f = video::SColorf(1.0f, 1.0f, 1.0f, 1.0f);
@@ -202,6 +206,11 @@ private:
 		float pos_1, float pos_2, const video::SColor &c);
 	void draw_stars(video::IVideoDriver *driver, float wicked_time_of_day);
 	void place_sky_body(std::array<video::S3DVertex, 4> &vertices,
-		float horizon_position,	float day_position);
+		float horizon_position,	float day_position, float tilt);
 	void setSkyDefaults();
 };
+
+// calculates value for sky body positions for the given observed time of day
+// this is used to draw both Sun/Moon and shadows
+float getWickedTimeOfDay(float time_of_day);
+

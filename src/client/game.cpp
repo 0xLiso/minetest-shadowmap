@@ -1349,6 +1349,8 @@ bool Game::createClient(const GameStartData &start_data)
 	/* Skybox
 	 */
 	sky = new Sky(-1, m_rendering_engine, texture_src, shader_src);
+	if (g_settings->getBool("enable_dynamic_shadows"))
+		sky->setSkyBodyOrbitTilt(rangelim(g_settings->getFloat("shadow_sky_body_orbit_tilt"), 0.0f, 60.0f));
 	scsf->setSky(sky);
 	skybox = NULL;	// This is used/set later on in the main run loop
 
@@ -3988,29 +3990,18 @@ void Game::updateShadows(float _timeoftheday)
 	if (!shadow)
 		return;
 
-	float timeoftheday = fmod(_timeoftheday, 1.0f);
-	bool isDay = timeoftheday > 0.2f && timeoftheday < 0.8f;
-	if (isDay)
-		timeoftheday -= 0.2f;
-	else {
-		if (timeoftheday >= 0.8f) {
-			timeoftheday -= 0.8f;
-		} else {
-			timeoftheday += 0.2f;
-		}
-	}
-
-	// @Liso: can we  add a z offset in the configuration??
-	// https://image2.slideserve.com/4889289/spherical-coordinates-l.jpg
+	float timeoftheday = getWickedTimeOfDay(fmod(_timeoftheday, 1.0f));
+	timeoftheday = fmod(timeoftheday - 0.25, 0.5) + 0.25;
 	const float offset_constant = 10000.0f;
-	float phi = isDay?timeoftheday * 5.0f:timeoftheday*(5.0f*6.0f/4.0f);
-	float theta = 1.4835f; //85%  3.14f /2.0f; // from 90 degrees +- 15 degrees should be ok.
-	float offsety = sinf(phi) * offset_constant * sinf(theta);
-	float offsetx = cosf(phi) * offset_constant * sinf(theta);
-	float offsetz = offsety / 2; // this hack gives nice diagonal shadows, closer to reality
-	//until we can align sun with this diagonal shadows, we must disable it :(
-	offsetz = 0.0f;
-	v3f sun_pos(offsetx, offsety, offsetz);
+
+	
+
+	v3f light = v3f(0.0f, 0.0f, -1.0f);
+	light.rotateXZBy(90);
+	light.rotateXYBy(timeoftheday * 360 - 90);
+	light.rotateYZBy(rangelim(g_settings->getFloat("shadow_sky_body_orbit_tilt"), 0.0f, 60.0f));
+
+	v3f sun_pos = light * offset_constant;
 
 	if (shadow->getDirectionalLightCount() == 0)
 		shadow->addDirectionalLight();
@@ -4107,6 +4098,9 @@ void Game::readSettings()
 	m_cache_mouse_sensitivity = rangelim(m_cache_mouse_sensitivity, 0.001, 100.0);
 
 	m_does_lost_focus_pause_game = g_settings->getBool("pause_on_lost_focus");
+
+	if (sky)
+		sky->setSkyBodyOrbitTilt(g_settings->getFloat("sky_body_tilt"));
 }
 
 /****************************************************************************/
