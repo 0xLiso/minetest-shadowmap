@@ -739,7 +739,7 @@ protected:
 	void updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 			const CameraOrientation &cam);
 
-	void updateShadows();
+	void updateShadows(float _timeoftheday);
 
 	// Misc
 	void limitFps(FpsControl *fps_timings, f32 *dtime);
@@ -3848,7 +3848,7 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 		client->getEnv().getClientMap().updateDrawList();
 		runData.update_draw_list_last_cam_dir = camera_direction;
 
-		updateShadows();
+		updateShadows(runData.time_of_day_smooth);
 	}
 
 	m_game_ui->update(*stats, client, draw_control, cam, runData.pointed_old, gui_chat_console, dtime);
@@ -3982,13 +3982,13 @@ inline void Game::updateProfilerGraphs(ProfilerGraph *graph)
 /****************************************************************************
  * Shadows
  *****************************************************************************/
-void Game::updateShadows()
+void Game::updateShadows(float _timeoftheday)
 {
 	ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
 	if (!shadow)
 		return;
 
-	float timeoftheday = client->getEnv().getTimeOfDayF();
+	float timeoftheday = fmod(_timeoftheday, 1.0f);
 	bool isDay = timeoftheday > 0.2f && timeoftheday < 0.8f;
 	if (isDay)
 		timeoftheday -= 0.2f;
@@ -4008,13 +4008,14 @@ void Game::updateShadows()
 	float offsety = sinf(phi) * offset_constant * sinf(theta);
 	float offsetx = cosf(phi) * offset_constant * sinf(theta);
 	float offsetz = offsety / 2; // this hack gives nice diagonal shadows, closer to reality
-
+	//until we can align sun with this diagonal shadows, we must disable it :(
+	offsetz = 0.0f;
 	v3f sun_pos(offsetx, offsety, offsetz);
 
 	if (shadow->getDirectionalLightCount() == 0)
 		shadow->addDirectionalLight();
 	shadow->getDirectionalLight().setDirection(sun_pos);
-	shadow->setTimeOfDay(client->getEnv().getTimeOfDayF());
+	shadow->setTimeOfDay(fmod(_timeoftheday, 1.0f));
 	
 	shadow->getDirectionalLight().update_frustum(camera, client);
 }
