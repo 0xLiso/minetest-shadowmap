@@ -42,7 +42,7 @@ varying float nightRatio;
 const float fogStart = FOG_START;
 const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
-const float softShadowRadius = 5.0;
+
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 const float bias0 = 0.9;
@@ -79,6 +79,48 @@ vec3 getLightSpacePosition()
 	#endif
 	pLightSpace = getPerspectiveFactor(pLightSpace);
 	return pLightSpace.xyz * 0.5 + 0.5;
+}
+
+
+//
+// Simple, fast noise function.
+// See: https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
+//
+vec4 perm(vec4 x)
+{
+	return mod(((x * 34.0) + 1.0) * x, 289.0);
+}
+
+float snoise(vec3 p)
+{
+	vec3 a = floor(p);
+	vec3 d = p - a;
+	d = d * d * (3.0 - 2.0 * d);
+
+	vec4 b = a.xxyy + vec4(0.0, 1.0, 0.0, 1.0);
+	vec4 k1 = perm(b.xyxy);
+	vec4 k2 = perm(k1.xyxy + b.zzww);
+
+	vec4 c = k2 + a.zzzz;
+	vec4 k3 = perm(c);
+	vec4 k4 = perm(c + 1.0);
+
+	vec4 o1 = fract(k3 * (1.0 / 41.0));
+	vec4 o2 = fract(k4 * (1.0 / 41.0));
+
+	vec4 o3 = o2 * d.z + o1 * (1.0 - d.z);
+	vec2 o4 = o3.yw * d.x + o3.xz * (1.0 - d.x);
+
+	return o4.y * d.y + o4.x * (1.0 - d.y);
+}
+
+
+mat2 getRandRotationMat2( ){
+	float randvalue=snoise(gl_FragCoord.xyz );
+	return mat2(
+	    cos(randvalue), -sin(randvalue),
+	    sin(randvalue), cos(randvalue)
+  	);
 }
 
 #ifdef COLORED_SHADOWS
@@ -126,6 +168,7 @@ float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 }
 
 #endif
+
 
 #if SHADOW_FILTER == 2
 	#define PCFBOUND 3.5
@@ -224,11 +267,12 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	vec4 visibility = vec4(0.0);
 
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
-	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
+	float rvalue = snoise(vec3(smTexCoord.xy,realDistance));
+	int init_offset = int(floor(mod(rvalue, 64.0 - PCFSAMPLES)));
 	int end_offset = int(PCFSAMPLES) + init_offset;
 
 	for (int x = init_offset; x < end_offset; x++) {
-		clampedpos = poissonDisk[x] * texture_size + smTexCoord.xy;
+		clampedpos = getRandRotationMat2()*(poissonDisk[x] * texture_size * SOFTSHADOWRADIUS) + smTexCoord.xy;
 		visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
 	}
 
@@ -243,11 +287,12 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	float visibility = 0.0;
 
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
-	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0 - PCFSAMPLES)));
+	float rvalue = snoise(vec3(smTexCoord.xy,realDistance));
+	int init_offset = int(floor(mod(rvalue, 64.0 - PCFSAMPLES)));
 	int end_offset = int(PCFSAMPLES) + init_offset;
 
 	for (int x = init_offset; x < end_offset; x++) {
-		clampedpos = poissonDisk[x] * texture_size * softShadowRadius  + smTexCoord.xy;
+		clampedpos = getRandRotationMat2()*(poissonDisk[x] * texture_size * SOFTSHADOWRADIUS) + smTexCoord.xy;
 		visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
 	}
 
@@ -271,7 +316,7 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	// basic PCF filter
 	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
 	for (x = -PCFBOUND; x <= PCFBOUND; x += 1.0) {
-		clampedpos = vec2(x,y) * texture_size + smTexCoord.xy;
+		clampedpos =  getRandRotationMat2()*(vec2(x,y) * texture_size* SOFTSHADOWRADIUS / PCFBOUND) + smTexCoord.xy;
 		visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
 	}
 
@@ -289,7 +334,7 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	// basic PCF filter
 	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
 	for (x = -PCFBOUND; x <= PCFBOUND; x += 1.0) {
-		clampedpos = vec2(x,y) * texture_size * softShadowRadius / PCFBOUND + smTexCoord.xy;
+		clampedpos =  getRandRotationMat2()*(vec2(x,y) * texture_size * SOFTSHADOWRADIUS / PCFBOUND) + smTexCoord.xy;
 		visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
 	}
 

@@ -289,29 +289,24 @@ public:
 		// Set Shadow shader uniform
 		ShadowRenderer *shadow = m_shadow_map_enabled ?  RenderingEngine::get_shadow_renderer() : nullptr;
 		if (shadow) {
-			core::matrix4 shadowViewProj = shadow->getDirectionalLight()
-				.getProjectionMatrix();
+			core::matrix4 shadowViewProj = shadow->getDirectionalLight().getProjectionMatrix();
 			shadowViewProj *= shadow->getDirectionalLight().getViewMatrix();
 
-			services->setPixelShaderConstant(
-				services->getPixelShaderConstantID("m_ShadowViewProj"),
+			services->setPixelShaderConstant(services->getPixelShaderConstantID("m_ShadowViewProj"),
 				*reinterpret_cast<float(*)[16]>(shadowViewProj.pointer()), 16);
 
 			float v_LightDirection[3];
 			shadow->getDirectionalLight().getDirection().getAs3Values(v_LightDirection);
-			services->setPixelShaderConstant(
-					services->getPixelShaderConstantID("v_LightDirection"),
+			services->setPixelShaderConstant(services->getPixelShaderConstantID("v_LightDirection"),
 					*reinterpret_cast<float(*)[3]>(v_LightDirection), 3);
 
 			float TextureResolution = (float)shadow->getDirectionalLight()
 				.getMapResolution();
-			services->setPixelShaderConstant(
-					services->getPixelShaderConstantID("f_textureresolution"),
+			services->setPixelShaderConstant(services->getPixelShaderConstantID("f_textureresolution"),
 					&TextureResolution, 1);
 
 			float ShadowStrengh = (float)shadow->getShadowStrengh();
-			services->setPixelShaderConstant(
-					services->getPixelShaderConstantID("f_shadow_strength"),
+			services->setPixelShaderConstant(services->getPixelShaderConstantID("f_shadow_strength"),
 					&ShadowStrengh, 1);
 
 			float timeofDay = (float)shadow->getTimeofDay();
@@ -740,11 +735,13 @@ ShaderInfo ShaderSource::generateShader(const std::string &name,
 		if (g_settings->getBool("shadow_poisson_filter"))
 			shaders_header << "#define POISSON_FILTER 1\n";
 
-		if (g_settings->getBool("shadow_psm"))
-			shaders_header << "#define SHADOWS_PSM 1\n";
-
 		s32 shadow_filter = g_settings->getS32("shadow_filters");
 		shaders_header << "#define SHADOW_FILTER " << shadow_filter << "\n";
+
+		float shadow_soft_radious = g_settings->getS32("shadow_soft_radious");
+		if (shadow_soft_radious < 1.0f)
+			shadow_soft_radious = 1.0f;
+		shaders_header << "#define SOFTSHADOWRADIUS " << shadow_soft_radious << "\n";
 	}
 
 	std::string common_header = shaders_header.str();
