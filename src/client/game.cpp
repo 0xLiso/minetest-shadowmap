@@ -3997,7 +3997,7 @@ void Game::updateShadows(float _timeoftheday)
 	v3f light = v3f(0.0f, 0.0f, -1.0f);
 	light.rotateXZBy(90);
 	light.rotateXYBy(timeoftheday * 360 - 90);
-	light.rotateYZBy(rangelim(g_settings->getFloat("shadow_sky_body_orbit_tilt"), 0.0f, 60.0f));
+	light.rotateYZBy(sky->getSkyBodyOrbitTilt());
 
 	v3f sun_pos = light * offset_constant;
 
