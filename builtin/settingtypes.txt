@@ -629,6 +629,11 @@ shadow_update_time (Map update time) float 0.2 0.001 0.2
 #    Minimun value 1.0 and max value 5.0 
 shadow_soft_radius (Soft shadow radius) float 1.0 1.0 5.0
 
+#    Set the tilt of Sun/Moon orbit in degrees
+#    Value of 0 means no tilt / vertical orbit.
+#    Minimun value 0.0 and max value 60.0
+shadow_sky_body_orbit_tilt (Sky Body Orbit Tilt) float 0.0 0.0 60.0
+
 [**Advanced]
 
 #    Arm inertia, gives a more realistic movement of
