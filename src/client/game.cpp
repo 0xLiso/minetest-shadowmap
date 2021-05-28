@@ -3994,8 +3994,6 @@ void Game::updateShadows(float _timeoftheday)
 	timeoftheday = fmod(timeoftheday - 0.25, 0.5) + 0.25;
 	const float offset_constant = 10000.0f;
 
-	
-
 	v3f light = v3f(0.0f, 0.0f, -1.0f);
 	light.rotateXZBy(90);
 	light.rotateXYBy(timeoftheday * 360 - 90);
@@ -4098,9 +4096,6 @@ void Game::readSettings()
 	m_cache_mouse_sensitivity = rangelim(m_cache_mouse_sensitivity, 0.001, 100.0);
 
 	m_does_lost_focus_pause_game = g_settings->getBool("pause_on_lost_focus");
-
-	if (sky)
-		sky->setSkyBodyOrbitTilt(g_settings->getFloat("sky_body_tilt"));
 }
 
 /****************************************************************************/

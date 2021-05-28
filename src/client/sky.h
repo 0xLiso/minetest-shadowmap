@@ -213,4 +213,3 @@ private:
 // calculates value for sky body positions for the given observed time of day
 // this is used to draw both Sun/Moon and shadows
 float getWickedTimeOfDay(float time_of_day);
-
