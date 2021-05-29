@@ -3991,7 +3991,7 @@ void Game::updateShadows(float _timeoftheday)
 		return;
 
 	float timeoftheday = getWickedTimeOfDay(fmod(_timeoftheday, 1.0f));
-	timeoftheday = fmod(timeoftheday - 0.25, 0.5) + 0.25;
+	timeoftheday = fmod(timeoftheday + 0.75, 0.5) + 0.25;
 	const float offset_constant = 10000.0f;
 
 	v3f light = v3f(0.0f, 0.0f, -1.0f);
