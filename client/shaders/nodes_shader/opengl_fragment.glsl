@@ -299,13 +299,15 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	vec2 clampedpos;
 	vec4 visibility = vec4(0.0);
 	float radius = getPenumbraRadius(shadowsampler, smTexCoord, realDistance);
+	float l = length(2.0 * smTexCoord.xy - 1.0);
+	float perspectiveFactor = (1.0 / l - bias0) / bias1 * l; // this is approximation of (x+1)-x
 
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
 	float y, x;
 	// basic PCF filter
 	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
 	for (x = -PCFBOUND; x <= PCFBOUND; x += 1.0) {
-		clampedpos = vec2(x,y) * texture_size * radius / PCFBOUND + smTexCoord.xy;
+		clampedpos = vec2(x,y) * texture_size * perspectiveFactor * radius / PCFBOUND + smTexCoord.xy;
 		visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
 	}
 
@@ -321,11 +323,17 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
 	float y, x;
 	float radius = getPenumbraRadius(shadowsampler, smTexCoord, realDistance);
+	float baseLength = length(2.0 * smTexCoord.xy - 1.0); // length in texture coords
+	baseLength = bias1 / (1.0 / baseLength - bias0); 				 // length in undistorted screen coords
+	float perspectiveFactor, l;
 
 	// basic PCF filter
 	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
 	for (x = -PCFBOUND; x <= PCFBOUND; x += 1.0) {
-		clampedpos =  vec2(x,y) * texture_size * radius / PCFBOUND + smTexCoord.xy;
+		clampedpos = vec2(x,y);     // screen offset
+		l = baseLength + length(clampedpos) * texture_size * radius / PCFBOUND;          // screen length offset
+		perspectiveFactor = 0.1 / (bias0 * l + bias1);                      // original distortion factor
+		clampedpos =  clampedpos * texture_size * perspectiveFactor * radius * perspectiveFactor / PCFBOUND + smTexCoord.xy; // both dx,dy and radius are adjusted
 		visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
 	}
 
