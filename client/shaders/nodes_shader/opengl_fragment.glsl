@@ -131,14 +131,10 @@ float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	#define PCFSAMPLES 64.0
 #elif SHADOW_FILTER == 1
 	#define PCFBOUND 1.5
-	#if defined(POISSON_FILTER) && !defined(COLORED_SHADOWS)
-		#define PCFSAMPLES 32.0
-	#else
-		#define PCFSAMPLES 16.0
-	#endif
+	#define PCFSAMPLES 16.0
 #else
 	#define PCFBOUND 0.0
-	#if defined(POISSON_FILTER) && !defined(COLORED_SHADOWS)
+	#if defined(POISSON_FILTER)
 		#define PCFSAMPLES 4.0
 	#else
 		#define PCFSAMPLES 1.0
@@ -262,13 +258,15 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 {
 	vec2 clampedpos;
 	vec4 visibility = vec4(0.0);
-
+	float sradius=0.0;
+	if( PCFBOUND>0)
+		sradius = SOFTSHADOWRADIUS / PCFBOUND;  
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
 	float y, x;
 	// basic PCF filter
 	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
 	for (x = -PCFBOUND; x <= PCFBOUND; x += 1.0) {
-		clampedpos = vec2(x,y) * texture_size* SOFTSHADOWRADIUS / PCFBOUND + smTexCoord.xy;
+		clampedpos = vec2(x,y) * texture_size* sradius +  smTexCoord.xy;
 		visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
 	}
 
@@ -280,13 +278,16 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 {
 	vec2 clampedpos;
 	float visibility = 0.0;
-
+	float sradius=0.0;
+	if( PCFBOUND>0)
+		sradius = SOFTSHADOWRADIUS / PCFBOUND;  
+	
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
 	float y, x;
 	// basic PCF filter
 	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
 	for (x = -PCFBOUND; x <= PCFBOUND; x += 1.0) {
-		clampedpos =  vec2(x,y) * texture_size * SOFTSHADOWRADIUS / PCFBOUND + smTexCoord.xy;
+		clampedpos =  vec2(x,y) * texture_size * sradius + smTexCoord.xy;
 		visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
 	}
 
