@@ -1,27 +1,46 @@
+/*
+Minetest
+Copyright (C) 2021 Liso <anlismon@gmail.com>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation; either version 2.1 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
+
 #pragma once
 
-#include <string>
-#include <vector>
-#include "irrlichttypes.h"
-#include <cmath>
-#include "client/camera.h"
-#include "client/client.h"
+#include "irrlichttypes_bloated.h"
+#include <matrix4.h>
+#include "util/basic_macros.h"
+
+class Camera;
+class Client;
 
 struct BSphere
 {
-	irr::core::vector3df center;
+	v3f center;
 	float radius{0.0f};
 };
+
 struct shadowFrustum
 {
-
 	float zNear{0.0f};
 	float zFar{0.0f};
 	float length{0.0f};
-	irr::core::matrix4 ProjOrthMat;
-	irr::core::matrix4 ViewMat;
-	irr::core::matrix4 WorldViewProj;
-	irr::core::vector3df position;
+	core::matrix4 ProjOrthMat;
+	core::matrix4 ViewMat;
+	core::matrix4 WorldViewProj;
+	v3f position;
 	BSphere sphere;
 	bool should_update_map_shadow{true};
 };
@@ -29,37 +48,34 @@ struct shadowFrustum
 class DirectionalLight
 {
 public:
-	DirectionalLight(const irr::u32 shadowMapResolution,
-			const irr::core::vector3df &position,
-			irr::video::SColorf lightColor = irr::video::SColor(0xffffffff),
+	DirectionalLight(const u32 shadowMapResolution,
+			const v3f &position,
+			video::SColorf lightColor = video::SColor(0xffffffff),
 			f32 farValue = 100.0f);
 	~DirectionalLight() = default;
 
-	DirectionalLight(const DirectionalLight &) = default;
-	DirectionalLight(DirectionalLight &&) = default;
-	DirectionalLight &operator=(const DirectionalLight &) = delete;
-	DirectionalLight &operator=(DirectionalLight &&) = delete;
+	//DISABLE_CLASS_COPY(DirectionalLight)
 
 	void update_frustum(const Camera *cam, Client *client);
 
-	// when set  direction is updated to negative normalized(direction)
-	void setDirection(const irr::core::vector3df &dir);
-	const irr::core::vector3df &getDirection();
-	const irr::core::vector3df &getPosition();
+	// when set direction is updated to negative normalized(direction)
+	void setDirection(v3f dir);
+	v3f getDirection() const;
+	v3f getPosition() const;
 
 	/// Gets the light's matrices.
-	const irr::core::matrix4 &getViewMatrix() const;
-	const irr::core::matrix4 &getProjectionMatrix() const;
-	irr::core::matrix4 getViewProjMatrix();
+	const core::matrix4 &getViewMatrix() const;
+	const core::matrix4 &getProjectionMatrix() const;
+	core::matrix4 getViewProjMatrix();
 
 	/// Gets the light's far value.
 	f32 getMaxFarValue() const;
 
 	/// Gets the light's color.
-	const irr::video::SColorf &getLightColor() const;
+	const video::SColorf &getLightColor() const;
 
 	/// Sets the light's color.
-	void setLightColor(const irr::video::SColorf &lightColor);
+	void setLightColor(const video::SColorf &lightColor);
 
 	/// Gets the shadow map resolution for this light.
 	u32 getMapResolution() const;
@@ -69,17 +85,14 @@ public:
 private:
 	void createSplitMatrices(const Camera *cam);
 
-	irr::video::SColorf diffuseColor{0xffffffff};
+	video::SColorf diffuseColor;
 
 	f32 farPlane;
 	u32 mapRes;
 	v3s16 m_camera_offset;
 
-	irr::core::vector3df pos;
-	irr::core::vector3df direction{0};
-	irr::core::vector3df lastcampos{0};
+	v3f pos;
+	v3f direction{0};
+	v3f lastcampos{0};
 	shadowFrustum shadow_frustum;
-
-	irr::core::vector3df v3zero{0.0f, 0.0f, 0.0f};
-	irr::core::vector3df v3Yone{0.0f, 1.0f, 0.0f};
 };

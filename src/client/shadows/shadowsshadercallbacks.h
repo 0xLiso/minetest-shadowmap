@@ -1,43 +1,35 @@
+/*
+Minetest
+Copyright (C) 2021 Liso <anlismon@gmail.com>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation; either version 2.1 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
+
 #pragma once
+#include "irrlichttypes_extrabloated.h"
+#include <IMaterialRendererServices.h>
+#include <IShaderConstantSetCallBack.h>
 
-#include <string>
-#include <vector>
-#include <irrlicht.h>
-#include <cassert>
-
-class ShadowDepthShaderCB : public irr::video::IShaderConstantSetCallBack
+class ShadowDepthShaderCB : public video::IShaderConstantSetCallBack
 {
 public:
-	void OnSetMaterial(const irr::video::SMaterial &material) override {}
+	void OnSetMaterial(const video::SMaterial &material) override {}
 
-	void OnSetConstants(irr::video::IMaterialRendererServices *services,
-			irr::s32 userData) override;
+	void OnSetConstants(video::IMaterialRendererServices *services,
+			s32 userData) override;
 
-	irr::f32 MaxFar{2048.0f}, MapRes{1024.0f};
+	f32 MaxFar{2048.0f}, MapRes{1024.0f};
 	int idx{0};
-};
-
-class CSMDirectionalShadowShaderCB : public irr::video::IShaderConstantSetCallBack
-{
-public:
-	void OnSetMaterial(const irr::video::SMaterial &material) override {}
-
-	void OnSetConstants(irr::video::IMaterialRendererServices *services,
-			irr::s32 userData) override;
-
-	//@Liso: I have to clear this bunch of vars
-	irr::core::matrix4 invWorld;
-	irr::video::SColorf LightColour;
-	irr::core::matrix4 mLightProj0, mLightProj1, mLightProj2;
-	irr::core::matrix4 mLightView0, mLightView1, mLightView2;
-	irr::core::matrix4 mLightView;
-	irr::core::matrix4 mLightProjView0, mLightProjView1, mLightProjView2;
-	irr::core::vector3df LightLink;
-	irr::core::vector3df farvalues;
-	irr::f32 FarLink, MapRes;
-
-	float lightBounds[3];
-
-	irr::core::matrix4 lightworldView;
-	irr::video::ITexture *sm0, *sm1, *sm2;
 };

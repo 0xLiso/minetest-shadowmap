@@ -1,9 +1,31 @@
+/*
+Minetest
+Copyright (C) 2021 Liso <anlismon@gmail.com>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation; either version 2.1 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
+
+#include <cmath>
+
 #include "client/shadows/dynamicshadows.h"
+#include "client/client.h"
 #include "client/clientenvironment.h"
 #include "client/clientmap.h"
+#include "client/camera.h"
 
-using v3f = irr::core::vector3df;
-using m4f = irr::core::matrix4;
+using m4f = core::matrix4;
 
 void DirectionalLight::createSplitMatrices(const Camera *cam)
 {
@@ -44,7 +66,7 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 
 	m4f mLookAt, mLookAtInv;
 
-	mLookAt.buildCameraLookAtMatrixLH(v3zero, -direction, v3Yone);
+	mLookAt.buildCameraLookAtMatrixLH(v3f(0.0f, 0.0f, 0.0f), -direction, v3f(0.0f, 1.0f, 0.0f));
 
 	mLookAt *= mTexelScaling;
 	mLookAtInv = mLookAt;
@@ -52,9 +74,9 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 
 	v3f frustumCenter = newCenter;
 	mLookAt.transformVect(frustumCenter);
-	frustumCenter.X = (float)std::floor(frustumCenter.X); // clamp to texel increment
-	frustumCenter.Y = (float)std::floor(frustumCenter.Y); // clamp to texel increment
-	frustumCenter.Z = (float)std::floor(frustumCenter.Z);
+	frustumCenter.X = floorf(frustumCenter.X); // clamp to texel increment
+	frustumCenter.Y = floorf(frustumCenter.Y); // clamp to texel increment
+	frustumCenter.Z = floorf(frustumCenter.Z);
 	mLookAtInv.transformVect(frustumCenter);
 	// probar radius multipliacdor en funcion del I, a menor I mas multiplicador
 	v3f eye_displacement = direction * vvolume;
@@ -64,24 +86,21 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 	v3f eye = frustumCenter - eye_displacement;
 	shadow_frustum.position = world_center - eye_displacement;
 	shadow_frustum.length =  vvolume;
-	shadow_frustum.ViewMat.buildCameraLookAtMatrixLH(eye, frustumCenter, v3Yone);
+	shadow_frustum.ViewMat.buildCameraLookAtMatrixLH(eye, frustumCenter, v3f(0.0f, 1.0f, 0.0f));
 	shadow_frustum.ProjOrthMat.buildProjectionMatrixOrthoLH(shadow_frustum.length,
 			shadow_frustum.length, -shadow_frustum.length,
 			shadow_frustum.length,false);
 }
-DirectionalLight::DirectionalLight(const irr::u32 shadowMapResolution,
-		const irr::core::vector3df &position, irr::video::SColorf lightColor,
-		irr::f32 farValue) :
+
+DirectionalLight::DirectionalLight(const u32 shadowMapResolution,
+		const v3f &position, video::SColorf lightColor,
+		f32 farValue) :
 		diffuseColor(lightColor),
 		farPlane(farValue), mapRes(shadowMapResolution), pos(position)
-{
+{}
 
-	v3zero = irr::core::vector3df(0.0f, 0.0f, 0.0f);
-	v3Yone = irr::core::vector3df(0.0f, 1.0f, 0.0f);
-}
 void DirectionalLight::update_frustum(const Camera *cam, Client *client)
 {
-
 	should_update_map_shadow = true;
 	float zNear = cam->getCameraNode()->getNearValue();
 	float zFar = getMaxFarValue();
@@ -99,53 +118,53 @@ void DirectionalLight::update_frustum(const Camera *cam, Client *client)
 	should_update_map_shadow = true;
 }
 
-void DirectionalLight::setDirection(const irr::core::vector3df &dir)
+void DirectionalLight::setDirection(v3f dir)
 {
 	direction = -dir;
 	direction.normalize();
 }
 
-const irr::core::vector3df &DirectionalLight::getDirection()
+v3f DirectionalLight::getDirection() const
 {
 	return direction;
 }
 
-const irr::core::vector3df &DirectionalLight::getPosition()
+v3f DirectionalLight::getPosition() const
 {
 	return shadow_frustum.position;
 }
 
-const irr::core::matrix4 &DirectionalLight::getViewMatrix() const
+const m4f &DirectionalLight::getViewMatrix() const
 {
 	return shadow_frustum.ViewMat;
 }
 
-const irr::core::matrix4 &DirectionalLight::getProjectionMatrix() const
+const m4f &DirectionalLight::getProjectionMatrix() const
 {
 	return shadow_frustum.ProjOrthMat;
 }
 
-irr::core::matrix4 DirectionalLight::getViewProjMatrix()
+m4f DirectionalLight::getViewProjMatrix()
 {
 	return shadow_frustum.ProjOrthMat * shadow_frustum.ViewMat;
 }
 
-irr::f32 DirectionalLight::getMaxFarValue() const
+f32 DirectionalLight::getMaxFarValue() const
 {
 	return farPlane;
 }
 
-const irr::video::SColorf &DirectionalLight::getLightColor() const
+const video::SColorf &DirectionalLight::getLightColor() const
 {
 	return diffuseColor;
 }
 
-void DirectionalLight::setLightColor(const irr::video::SColorf &lightColor)
+void DirectionalLight::setLightColor(const video::SColorf &lightColor)
 {
 	diffuseColor = lightColor;
 }
 
-irr::u32 DirectionalLight::getMapResolution() const
+u32 DirectionalLight::getMapResolution() const
 {
 	return mapRes;
 }

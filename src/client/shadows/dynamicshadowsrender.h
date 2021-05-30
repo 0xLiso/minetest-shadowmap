@@ -1,12 +1,32 @@
+/*
+Minetest
+Copyright (C) 2021 Liso <anlismon@gmail.com>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation; either version 2.1 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
+
 #pragma once
 
 #include <string>
 #include <vector>
-#include <irrlichttypes.h>
-
+#include "irrlichttypes_extrabloated.h"
 #include "client/shadows/dynamicshadows.h"
-#include "client/shadows/shadowsshadercallbacks.h"
-#include "client/shadows/shadowsScreenQuad.h"
+
+class ShadowDepthShaderCB;
+class shadowScreenQuad;
+class shadowScreenQuadCB;
 
 enum E_SHADOW_MODE : u8
 {
@@ -16,13 +36,13 @@ enum E_SHADOW_MODE : u8
 
 struct NodeToApply
 {
-	NodeToApply(irr::scene::ISceneNode *n,
+	NodeToApply(scene::ISceneNode *n,
 			E_SHADOW_MODE m = E_SHADOW_MODE::ESM_BOTH) :
 			node(n),
 			shadowMode(m){};
 	bool operator<(const NodeToApply &other) const { return node < other.node; };
 
-	irr::scene::ISceneNode *node;
+	scene::ISceneNode *node;
 
 	E_SHADOW_MODE shadowMode{E_SHADOW_MODE::ESM_BOTH};
 	bool dirty{false};
@@ -31,7 +51,7 @@ struct NodeToApply
 class ShadowRenderer
 {
 public:
-	ShadowRenderer(irr::IrrlichtDevice *irrlichtDevice, Client *client);
+	ShadowRenderer(IrrlichtDevice *device, Client *client);
 
 	~ShadowRenderer();
 
@@ -40,9 +60,9 @@ public:
 	/// Adds a directional light shadow map (Usually just one (the sun) except in
 	/// Tattoine ).
 	size_t addDirectionalLight();
-	DirectionalLight &getDirectionalLight(irr::u32 index = 0);
+	DirectionalLight &getDirectionalLight(u32 index = 0);
 	size_t getDirectionalLightCount() const;
-	irr::f32 getMaxShadowFar() const;
+	f32 getMaxShadowFar() const;
 
 	float getUpdateDelta() const;
 	/// Adds a shadow to the scene node.
@@ -50,19 +70,15 @@ public:
 	/// ESM_BOTH casts and receives shadows
 	/// ESM_RECEIVE only receives but does not cast shadows.
 	///
-	void addNodeToShadowList(irr::scene::ISceneNode *node,
+	void addNodeToShadowList(scene::ISceneNode *node,
 			E_SHADOW_MODE shadowMode = ESM_BOTH);
-	void removeNodeFromShadowList(irr::scene::ISceneNode *node);
+	void removeNodeFromShadowList(scene::ISceneNode *node);
 
-	void setClearColor(irr::video::SColor ClearColor);
+	void setClearColor(video::SColor ClearColor);
 
-	/// Returns the device that ShadowRenderer was initialized with.
-	irr::IrrlichtDevice *getIrrlichtDevice();
+	void update(video::ITexture *outputTarget = nullptr);
 
-	irr::scene::ISceneManager *getSceneManager();
-	void update(irr::video::ITexture *outputTarget = nullptr);
-
-	irr::video::ITexture *get_texture();
+	video::ITexture *get_texture();
 
 	bool is_active() const { return m_shadows_enabled; }
 	void setTimeOfDay(float isDay) { m_time_day = isDay; };
@@ -72,28 +88,27 @@ public:
 	float getTimeofDay() const { return m_time_day; }
 
 private:
-	irr::video::ITexture *getSMTexture(const std::string &shadow_map_name,
-			irr::video::ECOLOR_FORMAT texture_format,
+	video::ITexture *getSMTexture(const std::string &shadow_map_name,
+			video::ECOLOR_FORMAT texture_format,
 			bool force_creation = false);
 
-	void renderShadowMap(irr::video::ITexture *target, DirectionalLight &light,
-			irr::scene::E_SCENE_NODE_RENDER_PASS pass =
-					irr::scene::ESNRP_SOLID);
-	void renderShadowObjects(irr::video::ITexture *target, DirectionalLight &light);
+	void renderShadowMap(video::ITexture *target, DirectionalLight &light,
+			scene::E_SCENE_NODE_RENDER_PASS pass =
+					scene::ESNRP_SOLID);
+	void renderShadowObjects(video::ITexture *target, DirectionalLight &light);
 	void mixShadowsQuad();
 
 	// a bunch of variables
-	irr::IrrlichtDevice *m_device{nullptr};
-	irr::scene::ISceneManager *m_smgr{nullptr};
-	irr::video::IVideoDriver *m_driver{nullptr};
+	IrrlichtDevice *m_device{nullptr};
+	scene::ISceneManager *m_smgr{nullptr};
+	video::IVideoDriver *m_driver{nullptr};
 	Client *m_client{nullptr};
-	irr::core::dimension2du _screenRTT_resolution;
-	irr::video::ITexture *shadowMapClientMap{nullptr};
-	irr::video::ITexture *shadowMapTextureFinal{nullptr};
-	irr::video::ITexture *shadowMapTextureDynamicObjects{nullptr};
-	irr::video::ITexture *shadowMapTextureColors{nullptr};
-	bool _use_32bit_depth{false};
-	irr::video::SColor m_clear_color{0x0};
+	core::dimension2du _screenRTT_resolution;
+	video::ITexture *shadowMapClientMap{nullptr};
+	video::ITexture *shadowMapTextureFinal{nullptr};
+	video::ITexture *shadowMapTextureDynamicObjects{nullptr};
+	video::ITexture *shadowMapTextureColors{nullptr};
+	video::SColor m_clear_color{0x0};
 
 	std::vector<DirectionalLight> m_light_list;
 	std::vector<NodeToApply> m_shadow_node_array;
@@ -109,18 +124,18 @@ private:
 	bool m_shadow_map_colored{false};
 	bool m_shadow_psm{false};
 
-	irr::video::ECOLOR_FORMAT m_texture_format{irr::video::ECOLOR_FORMAT::ECF_R16F};
-	irr::video::ECOLOR_FORMAT m_texture_format_color{
-			irr::video::ECOLOR_FORMAT::ECF_R16G16};
+	video::ECOLOR_FORMAT m_texture_format{video::ECOLOR_FORMAT::ECF_R16F};
+	video::ECOLOR_FORMAT m_texture_format_color{
+			video::ECOLOR_FORMAT::ECF_R16G16};
 
 	// Shadow Shader stuff
 
 	void createShaders();
-	std::string readFile(const std::string &path);
+	std::string readShaderFile(const std::string &path);
 
-	irr::s32 depth_shader{-1};
-	irr::s32 depth_shader_trans{-1};
-	irr::s32 mixcsm_shader{-1};
+	s32 depth_shader{-1};
+	s32 depth_shader_trans{-1};
+	s32 mixcsm_shader{-1};
 
 	ShadowDepthShaderCB *m_shadow_depth_cb{nullptr};
 	ShadowDepthShaderCB *m_shadow_depth_trans_cb{nullptr};
