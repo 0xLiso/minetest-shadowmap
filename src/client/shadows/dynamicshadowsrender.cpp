@@ -433,13 +433,13 @@ void ShadowRenderer::createShaders()
 	video::IGPUProgrammingServices *gpu = m_driver->getGPUProgrammingServices();
 
 	if (depth_shader == -1) {
-		std::string depth_shader_vs = getShaderPath("shadow_shaders", "shadow_pass1.vs");
+		std::string depth_shader_vs = getShaderPath("shadow_shaders", "pass1_vertex.glsl");
 		if (depth_shader_vs.empty()) {
 			m_shadows_enabled = false;
 			errorstream << "Error shadow mapping vs shader not found." << std::endl;
 			return;
 		}
-		std::string depth_shader_fs = getShaderPath("shadow_shaders", "shadow_pass1.fs");
+		std::string depth_shader_fs = getShaderPath("shadow_shaders", "pass1_fragment.glsl");
 		if (depth_shader_fs.empty()) {
 			m_shadows_enabled = false;
 			errorstream << "Error shadow mapping fs shader not found." << std::endl;
@@ -468,14 +468,14 @@ void ShadowRenderer::createShaders()
 	}
 
 	if (mixcsm_shader == -1) {
-		std::string depth_shader_vs = getShaderPath("shadow_shaders", "shadow_pass2.vs");
+		std::string depth_shader_vs = getShaderPath("shadow_shaders", "pass2_vertex.glsl");
 		if (depth_shader_vs.empty()) {
 			m_shadows_enabled = false;
 			errorstream << "Error cascade shadow mapping fs shader not found." << std::endl;
 			return;
 		}
 
-		std::string depth_shader_fs = getShaderPath("shadow_shaders", "shadow_pass2.fs");
+		std::string depth_shader_fs = getShaderPath("shadow_shaders", "pass2_fragment.glsl");
 		if (depth_shader_fs.empty()) {
 			m_shadows_enabled = false;
 			errorstream << "Error cascade shadow mapping fs shader not found." << std::endl;
@@ -508,13 +508,13 @@ void ShadowRenderer::createShaders()
 	}
 
 	if (m_shadow_map_colored && depth_shader_trans == -1) {
-		std::string depth_shader_vs = getShaderPath("shadow_shaders", "shadow_pass1_trans.vs");
+		std::string depth_shader_vs = getShaderPath("shadow_shaders", "pass1_trans_vertex.glsl");
 		if (depth_shader_vs.empty()) {
 			m_shadows_enabled = false;
 			errorstream << "Error shadow mapping vs shader not found." << std::endl;
 			return;
 		}
-		std::string depth_shader_fs = getShaderPath("shadow_shaders", "shadow_pass1_trans.fs");
+		std::string depth_shader_fs = getShaderPath("shadow_shaders", "pass1_trans_fragment.glsl");
 		if (depth_shader_fs.empty()) {
 			m_shadows_enabled = false;
 			errorstream << "Error shadow mapping fs shader not found." << std::endl;
