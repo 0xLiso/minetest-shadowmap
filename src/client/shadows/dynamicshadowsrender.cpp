@@ -552,7 +552,6 @@ std::string ShadowRenderer::readShaderFile(const std::string &path)
 	std::string prefix;
 	if (m_shadow_map_colored)
 		prefix.append("#define COLORED_SHADOWS 1\n");
-	prefix.append("#define SHADOWS_PSM 1\n");
 
 	std::string content;
 	fs::ReadFile(path, content);

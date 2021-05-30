@@ -122,7 +122,6 @@ private:
 	bool m_shadow_map_texture_32bit{true};
 	bool m_shadows_enabled{false};
 	bool m_shadow_map_colored{false};
-	bool m_shadow_psm{false};
 
 	video::ECOLOR_FORMAT m_texture_format{video::ECOLOR_FORMAT::ECF_R16F};
 	video::ECOLOR_FORMAT m_texture_format_color{

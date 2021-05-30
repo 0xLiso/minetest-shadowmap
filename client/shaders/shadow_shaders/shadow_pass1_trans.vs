@@ -1,7 +1,6 @@
 uniform mat4 LightMVP; // world matrix
 varying vec4 tPos;
 
-#ifdef SHADOWS_PSM
 const float bias0 = 0.9;
 const float zPersFactor = 0.5;
 const float bias1 = 1.0 - bias0 + 1e-6;
@@ -14,7 +13,7 @@ vec4 getPerspectiveFactor(in vec4 shadowPosition)
 
 	return shadowPosition;
 }
-#endif
+
 
 void main()
 {
