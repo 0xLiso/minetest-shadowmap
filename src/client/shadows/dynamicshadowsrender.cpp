@@ -55,26 +55,17 @@ ShadowRenderer::~ShadowRenderer()
 	m_shadow_node_array.clear();
 	m_light_list.clear();
 
-	// we don't have to delete the textures in renderTargets
-	/*
-	if (shadowMapTextureDynamicObjects) {
-		delete shadowMapTextureDynamicObjects;
-		shadowMapTextureDynamicObjects = nullptr;
-	}
+	if (shadowMapTextureDynamicObjects)
+		m_driver->removeTexture(shadowMapTextureDynamicObjects);
 
-	if (shadowMapTextureFinal) {
-		delete shadowMapTextureFinal;
-		shadowMapTextureFinal = nullptr;
-	}
-	if (shadowMapTextureColors) {
-		delete shadowMapTextureColors;
-		shadowMapTextureColors = nullptr;
-	}
-	if (shadowMapClientMap) {
-		delete shadowMapClientMap;
-		shadowMapClientMap = nullptr;
-	}
-	*/
+	if (shadowMapTextureFinal)
+		m_driver->removeTexture(shadowMapTextureFinal);
+
+	if (shadowMapTextureColors)
+		m_driver->removeTexture(shadowMapTextureColors);
+
+	if (shadowMapClientMap)
+		m_driver->removeTexture(shadowMapClientMap);
 }
 
 void ShadowRenderer::initialize()
