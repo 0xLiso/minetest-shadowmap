@@ -610,7 +610,7 @@ void Sky::draw_sun(video::IVideoDriver *driver, float sunsize, const video::SCol
 		const video::SColor colors[4] = {c1, c2, suncolor, suncolor2};
 		for (int i = 0; i < 4; i++) {
 			draw_sky_body(vertices, -sunsizes[i], sunsizes[i], colors[i]);
-			place_sky_body(vertices, 90, wicked_time_of_day * 360 - 90, m_sky_body_orbit_tilt);
+			place_sky_body(vertices, 90, wicked_time_of_day * 360 - 90);
 			driver->drawIndexedTriangleList(&vertices[0], 4, indices, 2);
 		}
 	} else {
@@ -622,7 +622,7 @@ void Sky::draw_sun(video::IVideoDriver *driver, float sunsize, const video::SCol
 		else
 			c = video::SColor(255, 255, 255, 255);
 		draw_sky_body(vertices, -d, d, c);
-		place_sky_body(vertices, 90, wicked_time_of_day * 360 - 90, m_sky_body_orbit_tilt);
+		place_sky_body(vertices, 90, wicked_time_of_day * 360 - 90);
 		driver->drawIndexedTriangleList(&vertices[0], 4, indices, 2);
 	}
 }
@@ -663,7 +663,7 @@ void Sky::draw_moon(video::IVideoDriver *driver, float moonsize, const video::SC
 		const video::SColor colors[4] = {c1, c2, mooncolor, mooncolor2};
 		for (int i = 0; i < 4; i++) {
 			draw_sky_body(vertices, moonsizes_1[i], moonsizes_2[i], colors[i]);
-			place_sky_body(vertices, -90, wicked_time_of_day * 360 - 90, m_sky_body_orbit_tilt);
+			place_sky_body(vertices, -90, wicked_time_of_day * 360 - 90);
 			driver->drawIndexedTriangleList(&vertices[0], 4, indices, 2);
 		}
 	} else {
@@ -675,7 +675,7 @@ void Sky::draw_moon(video::IVideoDriver *driver, float moonsize, const video::SC
 		else
 			c = video::SColor(255, 255, 255, 255);
 		draw_sky_body(vertices, -d, d, c);
-		place_sky_body(vertices, -90, wicked_time_of_day * 360 - 90, m_sky_body_orbit_tilt);
+		place_sky_body(vertices, -90, wicked_time_of_day * 360 - 90);
 		driver->drawIndexedTriangleList(&vertices[0], 4, indices, 2);
 	}
 }
@@ -721,7 +721,7 @@ void Sky::draw_sky_body(std::array<video::S3DVertex, 4> &vertices, float pos_1, 
 
 
 void Sky::place_sky_body(
-	std::array<video::S3DVertex, 4> &vertices, float horizon_position, float day_position, float tilt)
+	std::array<video::S3DVertex, 4> &vertices, float horizon_position, float day_position)
 	/*
 	* Place body in the sky.
 	* vertices: The body as a rectangle of 4 vertices
@@ -729,15 +729,15 @@ void Sky::place_sky_body(
 	* day_position: turn the body around the Z axis, to place it depending of the time of the day
 	*/
 {
-	video::S3DVertex centrum = video::S3DVertex(0, 0, -1, 0, 0, 1, video::SColor(0), 0.0, 0.0);
-	centrum.Pos.rotateXZBy(horizon_position);
-	centrum.Pos.rotateXYBy(day_position);
-	centrum.Pos.rotateYZBy(tilt);
+	v3f centrum(0, 0, -1);
+	centrum.rotateXZBy(horizon_position);
+	centrum.rotateXYBy(day_position);
+	centrum.rotateYZBy(m_sky_body_orbit_tilt);
 	for (video::S3DVertex &vertex : vertices) {
 		// Body is directed to -Z (south) by default
 		vertex.Pos.rotateXZBy(horizon_position);
 		vertex.Pos.rotateXYBy(day_position);
-		vertex.Pos.Z += centrum.Pos.Z;
+		vertex.Pos.Z += centrum.Z;
 	}
 }
 
@@ -929,14 +929,14 @@ void Sky::setSkyDefaults()
 
 float getWickedTimeOfDay(float time_of_day)
 {
-	float nightlength = 0.415;
+	float nightlength = 0.415f;
 	float wn = nightlength / 2;
 	float wicked_time_of_day = 0;
-	if (time_of_day > wn && time_of_day < 1.0 - wn)
-		wicked_time_of_day = (time_of_day - wn) / (1.0 - wn * 2) * 0.5 + 0.25;
-	else if (time_of_day < 0.5)
-		wicked_time_of_day = time_of_day / wn * 0.25;
+	if (time_of_day > wn && time_of_day < 1.0f - wn)
+		wicked_time_of_day = (time_of_day - wn) / (1.0f - wn * 2) * 0.5f + 0.25f;
+	else if (time_of_day < 0.5f)
+		wicked_time_of_day = time_of_day / wn * 0.25f;
 	else
-		wicked_time_of_day = 1.0 - ((1.0 - time_of_day) / wn * 0.25);
+		wicked_time_of_day = 1.0f - ((1.0f - time_of_day) / wn * 0.25f);
 	return wicked_time_of_day;
 }

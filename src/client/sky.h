@@ -206,7 +206,7 @@ private:
 		float pos_1, float pos_2, const video::SColor &c);
 	void draw_stars(video::IVideoDriver *driver, float wicked_time_of_day);
 	void place_sky_body(std::array<video::S3DVertex, 4> &vertices,
-		float horizon_position,	float day_position, float tilt);
+		float horizon_position,	float day_position);
 	void setSkyDefaults();
 };
 

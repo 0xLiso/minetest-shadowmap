@@ -125,7 +125,8 @@ private:
 	// so this variable is just required so we can implement
 	// getBoundingBox() and is set to an empty box.
 	aabb3f m_bounding_box;
-	ShadowRenderer *m_shadow{nullptr};
+
+	ShadowRenderer *m_shadow;
 };
 
 void getItemMesh(Client *client, const ItemStack &item, ItemMesh *result);
