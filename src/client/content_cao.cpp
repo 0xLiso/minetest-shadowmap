@@ -24,6 +24,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <IMeshManipulator.h>
 #include <IAnimatedMeshSceneNode.h>
 #include "client/client.h"
+#include "client/renderingengine.h"
 #include "client/sound.h"
 #include "client/tile.h"
 #include "util/basic_macros.h"
@@ -555,6 +556,10 @@ void GenericCAO::removeFromScene(bool permanent)
 		clearParentAttachment();
 	}
 
+	ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
+	if (shadow) // remove mesh from shadow caster
+		shadow->removeNodeFromShadowList(getSceneNode());
+
 	if (m_meshnode) {
 		m_meshnode->remove();
 		m_meshnode->drop();
@@ -807,6 +812,10 @@ void GenericCAO::addToScene(ITextureSource *tsrc, scene::ISceneManager *smgr)
 
 	if (node && m_matrixnode)
 		node->setParent(m_matrixnode);
+
+	ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
+	if (shadow && node) // Add mesh to shadow caster
+		shadow->addNodeToShadowList(node);
 
 	updateNametag();
 	updateMarker();

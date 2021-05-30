@@ -24,11 +24,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "client/clientmap.h"
 #include "client/hud.h"
 #include "client/minimap.h"
+#include "client/shadows/dynamicshadowsrender.h"
 
 RenderingCore::RenderingCore(IrrlichtDevice *_device, Client *_client, Hud *_hud)
 	: device(_device), driver(device->getVideoDriver()), smgr(device->getSceneManager()),
 	guienv(device->getGUIEnvironment()), client(_client), camera(client->getCamera()),
-	mapper(client->getMinimap()), hud(_hud)
+	mapper(client->getMinimap()), hud(_hud),
+	shadow_renderer(new ShadowRenderer(device, client))
 {
 	screensize = driver->getScreenSize();
 	virtual_size = screensize;
@@ -37,12 +39,14 @@ RenderingCore::RenderingCore(IrrlichtDevice *_device, Client *_client, Hud *_hud
 RenderingCore::~RenderingCore()
 {
 	clearTextures();
+	delete shadow_renderer;
 }
 
 void RenderingCore::initialize()
 {
 	// have to be called late as the VMT is not ready in the constructor:
 	initTextures();
+	shadow_renderer->initialize();
 }
 
 void RenderingCore::updateScreenSize()
@@ -72,7 +76,11 @@ void RenderingCore::draw(video::SColor _skycolor, bool _show_hud, bool _show_min
 
 void RenderingCore::draw3D()
 {
-	smgr->drawAll();
+	shadow_renderer->setClearColor(skycolor);
+	shadow_renderer->update();
+
+	// we are going handle the draw stage
+	// smgr->drawAll();
 	driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
 	if (!show_hud)
 		return;

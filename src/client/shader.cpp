@@ -225,6 +225,8 @@ class MainShaderConstantSetter : public IShaderConstantSetter
 {
 	CachedVertexShaderSetting<float, 16> m_world_view_proj;
 	CachedVertexShaderSetting<float, 16> m_world;
+	CachedPixelShaderSetting<s32> m_shadow_texture;
+	bool m_shadow_map_enabled;
 #if ENABLE_GLES
 	// Modelview matrix
 	CachedVertexShaderSetting<float, 16> m_world_view;
@@ -238,13 +240,16 @@ public:
 	MainShaderConstantSetter() :
 		  m_world_view_proj("mWorldViewProj")
 		, m_world("mWorld")
+		, m_shadow_texture("ShadowMapSampler")
 #if ENABLE_GLES
 		, m_world_view("mWorldView")
 		, m_texture("mTexture")
 		, m_normal("mNormal")
 #endif
-	{}
-	~MainShaderConstantSetter() = default;
+    {
+        m_shadow_map_enabled = g_settings->getBool("enable_dynamic_shadows");
+    }
+    ~MainShaderConstantSetter() = default;
 
 	virtual void onSetConstants(video::IMaterialRendererServices *services) override
 	{
@@ -280,6 +285,45 @@ public:
 		};
 		m_normal.set(m, services);
 #endif
+
+		// Set Shadow shader uniform
+		ShadowRenderer *shadow = m_shadow_map_enabled ?  RenderingEngine::get_shadow_renderer() : nullptr;
+		if (shadow) {
+			core::matrix4 shadowViewProj = shadow->getDirectionalLight().getProjectionMatrix();
+			shadowViewProj *= shadow->getDirectionalLight().getViewMatrix();
+
+			services->setPixelShaderConstant(services->getPixelShaderConstantID("m_ShadowViewProj"),
+				*reinterpret_cast<float(*)[16]>(shadowViewProj.pointer()), 16);
+
+			float v_LightDirection[3];
+			shadow->getDirectionalLight().getDirection().getAs3Values(v_LightDirection);
+			services->setPixelShaderConstant(services->getPixelShaderConstantID("v_LightDirection"),
+					*reinterpret_cast<float(*)[3]>(v_LightDirection), 3);
+
+			float TextureResolution = (float)shadow->getDirectionalLight()
+				.getMapResolution();
+			services->setPixelShaderConstant(services->getPixelShaderConstantID("f_textureresolution"),
+					&TextureResolution, 1);
+
+			float ShadowStrengh = (float)shadow->getShadowStrengh();
+			services->setPixelShaderConstant(services->getPixelShaderConstantID("f_shadow_strength"),
+					&ShadowStrengh, 1);
+
+			float timeofDay = (float)shadow->getTimeofDay();
+			services->setPixelShaderConstant(
+					services->getPixelShaderConstantID("f_timeofday"),
+					&timeofDay, 1);
+
+			float shadowFar = shadow->getMaxShadowFar();
+			services->setPixelShaderConstant(
+					services->getPixelShaderConstantID("f_shadowfar"),
+					&shadowFar, 1);
+
+			// I dont like using this hardcoded value. maybe something like
+			// MAX_TEXTURE - 1 or somthing like that??
+			s32 TextureLayerID = 3;
+			m_shadow_texture.set(&TextureLayerID, services);
+		}
 	}
 };
 
@@ -681,6 +725,24 @@ ShaderInfo ShaderSource::generateShader(const std::string &name,
 	shaders_header << "#define ENABLE_TONE_MAPPING " << g_settings->getBool("tone_mapping") << "\n";
 
 	shaders_header << "#define FOG_START " << core::clamp(g_settings->getFloat("fog_start"), 0.0f, 0.99f) << "\n";
+
+	if (g_settings->getBool("enable_dynamic_shadows"))
+	{
+		shaders_header << "#define ENABLE_DYNAMIC_SHADOWS 1\n";
+		if (g_settings->getBool("shadow_map_color"))
+			shaders_header << "#define COLORED_SHADOWS 1\n";
+
+		if (g_settings->getBool("shadow_poisson_filter"))
+			shaders_header << "#define POISSON_FILTER 1\n";
+
+		s32 shadow_filter = g_settings->getS32("shadow_filters");
+		shaders_header << "#define SHADOW_FILTER " << shadow_filter << "\n";
+
+		float shadow_soft_radius = g_settings->getS32("shadow_soft_radius");
+		if (shadow_soft_radius < 1.0f)
+			shadow_soft_radius = 1.0f;
+		shaders_header << "#define SOFTSHADOWRADIUS " << shadow_soft_radius << "\n";
+	}
 
 	std::string common_header = shaders_header.str();
 

@@ -739,6 +739,8 @@ protected:
 	void updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 			const CameraOrientation &cam);
 
+	void updateShadows(float _timeoftheday);
+
 	// Misc
 	void limitFps(FpsControl *fps_timings, f32 *dtime);
 
@@ -1347,6 +1349,8 @@ bool Game::createClient(const GameStartData &start_data)
 	/* Skybox
 	 */
 	sky = new Sky(-1, m_rendering_engine, texture_src, shader_src);
+	if (g_settings->getBool("enable_dynamic_shadows"))
+		sky->setSkyBodyOrbitTilt(rangelim(g_settings->getFloat("shadow_sky_body_orbit_tilt"), 0.0f, 60.0f));
 	scsf->setSky(sky);
 	skybox = NULL;	// This is used/set later on in the main run loop
 
@@ -3705,6 +3709,12 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	float time_brightness = decode_light_f((float)daynight_ratio / 1000.0);
 	float direct_brightness;
 	bool sunlight_seen;
+	float update_draw_list_timer_delta = 0.2;
+
+	ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
+	if (shadow) {
+		update_draw_list_timer_delta = shadow->getUpdateDelta();
+	}
 
 	if (m_cache_enable_noclip && m_cache_enable_free_move) {
 		direct_brightness = time_brightness;
@@ -3832,12 +3842,15 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	runData.update_draw_list_timer += dtime;
 
 	v3f camera_direction = camera->getDirection();
-	if (runData.update_draw_list_timer >= 0.2
+	if (runData.update_draw_list_timer >= update_draw_list_timer_delta
 			|| runData.update_draw_list_last_cam_dir.getDistanceFrom(camera_direction) > 0.2
 			|| m_camera_offset_changed) {
+
 		runData.update_draw_list_timer = 0;
 		client->getEnv().getClientMap().updateDrawList();
 		runData.update_draw_list_last_cam_dir = camera_direction;
+
+		updateShadows(runData.time_of_day_smooth);
 	}
 
 	m_game_ui->update(*stats, client, draw_control, cam, runData.pointed_old, gui_chat_console, dtime);
@@ -3968,7 +3981,33 @@ inline void Game::updateProfilerGraphs(ProfilerGraph *graph)
 	graph->put(values);
 }
 
+/****************************************************************************
+ * Shadows
+ *****************************************************************************/
+void Game::updateShadows(float _timeoftheday)
+{
+	ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
+	if (!shadow)
+		return;
 
+	float timeoftheday = getWickedTimeOfDay(fmod(_timeoftheday, 1.0f));
+	timeoftheday = fmod(timeoftheday - 0.25, 0.5) + 0.25;
+	const float offset_constant = 10000.0f;
+
+	v3f light = v3f(0.0f, 0.0f, -1.0f);
+	light.rotateXZBy(90);
+	light.rotateXYBy(timeoftheday * 360 - 90);
+	light.rotateYZBy(sky->getSkyBodyOrbitTilt());
+
+	v3f sun_pos = light * offset_constant;
+
+	if (shadow->getDirectionalLightCount() == 0)
+		shadow->addDirectionalLight();
+	shadow->getDirectionalLight().setDirection(sun_pos);
+	shadow->setTimeOfDay(fmod(_timeoftheday, 1.0f));
+	
+	shadow->getDirectionalLight().update_frustum(camera, client);
+}
 
 /****************************************************************************
  Misc

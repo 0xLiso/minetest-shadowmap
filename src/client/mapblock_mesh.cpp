@@ -615,6 +615,7 @@ static void makeFastFace(const TileSpec &tile, u16 li0, u16 li1, u16 li2, u16 li
 		video::SColor c = encode_light(li[i], tile.emissive_light);
 		if (!tile.emissive_light)
 			applyFacesShading(c, normal);
+		
 
 		face.vertices[i] = video::S3DVertex(vertex_pos[i], normal, c, f[i]);
 	}
@@ -860,6 +861,10 @@ static void updateFastFaceRow(
 		g_settings->getBool("enable_shaders") &&
 		g_settings->getBool("enable_waving_water");
 
+	static thread_local const bool force_not_tiling =
+			g_settings->getBool("enable_dynamic_shadows") &&
+			g_settings->getBool("shadow_psm");
+
 	v3s16 p = startpos;
 
 	u16 continuous_tiles_count = 1;
@@ -898,7 +903,8 @@ static void updateFastFaceRow(
 					waving,
 					next_tile);
 
-			if (next_makes_face == makes_face
+			if (!force_not_tiling
+					&& next_makes_face == makes_face
 					&& next_p_corrected == p_corrected + translate_dir
 					&& next_face_dir_corrected == face_dir_corrected
 					&& memcmp(next_lights, lights, sizeof(lights)) == 0
