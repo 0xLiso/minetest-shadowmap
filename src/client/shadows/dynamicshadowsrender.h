@@ -113,15 +113,15 @@ private:
 	std::vector<DirectionalLight> m_light_list;
 	std::vector<NodeToApply> m_shadow_node_array;
 
-	float m_shadow_strength{0.25f};
-	float m_shadow_map_max_distance{4096.0f}; // arbitrary 4096 blocks
-	float m_shadow_map_texture_size{2048.0f};
+	float m_shadow_strength;
+	float m_shadow_map_max_distance;
+	float m_shadow_map_texture_size;
 	float m_time_day{false};
-	float m_update_delta{0.2f};
-	int m_shadow_samples{4};
-	bool m_shadow_map_texture_32bit{true};
-	bool m_shadows_enabled{false};
-	bool m_shadow_map_colored{false};
+	float m_update_delta;
+	int m_shadow_samples;
+	bool m_shadow_map_texture_32bit;
+	bool m_shadows_enabled;
+	bool m_shadow_map_colored;
 
 	video::ECOLOR_FORMAT m_texture_format{video::ECOLOR_FORMAT::ECF_R16F};
 	video::ECOLOR_FORMAT m_texture_format_color{

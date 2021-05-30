@@ -32,10 +32,7 @@ ShadowRenderer::ShadowRenderer(IrrlichtDevice *device, Client *client) :
 		m_device(device), m_smgr(device->getSceneManager()),
 		m_driver(device->getVideoDriver()), m_client(client)
 {
-	m_shadows_enabled = g_settings->getBool("enable_shaders");
-	m_shadows_enabled &= g_settings->getBool("enable_dynamic_shadows");
-	if (!m_shadows_enabled)
-		return;
+	m_shadows_enabled = true;
 
 	m_shadow_strength = g_settings->getFloat("shadow_strength");
 

@@ -125,7 +125,9 @@ void ClientMap::OnRegisterSceneNode()
 
 	if (!m_added_to_shadow_renderer) {
 		m_added_to_shadow_renderer = true;
-		m_rendering_engine->get_shadow_renderer()->addNodeToShadowList(this);
+		auto *shadows = m_rendering_engine->get_shadow_renderer();
+		if (shadows)
+			shadows->addNodeToShadowList(this);
 	}
 }
 

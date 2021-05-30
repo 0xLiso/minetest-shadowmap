@@ -30,10 +30,15 @@ RenderingCore::RenderingCore(IrrlichtDevice *_device, Client *_client, Hud *_hud
 	: device(_device), driver(device->getVideoDriver()), smgr(device->getSceneManager()),
 	guienv(device->getGUIEnvironment()), client(_client), camera(client->getCamera()),
 	mapper(client->getMinimap()), hud(_hud),
-	shadow_renderer(new ShadowRenderer(device, client))
+	shadow_renderer(nullptr)
 {
 	screensize = driver->getScreenSize();
 	virtual_size = screensize;
+
+	if (g_settings->getBool("enable_shaders") &&
+			g_settings->getBool("enable_dynamic_shadows")) {
+		shadow_renderer = new ShadowRenderer(device, client);
+	}
 }
 
 RenderingCore::~RenderingCore()
@@ -46,7 +51,8 @@ void RenderingCore::initialize()
 {
 	// have to be called late as the VMT is not ready in the constructor:
 	initTextures();
-	shadow_renderer->initialize();
+	if (shadow_renderer)
+		shadow_renderer->initialize();
 }
 
 void RenderingCore::updateScreenSize()
@@ -76,11 +82,14 @@ void RenderingCore::draw(video::SColor _skycolor, bool _show_hud, bool _show_min
 
 void RenderingCore::draw3D()
 {
-	shadow_renderer->setClearColor(skycolor);
-	shadow_renderer->update();
+	if (shadow_renderer) {
+		// Shadow renderer will handle the draw stage
+		shadow_renderer->setClearColor(skycolor);
+		shadow_renderer->update();
+	} else {
+		smgr->drawAll();
+	}
 
-	// we are going handle the draw stage
-	// smgr->drawAll();
 	driver->setTransform(video::ETS_WORLD, core::IdentityMatrix);
 	if (!show_hud)
 		return;
