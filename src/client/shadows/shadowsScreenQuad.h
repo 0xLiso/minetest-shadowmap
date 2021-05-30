@@ -30,8 +30,6 @@ public:
 	void render(video::IVideoDriver *driver);
 	video::SMaterial &getMaterial() { return Material; }
 
-	video::ITexture *textures[3];
-
 private:
 	video::S3DVertex Vertices[6];
 	video::SMaterial Material;

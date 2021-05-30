@@ -85,7 +85,7 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 	// but the shadow_frustum position must be the actual world position
 	v3f eye = frustumCenter - eye_displacement;
 	shadow_frustum.position = world_center - eye_displacement;
-	shadow_frustum.length =  vvolume;
+	shadow_frustum.length = vvolume;
 	shadow_frustum.ViewMat.buildCameraLookAtMatrixLH(eye, frustumCenter, v3f(0.0f, 1.0f, 0.0f));
 	shadow_frustum.ProjOrthMat.buildProjectionMatrixOrthoLH(shadow_frustum.length,
 			shadow_frustum.length, -shadow_frustum.length,

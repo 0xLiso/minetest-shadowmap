@@ -103,7 +103,6 @@ private:
 	scene::ISceneManager *m_smgr{nullptr};
 	video::IVideoDriver *m_driver{nullptr};
 	Client *m_client{nullptr};
-	core::dimension2du _screenRTT_resolution;
 	video::ITexture *shadowMapClientMap{nullptr};
 	video::ITexture *shadowMapTextureFinal{nullptr};
 	video::ITexture *shadowMapTextureDynamicObjects{nullptr};
@@ -116,7 +115,7 @@ private:
 	float m_shadow_strength;
 	float m_shadow_map_max_distance;
 	float m_shadow_map_texture_size;
-	float m_time_day{false};
+	float m_time_day{0.0f};
 	float m_update_delta;
 	int m_shadow_samples;
 	bool m_shadow_map_texture_32bit;
@@ -124,8 +123,7 @@ private:
 	bool m_shadow_map_colored;
 
 	video::ECOLOR_FORMAT m_texture_format{video::ECOLOR_FORMAT::ECF_R16F};
-	video::ECOLOR_FORMAT m_texture_format_color{
-			video::ECOLOR_FORMAT::ECF_R16G16};
+	video::ECOLOR_FORMAT m_texture_format_color{video::ECOLOR_FORMAT::ECF_R16G16};
 
 	// Shadow Shader stuff
 

@@ -31,5 +31,4 @@ public:
 			s32 userData) override;
 
 	f32 MaxFar{2048.0f}, MapRes{1024.0f};
-	int idx{0};
 };

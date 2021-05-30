@@ -26,12 +26,6 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 class Camera;
 class Client;
 
-struct BSphere
-{
-	v3f center;
-	float radius{0.0f};
-};
-
 struct shadowFrustum
 {
 	float zNear{0.0f};
@@ -39,10 +33,7 @@ struct shadowFrustum
 	float length{0.0f};
 	core::matrix4 ProjOrthMat;
 	core::matrix4 ViewMat;
-	core::matrix4 WorldViewProj;
 	v3f position;
-	BSphere sphere;
-	bool should_update_map_shadow{true};
 };
 
 class DirectionalLight
@@ -89,10 +80,8 @@ private:
 
 	f32 farPlane;
 	u32 mapRes;
-	v3s16 m_camera_offset;
 
 	v3f pos;
 	v3f direction{0};
-	v3f lastcampos{0};
 	shadowFrustum shadow_frustum;
 };
