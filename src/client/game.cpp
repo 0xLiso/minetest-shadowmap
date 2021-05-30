@@ -3982,14 +3982,15 @@ inline void Game::updateProfilerGraphs(ProfilerGraph *graph)
 /****************************************************************************
  * Shadows
  *****************************************************************************/
-void Game::updateShadows(float _timeoftheday)
+void Game::updateShadows(float in_timeoftheday)
 {
 	ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
 	if (!shadow)
 		return;
 
-	float timeoftheday = getWickedTimeOfDay(fmod(_timeoftheday, 1.0f));
-	timeoftheday = fmod(timeoftheday - 0.25, 0.5) + 0.25;
+	in_timeoftheday = fmod(in_timeoftheday, 1.0f);
+
+	float timeoftheday = fmod(getWickedTimeOfDay(in_timeoftheday) + 0.75f, 0.5f) + 0.25f;
 	const float offset_constant = 10000.0f;
 
 	v3f light(0.0f, 0.0f, -1.0f);
@@ -4002,7 +4003,7 @@ void Game::updateShadows(float _timeoftheday)
 	if (shadow->getDirectionalLightCount() == 0)
 		shadow->addDirectionalLight();
 	shadow->getDirectionalLight().setDirection(sun_pos);
-	shadow->setTimeOfDay(fmod(_timeoftheday, 1.0f));
+	shadow->setTimeOfDay(in_timeoftheday);
 
 	shadow->getDirectionalLight().update_frustum(camera, client);
 }
