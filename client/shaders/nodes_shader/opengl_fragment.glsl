@@ -47,14 +47,13 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 #ifdef ENABLE_DYNAMIC_SHADOWS
 const float bias0 = 0.9;
 const float zPersFactor = 0.5;
-const float bias1 = 1.0 - bias0;
+const float bias1 = 1.0 - bias0 + 1e-6;
 
 vec4 getPerspectiveFactor(in vec4 shadowPosition)
 {
 
 	float pDistance = length(shadowPosition.xy);
 	float pFactor = pDistance * bias0 + bias1;
-	pFactor+=1e-6;
 	shadowPosition.xyz *= vec3(vec2(1.0 / pFactor), zPersFactor);
 
 	return shadowPosition;
@@ -70,13 +69,12 @@ vec3 getLightSpacePosition()
 {
 	vec4 pLightSpace;
 	// some drawtypes have zero normals, so we need to handle it :(
-	#if DRAW_TYPE == NDT_PLANTLIKE
+#if DRAW_TYPE == NDT_PLANTLIKE
 	pLightSpace = m_ShadowViewProj * vec4(worldPosition, 1.0);
-	#else
-	float offsetScale = (0.0057 * getLinearDepth() + normalOffsetScale);
-	// ^ why is this different?
+#else
+	float offsetScale = 0.0057 * getLinearDepth() + normalOffsetScale;
 	pLightSpace = m_ShadowViewProj * vec4(worldPosition + offsetScale * normalize(vNormal), 1.0);
-	#endif
+#endif
 	pLightSpace = getPerspectiveFactor(pLightSpace);
 	return pLightSpace.xyz * 0.5 + 0.5;
 }
@@ -111,7 +109,7 @@ vec4 getHardShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 	float visibility = step(0.0, realDistance - texDepth.r);
 	vec4 result = vec4(visibility, vec3(0.0,0.0,0.0));//unpackColor(texDepth.g));
 	if (visibility < 0.1) {
-		visibility = step(0.0,	realDistance - texDepth.b);
+		visibility = step(0.0, realDistance - texDepth.b);
 		result = vec4(visibility, unpackColor(texDepth.a));
 	}
 	return result;
@@ -128,26 +126,15 @@ float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 
 #endif
 
-
 #if SHADOW_FILTER == 2
 	#define PCFBOUND 3.5
 	#define PCFSAMPLES 64.0
 #elif SHADOW_FILTER == 1
 	#define PCFBOUND 1.5
-	// why?
-	#if defined(POISSON_FILTER) && !defined(COLORED_SHADOWS)
-		#define PCFSAMPLES 32.0
-	#else
-		#define PCFSAMPLES 16.0
-	#endif
+	#define PCFSAMPLES 16.0
 #else
 	#define PCFBOUND 0.0
-	// why?
-	#if defined(POISSON_FILTER) && !defined(COLORED_SHADOWS)
-		#define PCFSAMPLES 4.0
-	#else
-		#define PCFSAMPLES 1.0
-	#endif
+	#define PCFSAMPLES 1.0
 #endif
 
 #ifdef POISSON_FILTER
@@ -353,6 +340,7 @@ void main(void)
 #endif
 
 	color = base.rgb;
+
 	vec4 col = vec4(color.rgb * varColor.rgb, 1.0);
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
@@ -360,24 +348,22 @@ void main(void)
 	vec3 shadow_color = vec3(0.0, 0.0, 0.0);
 	vec3 posLightSpace = getLightSpacePosition();
 
-	
 #ifdef COLORED_SHADOWS
-		vec4 visibility = getShadowColor(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
-		shadow_int = visibility.r;
-		shadow_color = visibility.gba;
+	vec4 visibility = getShadowColor(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
+	shadow_int = visibility.r;
+	shadow_color = visibility.gba;
 #else
-		shadow_int = getShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
+	shadow_int = getShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
 #endif
-		shadow_int *= 1.0 - nightRatio;
-
+	shadow_int *= 1.0 - nightRatio;
 
 	if (f_normal_length != 0 && cosLight < 0.0) {
 		shadow_int = clamp(1.0-nightRatio, 0.0, 1.0);
 	}
 
 	shadow_int = 1.0 - (shadow_int * adj_shadow_strength);
-	
-	col.rgb = mix(shadow_color,col.rgb,shadow_int)*shadow_int;
+
+	col.rgb = mix(shadow_color, col.rgb, shadow_int) * shadow_int;
 #endif
 
 #if ENABLE_TONE_MAPPING
@@ -397,6 +383,6 @@ void main(void)
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
 	col = mix(skyBgColor, col, clarity);
 	col = vec4(col.rgb, base.a);
-	
+
 	gl_FragColor = col;
 }

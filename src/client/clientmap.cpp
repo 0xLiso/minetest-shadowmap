@@ -336,7 +336,6 @@ void ClientMap::renderMap(video::IVideoDriver* driver, s32 pass)
 
 		// Mesh animation
 		if (pass == scene::ESNRP_SOLID) {
-			//MutexAutoLock lock(block->mesh_mutex);
 			MapBlockMesh *mapBlockMesh = block->mesh;
 			assert(mapBlockMesh);
 			// Pretty random but this should work somewhat nicely
@@ -636,8 +635,7 @@ void ClientMap::PrintInfo(std::ostream &out)
 }
 
 void ClientMap::renderMapShadows(video::IVideoDriver *driver,
-		video::SMaterial &material, s32 pass, v3f position,
-		v3f direction, float max_distance, bool replace_material)
+		const video::SMaterial &material, s32 pass)
 {
 	bool is_transparent_pass = pass != scene::ESNRP_SOLID;
 	std::string prefix;
@@ -647,16 +645,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 		prefix = "renderMap(SHADOW SOLID): ";
 
 	u32 drawcall_count = 0;
-
-	/*
-		Get all blocks and draw all visible ones
-	*/
-
 	u32 vertex_count = 0;
-
-	/*
-		Draw the selected MapBlocks
-	*/
 
 	MeshBufListList drawbufs;
 
@@ -687,7 +676,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 					auto *rnd = driver->getMaterialRenderer(mat.MaterialType);
 					bool transparent = rnd && rnd->isTransparent();
 					if (transparent == is_transparent_pass)
-						drawbufs.add(mesh->getMeshBuffer(i), block_pos, layer);
+						drawbufs.add(buf, block_pos, layer);
 				}
 			}
 		}
@@ -716,8 +705,11 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 				if (transparent == is_transparent_pass) {
 					local_material.MaterialType = material.MaterialType;
 					local_material.BackfaceCulling = material.BackfaceCulling;
-					local_material.FrontfaceCulling =	material.FrontfaceCulling;
+					local_material.FrontfaceCulling = material.FrontfaceCulling;
 					local_material.Lighting = false;
+				} else {
+					// TODO: determine if this is always true and remove the if
+					errorstream << "never happens" << std::endl;
 				}
 				driver->setMaterial(local_material);
 
@@ -733,7 +725,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 		}
 	}
 
-	g_profiler->avg(prefix + "draw shadow meshes [ms]", draw.stop(true));
+	g_profiler->avg(prefix + "draw meshes [ms]", draw.stop(true));
 	g_profiler->avg(prefix + "vertices drawn [#]", vertex_count);
 	g_profiler->avg(prefix + "drawcalls [#]", drawcall_count);
 }
@@ -765,8 +757,12 @@ void ClientMap::updateDrawListShadow(
 		block->refDrop();
 	}
 	m_drawlist_shadow.clear();
+
 	//we need to append the blocks from the camera pov. because sometimes
 	//they are not inside the light frustum and it creates glitches
+	// ===============
+	// TODO: this absolutely needs to be fixed, this breaks refcounting
+	// ===============
 	m_drawlist_shadow = m_drawlist;
 
 	// Number of blocks currently loaded by the client

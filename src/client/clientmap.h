@@ -126,9 +126,7 @@ public:
 	void renderMap(video::IVideoDriver* driver, s32 pass);
 
 	void renderMapShadows(video::IVideoDriver *driver,
-			video::SMaterial &material,
-			s32 pass, v3f position, v3f direction,
-			float max_distance, bool replace_material = false);
+			const video::SMaterial &material, s32 pass);
 
 	int getBackgroundBrightness(float max_d, u32 daylight_factor,
 			int oldvalue, bool *sunlight_seen_result);

@@ -6,6 +6,7 @@ uniform vec3 eyePosition;
 // The cameraOffset is the current center of the visible world.
 uniform vec3 cameraOffset;
 uniform float animationTimer;
+
 varying vec3 vNormal;
 varying vec3 vPosition;
 // World position in the visible world (i.e. relative to the cameraOffset.)
@@ -194,22 +195,20 @@ void main(void)
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	vec3 nNormal = normalize(vNormal);
 	cosLight = dot(nNormal, -v_LightDirection);
-	float texelSize = 768.0/f_textureresolution + 1.0 / f_textureresolution;
+	float texelSize = 768.0 / f_textureresolution + 1.0 / f_textureresolution;
 	float slopeScale = clamp(1.0 - abs(cosLight), 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
 	
-	if(f_timeofday<0.2){
-		adj_shadow_strength =f_shadow_strength * 0.5;
-
-		adj_shadow_strength *= 	(1.0 - mtsmoothstep(0.18, 0.2, f_timeofday));
-	}else if(f_timeofday>=0.8){
-		adj_shadow_strength =f_shadow_strength * 0.5;
-
-		adj_shadow_strength *= 	mtsmoothstep(0.8, 0.83, f_timeofday);
-	}else{
+	if (f_timeofday < 0.2) {
+		adj_shadow_strength = f_shadow_strength * 0.5 *
+			(1.0 - mtsmoothstep(0.18, 0.2, f_timeofday));
+	} else if (f_timeofday >= 0.8) {
+		adj_shadow_strength = f_shadow_strength * 0.5 *
+			mtsmoothstep(0.8, 0.83, f_timeofday);
+	} else {
 		adj_shadow_strength = f_shadow_strength *
-		mtsmoothstep(0.20, 0.25, f_timeofday) *
-		(1.0 - mtsmoothstep(0.7, 0.8, f_timeofday));
+			mtsmoothstep(0.20, 0.25, f_timeofday) *
+			(1.0 - mtsmoothstep(0.7, 0.8, f_timeofday));
 	}
 	f_normal_length = length(vNormal);
 #endif

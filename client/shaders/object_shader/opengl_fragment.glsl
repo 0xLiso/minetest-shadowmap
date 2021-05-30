@@ -76,10 +76,8 @@ const float bias1 = 1.0 - bias0;
 
 vec4 getPerspectiveFactor(in vec4 shadowPosition)
 {
-
 	float pDistance = length(shadowPosition.xy);
 	float pFactor = pDistance * bias0 + bias1;
-	//pFactor+=1e-6;
 	shadowPosition.xyz *= vec3(vec2(1.0 / pFactor), zPersFactor);
 
 	return shadowPosition;
@@ -94,8 +92,8 @@ float getLinearDepth()
 vec3 getLightSpacePosition()
 {
 	vec4 pLightSpace;
-	float normalBias =0.0005*getLinearDepth()*cosLight+normalOffsetScale ;
-	pLightSpace = m_ShadowViewProj * vec4(worldPosition + normalBias*normalize(vNormal), 1.0);
+	float normalBias = 0.0005 * getLinearDepth() * cosLight + normalOffsetScale;
+	pLightSpace = m_ShadowViewProj * vec4(worldPosition + normalBias * normalize(vNormal), 1.0);
 	pLightSpace = getPerspectiveFactor(pLightSpace);
 	return pLightSpace.xyz * 0.5 + 0.5;
 }
@@ -152,20 +150,10 @@ float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	#define PCFSAMPLES 64.0
 #elif SHADOW_FILTER == 1
 	#define PCFBOUND 1.5
-	// why?
-	#if defined(POISSON_FILTER) && !defined(COLORED_SHADOWS)
-		#define PCFSAMPLES 32.0
-	#else
-		#define PCFSAMPLES 16.0
-	#endif
+	#define PCFSAMPLES 16.0
 #else
 	#define PCFBOUND 0.0
-	// why?
-	#if defined(POISSON_FILTER) && !defined(COLORED_SHADOWS)
-		#define PCFSAMPLES 4.0
-	#else
-		#define PCFSAMPLES 1.0
-	#endif
+	#define PCFSAMPLES 1.0
 #endif
 
 #ifdef POISSON_FILTER
@@ -248,7 +236,7 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	int end_offset = int(PCFSAMPLES) + init_offset;
 
 	for (int x = init_offset; x < end_offset; x++) {
-		clampedpos =  poissonDisk[x] * texture_size * SOFTSHADOWRADIUS + smTexCoord.xy;
+		clampedpos = poissonDisk[x] * texture_size * SOFTSHADOWRADIUS + smTexCoord.xy;
 		visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
 	}
 
@@ -337,7 +325,7 @@ void main(void)
 #endif
 
 	color = base.rgb;
-	vec4 col = vec4(color.rgb, base.a); 
+	vec4 col = vec4(color.rgb, base.a);
 	col.rgb *= varColor.rgb;
 	col.rgb *= emissiveColor.rgb * vIDiff;
 
@@ -357,14 +345,13 @@ void main(void)
 	if (f_normal_length != 0 && cosLight <= 0.001) {
 		shadow_int = clamp(shadow_int + 0.5 * abs(cosLight), 0.0, 1.0);
 	}
-	
 
 	shadow_int = 1.0 - (shadow_int * adj_shadow_strength);
 
-	col.rgb = mix(shadow_color,col.rgb,shadow_int)*shadow_int;
+	col.rgb = mix(shadow_color, col.rgb, shadow_int) * shadow_int;
 #endif
 
-	
+
 
 #if ENABLE_TONE_MAPPING
 	col = applyToneMapping(col);
@@ -382,6 +369,6 @@ void main(void)
 	float clarity = clamp(fogShadingParameter
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
 	col = mix(skyBgColor, col, clarity);
-	 
+
 	gl_FragColor = vec4(col.rgb, base.a);
 }

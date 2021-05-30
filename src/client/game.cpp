@@ -3709,12 +3709,6 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	float time_brightness = decode_light_f((float)daynight_ratio / 1000.0);
 	float direct_brightness;
 	bool sunlight_seen;
-	float update_draw_list_timer_delta = 0.2;
-
-	ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
-	if (shadow) {
-		update_draw_list_timer_delta = shadow->getUpdateDelta();
-	}
 
 	if (m_cache_enable_noclip && m_cache_enable_free_move) {
 		direct_brightness = time_brightness;
@@ -3841,8 +3835,12 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	*/
 	runData.update_draw_list_timer += dtime;
 
+	float update_draw_list_delta = 0.2f;
+	if (ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer())
+		update_draw_list_delta = shadow->getUpdateDelta();
+
 	v3f camera_direction = camera->getDirection();
-	if (runData.update_draw_list_timer >= update_draw_list_timer_delta
+	if (runData.update_draw_list_timer >= update_draw_list_delta
 			|| runData.update_draw_list_last_cam_dir.getDistanceFrom(camera_direction) > 0.2
 			|| m_camera_offset_changed) {
 
@@ -3994,7 +3992,7 @@ void Game::updateShadows(float _timeoftheday)
 	timeoftheday = fmod(timeoftheday - 0.25, 0.5) + 0.25;
 	const float offset_constant = 10000.0f;
 
-	v3f light = v3f(0.0f, 0.0f, -1.0f);
+	v3f light(0.0f, 0.0f, -1.0f);
 	light.rotateXZBy(90);
 	light.rotateXYBy(timeoftheday * 360 - 90);
 	light.rotateYZBy(sky->getSkyBodyOrbitTilt());

@@ -406,9 +406,7 @@ void ShadowRenderer::renderShadowMap(irr::video::ITexture *target,
 			m_driver->setTransform(irr::video::ETS_WORLD,
 					map_node->getAbsoluteTransformation());
 
-			map_node->renderMapShadows(m_driver, material, pass,
-					light.getPosition(), light.getDirection(),
-					m_shadow_map_max_distance * BS, false);
+			map_node->renderMapShadows(m_driver, material, pass);
 			break;
 		} // end clientMap render
 	}

@@ -81,23 +81,21 @@ void main(void)
 #endif
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-	
-	cosLight = max(0.0,dot( vNormal,-v_LightDirection) );
-	float texelSize =  .51;  
-	float slopeScale = clamp(1.0 - cosLight , 0.0, 1.0);
+
+	cosLight = max(0.0, dot(vNormal, -v_LightDirection));
+	float texelSize = 0.51;
+	float slopeScale = clamp(1.0 - cosLight, 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
-	if(f_timeofday<0.2){
-		adj_shadow_strength =f_shadow_strength * 0.5;
-
-		adj_shadow_strength *= 	(1.0 - mtsmoothstep(0.18, 0.2, f_timeofday));
-	}else if(f_timeofday>=0.8){
-		adj_shadow_strength =f_shadow_strength * 0.5;
-
-		adj_shadow_strength *= 	mtsmoothstep(0.8, 0.83, f_timeofday);
-	}else{
+	if (f_timeofday < 0.2) {
+		adj_shadow_strength = f_shadow_strength * 0.5 *
+			(1.0 - mtsmoothstep(0.18, 0.2, f_timeofday));
+	} else if (f_timeofday >= 0.8) {
+		adj_shadow_strength = f_shadow_strength * 0.5 *
+			mtsmoothstep(0.8, 0.83, f_timeofday);
+	} else {
 		adj_shadow_strength = f_shadow_strength *
-		mtsmoothstep(0.20, 0.25, f_timeofday) *
-		(1.0 - mtsmoothstep(0.7, 0.8, f_timeofday));
+			mtsmoothstep(0.20, 0.25, f_timeofday) *
+			(1.0 - mtsmoothstep(0.7, 0.8, f_timeofday));
 	}
 	f_normal_length = length(vNormal);
 
