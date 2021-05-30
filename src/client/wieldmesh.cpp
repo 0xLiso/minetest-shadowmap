@@ -230,7 +230,7 @@ WieldMeshSceneNode::~WieldMeshSceneNode()
 	sanity_check(g_extrusion_mesh_cache);
 
 	// Remove node from shadow casters
-	if (m_shadow) 
+	if (m_shadow)
 		m_shadow->removeNodeFromShadowList(m_meshnode);
 
 	if (g_extrusion_mesh_cache->drop())
@@ -535,9 +535,9 @@ void WieldMeshSceneNode::changeToMesh(scene::IMesh *mesh)
 	// need to normalize normals when lighting is enabled (because of setScale())
 	m_meshnode->setMaterialFlag(video::EMF_NORMALIZE_NORMALS, m_lighting);
 	m_meshnode->setVisible(true);
-	
+
 	// Add mesh to shadow caster
-	if (m_shadow) 
+	if (m_shadow)
 		m_shadow->addNodeToShadowList(m_meshnode);
 }
 

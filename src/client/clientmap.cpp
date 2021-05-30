@@ -701,18 +701,13 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 
 			for (auto &pair : list.bufs) {
 				scene::IMeshBuffer *buf = pair.second;
+
+				// override some material properties
 				video::SMaterial local_material = buf->getMaterial();
-				auto *rnd = driver->getMaterialRenderer(local_material.MaterialType);
-				bool transparent = rnd && rnd->isTransparent();
-				if (transparent == is_transparent_pass) {
-					local_material.MaterialType = material.MaterialType;
-					local_material.BackfaceCulling = material.BackfaceCulling;
-					local_material.FrontfaceCulling = material.FrontfaceCulling;
-					local_material.Lighting = false;
-				} else {
-					// TODO: determine if this is always true and remove the if
-					errorstream << "never happens" << std::endl;
-				}
+				local_material.MaterialType = material.MaterialType;
+				local_material.BackfaceCulling = material.BackfaceCulling;
+				local_material.FrontfaceCulling = material.FrontfaceCulling;
+				local_material.Lighting = false;
 				driver->setMaterial(local_material);
 
 				v3f block_wpos = intToFloat(pair.first * MAP_BLOCKSIZE, BS);
@@ -734,18 +729,17 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 
 /*
 	Custom update draw list for the pov of shadow light.
-	@Liso double or triple check this fn and optimize it.
 */
 void ClientMap::updateDrawListShadow(
 		v3f shadow_light_pos, v3f shadow_light_dir, float shadow_range)
 {
 	ScopeProfiler sp(g_profiler, "CM::updateDrawListShadow()", SPT_AVG);
 
-	v3f camera_position = shadow_light_pos;
-	v3f camera_direction = shadow_light_dir;
+	const v3f camera_position = shadow_light_pos;
+	const v3f camera_direction = shadow_light_dir;
 	// I "fake" fov just to avoid creating a new function to handle orthographic
 	// projection.
-	f32 camera_fov = m_camera_fov * 1.9f;
+	const f32 camera_fov = m_camera_fov * 1.9f;
 
 	v3s16 cam_pos_nodes = floatToInt(camera_position, BS);
 	v3s16 p_blocks_min;
@@ -760,12 +754,14 @@ void ClientMap::updateDrawListShadow(
 	}
 	m_drawlist_shadow.clear();
 
-	//we need to append the blocks from the camera pov. because sometimes
-	//they are not inside the light frustum and it creates glitches
-	// ===============
-	// TODO: this absolutely needs to be fixed, this breaks refcounting
-	// ===============
-	m_drawlist_shadow = m_drawlist;
+	// We need to append the blocks from the camera POV because sometimes
+	// they are not inside the light frustum and it creates glitches.
+	// This could potentially be removed if we figure out why they are missing
+	// from the light frustum.
+	for (auto &i : m_drawlist) {
+		i.second->refGrab();
+		m_drawlist_shadow[i.first] = i.second;
+	}
 
 	// Number of blocks currently loaded by the client
 	u32 blocks_loaded = 0;
@@ -788,9 +784,6 @@ void ClientMap::updateDrawListShadow(
 			/*
 				Loop through blocks in sector
 			*/
-
-			u32 sector_blocks_drawn = 0;
-
 			for (MapBlock *block : sectorblocks) {
 				if (!block->mesh) {
 					// Ignore if mesh doesn't exist
@@ -818,14 +811,11 @@ void ClientMap::updateDrawListShadow(
 				block->resetUsageTimer();
 
 				// Add to set
-				block->refGrab();
-				m_drawlist_shadow[block->getPos()] = block;
-
-				sector_blocks_drawn++;
-			} // foreach sectorblocks
-
-		if (sector_blocks_drawn != 0)
-			m_last_drawn_sectors.insert(sp);
+				if (m_drawlist_shadow.find(block->getPos()) == m_drawlist_shadow.end()) {
+					block->refGrab();
+					m_drawlist_shadow[block->getPos()] = block;
+				}
+			}
 	}
 
 	// @Liso check these measurements

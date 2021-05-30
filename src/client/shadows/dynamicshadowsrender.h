@@ -84,8 +84,8 @@ public:
 	void setTimeOfDay(float isDay) { m_time_day = isDay; };
 
 	s32 getShadowSamples() const { return m_shadow_samples; }
-	float getShadowStrengh() const { return m_shadow_strength; }
-	float getTimeofDay() const { return m_time_day; }
+	float getShadowStrength() const { return m_shadow_strength; }
+	float getTimeOfDay() const { return m_time_day; }
 
 private:
 	video::ITexture *getSMTexture(const std::string &shadow_map_name,

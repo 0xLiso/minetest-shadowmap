@@ -225,8 +225,16 @@ class MainShaderConstantSetter : public IShaderConstantSetter
 {
 	CachedVertexShaderSetting<float, 16> m_world_view_proj;
 	CachedVertexShaderSetting<float, 16> m_world;
+
+	// Shadow-related
+	CachedPixelShaderSetting<float, 16> m_shadow_view_proj;
+	CachedPixelShaderSetting<float, 3> m_light_direction;
+	CachedPixelShaderSetting<float> m_texture_res;
+	CachedPixelShaderSetting<float> m_shadow_strength;
+	CachedPixelShaderSetting<float> m_time_of_day;
+	CachedPixelShaderSetting<float> m_shadowfar;
 	CachedPixelShaderSetting<s32> m_shadow_texture;
-	bool m_shadow_map_enabled;
+
 #if ENABLE_GLES
 	// Modelview matrix
 	CachedVertexShaderSetting<float, 16> m_world_view;
@@ -240,16 +248,20 @@ public:
 	MainShaderConstantSetter() :
 		  m_world_view_proj("mWorldViewProj")
 		, m_world("mWorld")
-		, m_shadow_texture("ShadowMapSampler")
 #if ENABLE_GLES
 		, m_world_view("mWorldView")
 		, m_texture("mTexture")
 		, m_normal("mNormal")
 #endif
-    {
-        m_shadow_map_enabled = g_settings->getBool("enable_dynamic_shadows");
-    }
-    ~MainShaderConstantSetter() = default;
+		, m_shadow_view_proj("m_ShadowViewProj")
+		, m_light_direction("v_LightDirection")
+		, m_texture_res("f_textureresolution")
+		, m_shadow_strength("f_shadow_strength")
+		, m_time_of_day("f_timeofday")
+		, m_shadowfar("f_shadowfar")
+		, m_shadow_texture("ShadowMapSampler")
+	{}
+	~MainShaderConstantSetter() = default;
 
 	virtual void onSetConstants(video::IMaterialRendererServices *services) override
 	{
@@ -286,39 +298,30 @@ public:
 		m_normal.set(m, services);
 #endif
 
-		// Set Shadow shader uniform
-		// TODO: this should use CachedPixelShaderSetting like the others
-		ShadowRenderer *shadow = m_shadow_map_enabled ? RenderingEngine::get_shadow_renderer() : nullptr;
+		// Set uniforms for Shadow shader
+		ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
 		if (shadow) {
-			core::matrix4 shadowViewProj = shadow->getDirectionalLight().getProjectionMatrix();
-			shadowViewProj *= shadow->getDirectionalLight().getViewMatrix();
+			const auto &light = shadow->getDirectionalLight();
 
-			services->setPixelShaderConstant(services->getPixelShaderConstantID("m_ShadowViewProj"),
-				*reinterpret_cast<float(*)[16]>(shadowViewProj.pointer()), 16);
+			core::matrix4 shadowViewProj = light.getProjectionMatrix();
+			shadowViewProj *= light.getViewMatrix();
+			m_shadow_view_proj.set(shadowViewProj.pointer(), services);
 
 			float v_LightDirection[3];
-			shadow->getDirectionalLight().getDirection().getAs3Values(v_LightDirection);
-			services->setPixelShaderConstant(services->getPixelShaderConstantID("v_LightDirection"),
-					*reinterpret_cast<float(*)[3]>(v_LightDirection), 3);
+			light.getDirection().getAs3Values(v_LightDirection);
+			m_light_direction.set(v_LightDirection, services);
 
-			float TextureResolution = (float)shadow->getDirectionalLight()
-				.getMapResolution();
-			services->setPixelShaderConstant(services->getPixelShaderConstantID("f_textureresolution"),
-					&TextureResolution, 1);
+			float TextureResolution = light.getMapResolution();
+			m_texture_res.set(&TextureResolution, services);
 
-			float ShadowStrengh = (float)shadow->getShadowStrengh();
-			services->setPixelShaderConstant(services->getPixelShaderConstantID("f_shadow_strength"),
-					&ShadowStrengh, 1);
+			float ShadowStrength = shadow->getShadowStrength();
+			m_shadow_strength.set(&ShadowStrength, services);
 
-			float timeofDay = (float)shadow->getTimeofDay();
-			services->setPixelShaderConstant(
-					services->getPixelShaderConstantID("f_timeofday"),
-					&timeofDay, 1);
+			float timeOfDay = shadow->getTimeOfDay();
+			m_time_of_day.set(&timeOfDay, services);
 
 			float shadowFar = shadow->getMaxShadowFar();
-			services->setPixelShaderConstant(
-					services->getPixelShaderConstantID("f_shadowfar"),
-					&shadowFar, 1);
+			m_shadowfar.set(&shadowFar, services);
 
 			// I dont like using this hardcoded value. maybe something like
 			// MAX_TEXTURE - 1 or somthing like that??
