@@ -192,9 +192,10 @@ float getPenumbraRadius(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 
 	float baseLength = getBaseLength(smTexCoord);
 	float perspectiveFactor;
+	float bound = clamp(PCFBOUND * (1 - baseLength), 0.5, PCFBOUND);
 
-	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
-	for (x = -PCFBOUND; x <= PCFBOUND; x += 1.0) {
+	for (y = -bound; y <= bound; y += 1.0)
+	for (x = -bound; x <= bound; x += 1.0) {
 		clampedpos = vec2(x,y);
 		perspectiveFactor = getDeltaPerspectiveFactor(baseLength + length(clampedpos) * texture_size * maxRadius);
 		clampedpos = clampedpos * texture_size * perspectiveFactor * maxRadius * perspectiveFactor + smTexCoord.xy;
@@ -282,12 +283,18 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	vec2 clampedpos;
 	vec4 visibility = vec4(0.0);
 	float radius = getPenumbraRadius(shadowsampler, smTexCoord, realDistance, 1.5); // scale to align with PCF
+	if (radius < 0.1) {
+		// we are in the middle of even brightness, no need for filtering
+		return getHardShadowColor(shadowsampler, smTexCoord.xy, realDistance);
+	}
+
 	float baseLength = getBaseLength(smTexCoord);
 	float perspectiveFactor;
 
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
-	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0-PCFSAMPLES)));
-	int end_offset = int(PCFSAMPLES) + init_offset;
+	int samples = int(clamp(PCFSAMPLES * (1 - baseLength), 1, PCFSAMPLES));
+	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0-samples)));
+	int end_offset = int(samples) + init_offset;
 
 	for (int x = init_offset; x < end_offset; x++) {
 		clampedpos = poissonDisk[x];
@@ -296,7 +303,7 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 		visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
 	}
 
-	return visibility / PCFSAMPLES;
+	return visibility / samples;
 }
 
 #else
@@ -306,12 +313,18 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	vec2 clampedpos;
 	float visibility = 0.0;
 	float radius = getPenumbraRadius(shadowsampler, smTexCoord, realDistance, 1.5); // scale to align with PCF
+	if (radius < 0.1) {
+		// we are in the middle of even brightness, no need for filtering
+		return getHardShadow(shadowsampler, smTexCoord.xy, realDistance);
+	}
+
 	float baseLength = getBaseLength(smTexCoord);
 	float perspectiveFactor;
 
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
-	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0-PCFSAMPLES)));
-	int end_offset = int(PCFSAMPLES) + init_offset;
+	int samples = int(clamp(PCFSAMPLES * (1 - baseLength), 1, PCFSAMPLES));
+	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0-samples)));
+	int end_offset = int(samples) + init_offset;
 
 	for (int x = init_offset; x < end_offset; x++) {
 		clampedpos = poissonDisk[x];
@@ -320,7 +333,7 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 		visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
 	}
 
-	return visibility / PCFSAMPLES;
+	return visibility / samples;
 }
 
 #endif
@@ -335,19 +348,25 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	vec2 clampedpos;
 	vec4 visibility = vec4(0.0);
 	float radius = getPenumbraRadius(shadowsampler, smTexCoord, realDistance, 1.0);
+	if (radius < 0.1) {
+		// we are in the middle of even brightness, no need for filtering
+		return getHardShadowColor(shadowsampler, smTexCoord.xy, realDistance);
+	}
+
 	float baseLength = getBaseLength(smTexCoord);
 	float perspectiveFactor;
 
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
 	float y, x;
+	float bound = clamp(PCFBOUND * (1 - baseLength), 0.5, PCFBOUND);
 	int n = 0;
 
 	// basic PCF filter
-	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
-	for (x = -PCFBOUND; x <= PCFBOUND; x += 1.0) {
+	for (y = -bound; y <= bound; y += 1.0)
+	for (x = -bound; x <= bound; x += 1.0) {
 		clampedpos = vec2(x,y);     // screen offset
-		perspectiveFactor = getDeltaPerspectiveFactor(baseLength + length(clampedpos) * texture_size * radius / PCFBOUND);
-		clampedpos =  clampedpos * texture_size * perspectiveFactor * radius * perspectiveFactor / PCFBOUND + smTexCoord.xy; // both dx,dy and radius are adjusted
+		perspectiveFactor = getDeltaPerspectiveFactor(baseLength + length(clampedpos) * texture_size * radius / bound);
+		clampedpos =  clampedpos * texture_size * perspectiveFactor * radius * perspectiveFactor / bound + smTexCoord.xy; // both dx,dy and radius are adjusted
 		visibility += getHardShadowColor(shadowsampler, clampedpos.xy, realDistance);
 		n += 1;
 	}
@@ -362,20 +381,25 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	vec2 clampedpos;
 	float visibility = 0.0;
 	float radius = getPenumbraRadius(shadowsampler, smTexCoord, realDistance, 1.0);
+	if (radius < 0.1) {
+		// we are in the middle of even brightness, no need for filtering
+		return getHardShadow(shadowsampler, smTexCoord.xy, realDistance);
+	}
+
 	float baseLength = getBaseLength(smTexCoord);
 	float perspectiveFactor;
 
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
 	float y, x;
-
+	float bound = clamp(PCFBOUND * (1 - baseLength), 0.5, PCFBOUND);
 	int n = 0;
 
 	// basic PCF filter
-	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
-	for (x = -PCFBOUND; x <= PCFBOUND; x += 1.0) {
+	for (y = -bound; y <= bound; y += 1.0)
+	for (x = -bound; x <= bound; x += 1.0) {
 		clampedpos = vec2(x,y);     // screen offset
-		perspectiveFactor = getDeltaPerspectiveFactor(baseLength + length(clampedpos) * texture_size * radius / PCFBOUND);
-		clampedpos =  clampedpos * texture_size * perspectiveFactor * radius * perspectiveFactor / PCFBOUND + smTexCoord.xy; // both dx,dy and radius are adjusted
+		perspectiveFactor = getDeltaPerspectiveFactor(baseLength + length(clampedpos) * texture_size * radius / bound);
+		clampedpos =  clampedpos * texture_size * perspectiveFactor * radius * perspectiveFactor / bound + smTexCoord.xy; // both dx,dy and radius are adjusted
 		visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
 		n += 1;
 	}
@@ -463,6 +487,7 @@ void main(void)
 	shadow_int = 1.0 - (shadow_int * adj_shadow_strength);
 	
 	col.rgb = mix(shadow_color,col.rgb,shadow_int)*shadow_int;
+	// col.r = 0.5 * clamp(getPenumbraRadius(ShadowMapSampler, posLightSpace.xy, posLightSpace.z, 1.0) / SOFTSHADOWRADIUS, 0.0, 1.0) + 0.5 * col.r;
 #endif
 
 #if ENABLE_TONE_MAPPING
