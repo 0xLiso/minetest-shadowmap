@@ -774,8 +774,6 @@ void ClientMap::updateDrawListShadow(
 			MapSector *sector = sector_it.second;
 			if (!sector)
 				continue;
-			v2s16 sp = sector->getPos();
-
 			blocks_loaded += sector->size();
 
 			MapBlockVect sectorblocks;
