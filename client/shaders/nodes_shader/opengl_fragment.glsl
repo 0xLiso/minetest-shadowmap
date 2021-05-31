@@ -188,7 +188,7 @@ float getPenumbraRadius(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 	float y, x;
 	float depth = 0.0;
 	float pointDepth;
-	float maxRadius = SOFTSHADOWRADIUS * multiplier;
+	float maxRadius = SOFTSHADOWRADIUS * 5.0 * multiplier;
 
 	float baseLength = getBaseLength(smTexCoord);
 	float perspectiveFactor;
