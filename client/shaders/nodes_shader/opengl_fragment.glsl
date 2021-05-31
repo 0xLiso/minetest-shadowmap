@@ -193,6 +193,7 @@ float getPenumbraRadius(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 	float baseLength = getBaseLength(smTexCoord);
 	float perspectiveFactor;
 	float bound = clamp(PCFBOUND * (1 - baseLength), 0.5, PCFBOUND);
+	int n = 0;
 
 	for (y = -bound; y <= bound; y += 1.0)
 	for (x = -bound; x <= bound; x += 1.0) {
@@ -201,11 +202,16 @@ float getPenumbraRadius(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 		clampedpos = clampedpos * texture_size * perspectiveFactor * maxRadius * perspectiveFactor + smTexCoord.xy;
 
 		pointDepth = getHardShadowDepth(shadowsampler, clampedpos.xy, realDistance);
-		depth = max(depth, pointDepth);
+		if (pointDepth > -0.01) {
+			depth += pointDepth;
+			n += 1;
+		}
 	}
 
+	depth = depth / n;
+
 	depth = pow(clamp(depth, 0.0, 1000.0), 1.6) / 0.001;
-	return depth * maxRadius;
+	return max(0.5, depth * maxRadius);
 }
 
 #ifdef POISSON_FILTER
