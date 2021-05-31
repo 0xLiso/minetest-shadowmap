@@ -618,16 +618,20 @@ shadow_filters (Shadow filter quality) enum 1 0,1,2
 #    On true translucent nodes cast colored shadows. This is expensive.
 shadow_map_color (Colored shadows) bool false
 
+
 #    Set the shadow update time.
 #    Lower value means shadows and map updates faster, but it consume more resources.
+#    Minimun value 0.001 seconds max value 0.2 seconds
 shadow_update_time (Map update time) float 0.2 0.001 0.2
 
 #    Set the soft shadow radius size.
 #    Lower values mean sharper shadows bigger values softer.
-shadow_soft_radius (Soft shadow radius) float 1.0 1.0 5.0
+#    Minimun value 1.0 and max value 10.0
+shadow_soft_radius (Soft shadow radius) float 1.0 1.0 10.0
 
 #    Set the tilt of Sun/Moon orbit in degrees
 #    Value of 0 means no tilt / vertical orbit.
+#    Minimun value 0.0 and max value 60.0
 shadow_sky_body_orbit_tilt (Sky Body Orbit Tilt) float 0.0 0.0 60.0
 
 [**Advanced]
