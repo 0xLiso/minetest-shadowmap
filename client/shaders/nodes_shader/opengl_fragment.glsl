@@ -292,7 +292,7 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	float perspectiveFactor;
 
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
-	int samples = int(clamp(PCFSAMPLES * (1 - baseLength), 1, PCFSAMPLES));
+	int samples = int(clamp(PCFSAMPLES * (1 - baseLength) * (1 - baseLength), 1, PCFSAMPLES));
 	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0-samples)));
 	int end_offset = int(samples) + init_offset;
 
@@ -322,7 +322,7 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	float perspectiveFactor;
 
 	float texture_size = 1.0 / (f_textureresolution * 0.5);
-	int samples = int(clamp(PCFSAMPLES * (1 - baseLength), 1, PCFSAMPLES));
+	int samples = int(clamp(PCFSAMPLES * (1 - baseLength) * (1 - baseLength), 1, PCFSAMPLES));
 	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0-samples)));
 	int end_offset = int(samples) + init_offset;
 
