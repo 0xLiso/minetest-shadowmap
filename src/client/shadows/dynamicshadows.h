@@ -51,7 +51,9 @@ public:
 
 	// when set direction is updated to negative normalized(direction)
 	void setDirection(v3f dir);
-	v3f getDirection() const;
+	v3f getDirection() const{
+		return direction;
+	};
 	v3f getPosition() const;
 
 	/// Gets the light's matrices.
@@ -60,16 +62,26 @@ public:
 	core::matrix4 getViewProjMatrix();
 
 	/// Gets the light's far value.
-	f32 getMaxFarValue() const;
+	f32 getMaxFarValue() const
+	{
+		return farPlane;
+	}
+
 
 	/// Gets the light's color.
-	const video::SColorf &getLightColor() const;
+	const video::SColorf &getLightColor() const
+	{
+		return diffuseColor;
+	}
 
 	/// Sets the light's color.
 	void setLightColor(const video::SColorf &lightColor);
 
 	/// Gets the shadow map resolution for this light.
-	u32 getMapResolution() const;
+	u32 getMapResolution() const
+	{
+		return mapRes;
+	}
 
 	bool should_update_map_shadow{true};
 

@@ -124,10 +124,7 @@ void DirectionalLight::setDirection(v3f dir)
 	direction.normalize();
 }
 
-v3f DirectionalLight::getDirection() const
-{
-	return direction;
-}
+
 
 v3f DirectionalLight::getPosition() const
 {
@@ -149,22 +146,10 @@ m4f DirectionalLight::getViewProjMatrix()
 	return shadow_frustum.ProjOrthMat * shadow_frustum.ViewMat;
 }
 
-f32 DirectionalLight::getMaxFarValue() const
-{
-	return farPlane;
-}
-
-const video::SColorf &DirectionalLight::getLightColor() const
-{
-	return diffuseColor;
-}
 
 void DirectionalLight::setLightColor(const video::SColorf &lightColor)
 {
 	diffuseColor = lightColor;
 }
 
-u32 DirectionalLight::getMapResolution() const
-{
-	return mapRes;
-}
+
