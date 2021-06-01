@@ -769,49 +769,49 @@ void ClientMap::updateDrawListShadow(const v3f &shadow_light_pos, const v3f &sha
 	u32 blocks_occlusion_culled = 0;
 
 	for (auto &sector_it : m_sectors) {
-			MapSector *sector = sector_it.second;
-			if (!sector)
-				continue;
-			blocks_loaded += sector->size();
+		MapSector *sector = sector_it.second;
+		if (!sector)
+			continue;
+		blocks_loaded += sector->size();
 
-			MapBlockVect sectorblocks;
-			sector->getBlocks(sectorblocks);
+		MapBlockVect sectorblocks;
+		sector->getBlocks(sectorblocks);
+
+		/*
+			Loop through blocks in sector
+		*/
+		for (MapBlock *block : sectorblocks) {
+			if (!block->mesh) {
+				// Ignore if mesh doesn't exist
+				continue;
+			}
+
+			float range = shadow_range;
+
+			float d = 0.0;
+			if (!isBlockInSight(block->getPos(), camera_position,
+					    camera_direction, camera_fov, range, &d))
+				continue;
+
+			blocks_in_range_with_mesh++;
 
 			/*
-				Loop through blocks in sector
+				Occlusion culling
 			*/
-			for (MapBlock *block : sectorblocks) {
-				if (!block->mesh) {
-					// Ignore if mesh doesn't exist
-					continue;
-				}
-
-				float range = shadow_range;
-
-				float d = 0.0;
-				if (!isBlockInSight(block->getPos(), camera_position,
-						    camera_direction, camera_fov, range, &d))
-					continue;
-
-				blocks_in_range_with_mesh++;
-
-				/*
-					Occlusion culling
-				*/
-				if (isBlockOccluded(block, cam_pos_nodes)) {
-					blocks_occlusion_culled++;
-					continue;
-				}
-
-				// This block is in range. Reset usage timer.
-				block->resetUsageTimer();
-
-				// Add to set
-				if (m_drawlist_shadow.find(block->getPos()) == m_drawlist_shadow.end()) {
-					block->refGrab();
-					m_drawlist_shadow[block->getPos()] = block;
-				}
+			if (isBlockOccluded(block, cam_pos_nodes)) {
+				blocks_occlusion_culled++;
+				continue;
 			}
+
+			// This block is in range. Reset usage timer.
+			block->resetUsageTimer();
+
+			// Add to set
+			if (m_drawlist_shadow.find(block->getPos()) == m_drawlist_shadow.end()) {
+				block->refGrab();
+				m_drawlist_shadow[block->getPos()] = block;
+			}
+		}
 	}
 
 	// @Liso check these measurements
