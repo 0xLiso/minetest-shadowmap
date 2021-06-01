@@ -125,7 +125,7 @@ void ClientMap::OnRegisterSceneNode()
 
 	if (!m_added_to_shadow_renderer) {
 		m_added_to_shadow_renderer = true;
-		auto *shadows = m_rendering_engine->get_shadow_renderer();
+		auto shadows = m_rendering_engine->get_shadow_renderer();
 		if (shadows)
 			shadows->addNodeToShadowList(this);
 	}
@@ -675,7 +675,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 					scene::IMeshBuffer *buf = mesh->getMeshBuffer(i);
 
 					video::SMaterial &mat = buf->getMaterial();
-					auto *rnd = driver->getMaterialRenderer(mat.MaterialType);
+					auto rnd = driver->getMaterialRenderer(mat.MaterialType);
 					bool transparent = rnd && rnd->isTransparent();
 					if (transparent == is_transparent_pass)
 						drawbufs.add(buf, block_pos, layer);
@@ -691,14 +691,13 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 
 	// Render all layers in order
 	for (auto &lists : drawbufs.lists) {
-		for (MeshBufList &list : lists) {
-			// Check and abort if the machine is swapping a lot
+		// Check and abort if the machine is swapping a lot
 			if (draw.getTimerTime() > 1000) {
 				infostream << "ClientMap::renderMapShadows(): Rendering "
 						"took >1s, returning." << std::endl;
-				return;
+				break;
 			}
-
+		for (MeshBufList &list : lists) {
 			for (auto &pair : list.bufs) {
 				scene::IMeshBuffer *buf = pair.second;
 
@@ -730,8 +729,7 @@ void ClientMap::renderMapShadows(video::IVideoDriver *driver,
 /*
 	Custom update draw list for the pov of shadow light.
 */
-void ClientMap::updateDrawListShadow(
-		v3f shadow_light_pos, v3f shadow_light_dir, float shadow_range)
+void ClientMap::updateDrawListShadow(v3f shadow_light_pos, v3f shadow_light_dir, float shadow_range)
 {
 	ScopeProfiler sp(g_profiler, "CM::updateDrawListShadow()", SPT_AVG);
 
