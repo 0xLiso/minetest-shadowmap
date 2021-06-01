@@ -470,6 +470,9 @@ void main(void)
 	vec3 shadow_color = vec3(0.0, 0.0, 0.0);
 	vec3 posLightSpace = getLightSpacePosition();
 
+	float distance_rate = (1 - pow(clamp(2.0 * length(posLightSpace.xy - 0.5),0.0,1.0), 20.0));
+
+	if (distance_rate > 1e-7) {
 	
 #ifdef COLORED_SHADOWS
 		vec4 visibility = getShadowColor(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
@@ -478,8 +481,11 @@ void main(void)
 #else
 		shadow_int = getShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
 #endif
+		shadow_int *= distance_rate;
 		shadow_int *= 1.0 - nightRatio;
 
+
+	}
 
 	if (f_normal_length != 0 && cosLight < 0.0) {
 		shadow_int = clamp(1.0-nightRatio, 0.0, 1.0);
