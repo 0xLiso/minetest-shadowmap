@@ -299,8 +299,7 @@ public:
 #endif
 
 		// Set uniforms for Shadow shader
-		ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
-		if (shadow) {
+		if (ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer()) {
 			const auto &light = shadow->getDirectionalLight();
 
 			core::matrix4 shadowViewProj = light.getProjectionMatrix();
