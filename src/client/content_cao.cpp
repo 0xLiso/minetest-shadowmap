@@ -556,8 +556,7 @@ void GenericCAO::removeFromScene(bool permanent)
 		clearParentAttachment();
 	}
 
-	ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
-	if (shadow) // remove mesh from shadow caster
+	if (ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer()) // remove mesh from shadow caster
 		shadow->removeNodeFromShadowList(getSceneNode());
 
 	if (m_meshnode) {
