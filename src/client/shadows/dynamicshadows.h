@@ -75,7 +75,10 @@ public:
 	}
 
 	/// Sets the light's color.
-	void setLightColor(const video::SColorf &lightColor);
+	void setLightColor(const video::SColorf &lightColor)
+	{
+		diffuseColor = lightColor;
+	}
 
 	/// Gets the shadow map resolution for this light.
 	u32 getMapResolution() const

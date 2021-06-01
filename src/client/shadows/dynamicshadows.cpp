@@ -147,9 +147,5 @@ m4f DirectionalLight::getViewProjMatrix()
 }
 
 
-void DirectionalLight::setLightColor(const video::SColorf &lightColor)
-{
-	diffuseColor = lightColor;
-}
 
 
