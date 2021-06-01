@@ -255,54 +255,45 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 		m_driver->setRenderTarget(outputTarget, true, true, m_clear_color);
 		m_smgr->drawAll();
 
-		/**/
-		if (false) {
-			// this is debug, ignore for now.
-			m_driver->draw2DImage(shadowMapTextureFinal,
-					core::rect<s32>(0, 50, 128, 128 + 50),
-					core::rect<s32>({0, 0}, shadowMapTextureFinal->getSize()));
+		/* this code just shows shadows textures in screen and in ONLY for debugging*/
+		#if 0
+		// this is debug, ignore for now.
+		m_driver->draw2DImage(shadowMapTextureFinal,
+				core::rect<s32>(0, 50, 128, 128 + 50),
+				core::rect<s32>({0, 0}, shadowMapTextureFinal->getSize()));
 
-			m_driver->draw2DImage(shadowMapClientMap,
-					core::rect<s32>(0, 50 + 128, 128, 128 + 50 + 128),
-					core::rect<s32>({0, 0}, shadowMapTextureFinal->getSize()));
-			m_driver->draw2DImage(shadowMapTextureDynamicObjects,
-					core::rect<s32>(0, 128 + 50 + 128, 128,
-							128 + 50 + 128 + 128),
-					core::rect<s32>({0, 0}, shadowMapTextureDynamicObjects->getSize()));
+		m_driver->draw2DImage(shadowMapClientMap,
+				core::rect<s32>(0, 50 + 128, 128, 128 + 50 + 128),
+				core::rect<s32>({0, 0}, shadowMapTextureFinal->getSize()));
+		m_driver->draw2DImage(shadowMapTextureDynamicObjects,
+				core::rect<s32>(0, 128 + 50 + 128, 128,
+						128 + 50 + 128 + 128),
+				core::rect<s32>({0, 0}, shadowMapTextureDynamicObjects->getSize()));
 
-			if (m_shadow_map_colored) {
+		if (m_shadow_map_colored) {
 
-				m_driver->draw2DImage(shadowMapTextureColors,
-						core::rect<s32>(128,128 + 50 + 128 + 128,
-								128 + 128, 128 + 50 + 128 + 128 + 128),
-						core::rect<s32>({0, 0}, shadowMapTextureColors->getSize()));
-			}
+			m_driver->draw2DImage(shadowMapTextureColors,
+					core::rect<s32>(128,128 + 50 + 128 + 128,
+							128 + 128, 128 + 50 + 128 + 128 + 128),
+					core::rect<s32>({0, 0}, shadowMapTextureColors->getSize()));
 		}
+		#endif
 		m_driver->setRenderTarget(0, false, false);
 	}
 }
 
-video::ITexture *ShadowRenderer::get_texture()
-{
-	return shadowMapTextureFinal;
-}
 
 video::ITexture *ShadowRenderer::getSMTexture(const std::string &shadow_map_name,
 		video::ECOLOR_FORMAT texture_format, bool force_creation)
 {
-	video::ITexture *shadowMapTexture = nullptr;
-
 	if (force_creation) {
-		shadowMapTexture = m_driver->addRenderTargetTexture(
+		return m_driver->addRenderTargetTexture(
 				core::dimension2du(m_shadow_map_texture_size,
 						m_shadow_map_texture_size),
 				shadow_map_name.c_str(), texture_format);
-		return shadowMapTexture;
 	}
 
-	shadowMapTexture = m_driver->getTexture(shadow_map_name.c_str());
-
-	return shadowMapTexture;
+	return m_driver->getTexture(shadow_map_name.c_str());
 }
 
 void ShadowRenderer::renderShadowMap(video::ITexture *target,

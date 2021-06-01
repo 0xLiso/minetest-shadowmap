@@ -78,7 +78,11 @@ public:
 
 	void update(video::ITexture *outputTarget = nullptr);
 
-	video::ITexture *get_texture();
+	video::ITexture *get_texture()
+	{
+		return shadowMapTextureFinal;
+	}
+
 
 	bool is_active() const { return m_shadows_enabled; }
 	void setTimeOfDay(float isDay) { m_time_day = isDay; };
