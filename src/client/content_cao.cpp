@@ -807,15 +807,13 @@ void GenericCAO::addToScene(ITextureSource *tsrc, scene::ISceneManager *smgr)
 	if (m_reset_textures_timer < 0)
 		updateTextures(m_current_texture_modifier);
 
-	scene::ISceneNode *node = getSceneNode();
+	if(scene::ISceneNode *node = getSceneNode()){
+		if (m_matrixnode)
+			node->setParent(m_matrixnode);
 
-	if (node && m_matrixnode)
-		node->setParent(m_matrixnode);
-
-	ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer();
-	if (shadow && node) // Add mesh to shadow caster
-		shadow->addNodeToShadowList(node);
-
+		if (ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer()) // Add mesh to shadow caster
+			shadow->addNodeToShadowList(node);
+	}
 	updateNametag();
 	updateMarker();
 	updateNodePos();
