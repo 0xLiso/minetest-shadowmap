@@ -108,7 +108,7 @@ void ModChannelRef::Register(lua_State *L)
 	lua_pop(L, 1); // Drop metatable
 
 	luaL_register(L, nullptr, methods); // fill methodtable
-	lua_pop(L, 1);			// Drop methodtable
+	lua_pop(L, 1);			    // Drop methodtable
 }
 
 void ModChannelRef::create(lua_State *L, const std::string &channel)

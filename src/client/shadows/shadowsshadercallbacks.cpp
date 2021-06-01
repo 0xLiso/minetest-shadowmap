@@ -28,17 +28,16 @@ void ShadowDepthShaderCB::OnSetConstants(
 	lightMVP *= driver->getTransform(video::ETS_VIEW);
 	lightMVP *= driver->getTransform(video::ETS_WORLD);
 
-	services->setVertexShaderConstant(
-		services->getPixelShaderConstantID("LightMVP"),
-		lightMVP.pointer(), 16);
+	services->setVertexShaderConstant(services->getPixelShaderConstantID("LightMVP"),
+			lightMVP.pointer(), 16);
 
 	services->setVertexShaderConstant(
-		services->getPixelShaderConstantID("MapResolution"), &MapRes, 1);
+			services->getPixelShaderConstantID("MapResolution"), &MapRes, 1);
 	services->setVertexShaderConstant(
-		services->getPixelShaderConstantID("MaxFar"), &MaxFar, 1);
+			services->getPixelShaderConstantID("MaxFar"), &MaxFar, 1);
 
 	s32 TextureId = 0;
 	services->setPixelShaderConstant(
-		services->getPixelShaderConstantID("ColorMapSampler"), &TextureId,
-		1);
+			services->getPixelShaderConstantID("ColorMapSampler"), &TextureId,
+			1);
 }

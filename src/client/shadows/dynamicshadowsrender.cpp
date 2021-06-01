@@ -79,19 +79,17 @@ void ShadowRenderer::initialize()
 		m_shadows_enabled = false;
 
 		warningstream << "Shadows: GLSL Shader not supported on this system."
-			<< std::endl;
+			      << std::endl;
 		return;
 	}
 
-	m_texture_format = m_shadow_map_texture_32bit
-					   ? video::ECOLOR_FORMAT::ECF_R32F
-					   : video::ECOLOR_FORMAT::ECF_R16F;
+	m_texture_format = m_shadow_map_texture_32bit ? video::ECOLOR_FORMAT::ECF_R32F
+						      : video::ECOLOR_FORMAT::ECF_R16F;
 
 	m_texture_format_color = m_shadow_map_texture_32bit
 						 ? video::ECOLOR_FORMAT::ECF_G32R32F
 						 : video::ECOLOR_FORMAT::ECF_G16R16F;
 }
-
 
 float ShadowRenderer::getUpdateDelta() const
 {
@@ -100,8 +98,7 @@ float ShadowRenderer::getUpdateDelta() const
 
 size_t ShadowRenderer::addDirectionalLight()
 {
-	m_light_list.emplace_back(m_shadow_map_texture_size,
-			v3f(0.f, 0.f, 0.f),
+	m_light_list.emplace_back(m_shadow_map_texture_size, v3f(0.f, 0.f, 0.f),
 			video::SColor(255, 255, 255, 255), m_shadow_map_max_distance);
 	return m_light_list.size() - 1;
 }
@@ -162,23 +159,28 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 	if (!shadowMapTextureDynamicObjects) {
 
 		shadowMapTextureDynamicObjects = getSMTexture(
-			std::string("shadow_dynamic_") + itos(m_shadow_map_texture_size),
-			m_texture_format, true);
+				std::string("shadow_dynamic_") +
+						itos(m_shadow_map_texture_size),
+				m_texture_format, true);
 	}
 
 	if (!shadowMapClientMap) {
 
 		shadowMapClientMap = getSMTexture(
-			std::string("shadow_clientmap_") + itos(m_shadow_map_texture_size),
-			m_shadow_map_colored ? m_texture_format_color : m_texture_format,
-			true);
+				std::string("shadow_clientmap_") +
+						itos(m_shadow_map_texture_size),
+				m_shadow_map_colored ? m_texture_format_color
+						     : m_texture_format,
+				true);
 	}
 
 	if (m_shadow_map_colored && !shadowMapTextureColors) {
 		shadowMapTextureColors = getSMTexture(
-			std::string("shadow_colored_") + itos(m_shadow_map_texture_size),
-			m_shadow_map_colored ? m_texture_format_color : m_texture_format,
-			true);
+				std::string("shadow_colored_") +
+						itos(m_shadow_map_texture_size),
+				m_shadow_map_colored ? m_texture_format_color
+						     : m_texture_format,
+				true);
 	}
 
 	// The merge all shadowmaps texture
@@ -196,8 +198,9 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 				frt = video::ECOLOR_FORMAT::ECF_R16F;
 		}
 		shadowMapTextureFinal = getSMTexture(
-			std::string("shadowmap_final_") + itos(m_shadow_map_texture_size),
-			frt, true);
+				std::string("shadowmap_final_") +
+						itos(m_shadow_map_texture_size),
+				frt, true);
 	}
 
 	if (!m_shadow_node_array.empty() && !m_light_list.empty()) {
@@ -221,7 +224,9 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 
 				if (m_shadow_map_colored) {
 					m_driver->setRenderTarget(shadowMapTextureColors,
-							true, false, video::SColor(255, 255, 255, 255));
+							true, false,
+							video::SColor(255, 255, 255,
+									255));
 				}
 				renderShadowMap(shadowMapTextureColors, light,
 						scene::ESNRP_TRANSPARENT);
@@ -241,8 +246,10 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 			m_screen_quad->getMaterial().setTexture(0, shadowMapClientMap);
 			// dynamic objs shadow texture.
 			if (m_shadow_map_colored)
-				m_screen_quad->getMaterial().setTexture(1, shadowMapTextureColors);
-			m_screen_quad->getMaterial().setTexture(2, shadowMapTextureDynamicObjects);
+				m_screen_quad->getMaterial().setTexture(
+						1, shadowMapTextureColors);
+			m_screen_quad->getMaterial().setTexture(
+					2, shadowMapTextureDynamicObjects);
 
 			m_driver->setRenderTarget(shadowMapTextureFinal, false, false,
 					video::SColor(255, 255, 255, 255));
@@ -255,8 +262,8 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 		m_driver->setRenderTarget(outputTarget, true, true, m_clear_color);
 		m_smgr->drawAll();
 
-		/* this code just shows shadows textures in screen and in ONLY for debugging*/
-		#if 0
+/* this code just shows shadows textures in screen and in ONLY for debugging*/
+#if 0
 		// this is debug, ignore for now.
 		m_driver->draw2DImage(shadowMapTextureFinal,
 				core::rect<s32>(0, 50, 128, 128 + 50),
@@ -277,11 +284,10 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 							128 + 128, 128 + 50 + 128 + 128 + 128),
 					core::rect<s32>({0, 0}, shadowMapTextureColors->getSize()));
 		}
-		#endif
+#endif
 		m_driver->setRenderTarget(0, false, false);
 	}
 }
-
 
 video::ITexture *ShadowRenderer::getSMTexture(const std::string &shadow_map_name,
 		video::ECOLOR_FORMAT texture_format, bool force_creation)
@@ -296,8 +302,8 @@ video::ITexture *ShadowRenderer::getSMTexture(const std::string &shadow_map_name
 	return m_driver->getTexture(shadow_map_name.c_str());
 }
 
-void ShadowRenderer::renderShadowMap(video::ITexture *target,
-		DirectionalLight &light, scene::E_SCENE_NODE_RENDER_PASS pass)
+void ShadowRenderer::renderShadowMap(video::ITexture *target, DirectionalLight &light,
+		scene::E_SCENE_NODE_RENDER_PASS pass)
 {
 	m_driver->setTransform(video::ETS_VIEW, light.getViewMatrix());
 	m_driver->setTransform(video::ETS_PROJECTION, light.getProjectionMatrix());
@@ -311,7 +317,8 @@ void ShadowRenderer::renderShadowMap(video::ITexture *target,
 
 		video::SMaterial material;
 		if (map_node->getMaterialCount() > 0) {
-			// we only want the first material, which is the one with the albedo info
+			// we only want the first material, which is the one with the
+			// albedo info
 			material = map_node->getMaterial(0);
 		}
 
@@ -319,27 +326,27 @@ void ShadowRenderer::renderShadowMap(video::ITexture *target,
 		material.FrontfaceCulling = true;
 		material.PolygonOffsetFactor = 4.0f;
 		material.PolygonOffsetDirection = video::EPO_BACK;
-		//material.PolygonOffsetDepthBias = 1.0f/4.0f;
-		//material.PolygonOffsetSlopeScale = -1.f;
+		// material.PolygonOffsetDepthBias = 1.0f/4.0f;
+		// material.PolygonOffsetSlopeScale = -1.f;
 
 		if (m_shadow_map_colored && pass != scene::ESNRP_SOLID)
-			material.MaterialType = (video::E_MATERIAL_TYPE) depth_shader_trans;
+			material.MaterialType =
+					(video::E_MATERIAL_TYPE)depth_shader_trans;
 		else
-			material.MaterialType = (video::E_MATERIAL_TYPE) depth_shader;
+			material.MaterialType = (video::E_MATERIAL_TYPE)depth_shader;
 
 		// FIXME: I don't think this is needed here
 		map_node->OnAnimate(m_device->getTimer()->getTime());
 
-		m_driver->setTransform(video::ETS_WORLD,
-				map_node->getAbsoluteTransformation());
+		m_driver->setTransform(
+				video::ETS_WORLD, map_node->getAbsoluteTransformation());
 
 		map_node->renderMapShadows(m_driver, material, pass);
 		break;
 	}
 }
 
-void ShadowRenderer::renderShadowObjects(
-		video::ITexture *target, DirectionalLight &light)
+void ShadowRenderer::renderShadowObjects(video::ITexture *target, DirectionalLight &light)
 {
 	m_driver->setTransform(video::ETS_VIEW, light.getViewMatrix());
 	m_driver->setTransform(video::ETS_PROJECTION, light.getProjectionMatrix());
@@ -364,20 +371,20 @@ void ShadowRenderer::renderShadowObjects(
 			auto &current_mat = shadow_node.node->getMaterial(m);
 
 			BufferMaterialList.push_back(current_mat.MaterialType);
-			current_mat.MaterialType =
-					(video::E_MATERIAL_TYPE)depth_shader;
+			current_mat.MaterialType = (video::E_MATERIAL_TYPE)depth_shader;
 
 			current_mat.setTexture(3, shadowMapTextureFinal);
 
 			BufferMaterialCullingList.emplace_back(
-				(bool)current_mat.BackfaceCulling, (bool)current_mat.FrontfaceCulling);
+					(bool)current_mat.BackfaceCulling,
+					(bool)current_mat.FrontfaceCulling);
 
 			current_mat.BackfaceCulling = true;
 			current_mat.FrontfaceCulling = false;
-			current_mat.PolygonOffsetFactor = 1.0f/2048.0f;
+			current_mat.PolygonOffsetFactor = 1.0f / 2048.0f;
 			current_mat.PolygonOffsetDirection = video::EPO_BACK;
-			//current_mat.PolygonOffsetDepthBias = 1.0 * 2.8e-6;
-			//current_mat.PolygonOffsetSlopeScale = -1.f;
+			// current_mat.PolygonOffsetDepthBias = 1.0 * 2.8e-6;
+			// current_mat.PolygonOffsetSlopeScale = -1.f;
 		}
 
 		m_driver->setTransform(video::ETS_WORLD,
@@ -389,10 +396,12 @@ void ShadowRenderer::renderShadowObjects(
 		for (u32 m = 0; m < n_node_materials; m++) {
 			auto &current_mat = shadow_node.node->getMaterial(m);
 
-			current_mat.MaterialType = (video::E_MATERIAL_TYPE) BufferMaterialList[m];
+			current_mat.MaterialType =
+					(video::E_MATERIAL_TYPE)BufferMaterialList[m];
 
 			current_mat.BackfaceCulling = BufferMaterialCullingList[m].first;
-			current_mat.FrontfaceCulling = BufferMaterialCullingList[m].second;
+			current_mat.FrontfaceCulling =
+					BufferMaterialCullingList[m].second;
 		}
 
 	} // end for caster shadow nodes
@@ -415,16 +424,20 @@ void ShadowRenderer::createShaders()
 	video::IGPUProgrammingServices *gpu = m_driver->getGPUProgrammingServices();
 
 	if (depth_shader == -1) {
-		std::string depth_shader_vs = getShaderPath("shadow_shaders", "pass1_vertex.glsl");
+		std::string depth_shader_vs =
+				getShaderPath("shadow_shaders", "pass1_vertex.glsl");
 		if (depth_shader_vs.empty()) {
 			m_shadows_enabled = false;
-			errorstream << "Error shadow mapping vs shader not found." << std::endl;
+			errorstream << "Error shadow mapping vs shader not found."
+				    << std::endl;
 			return;
 		}
-		std::string depth_shader_fs = getShaderPath("shadow_shaders", "pass1_fragment.glsl");
+		std::string depth_shader_fs =
+				getShaderPath("shadow_shaders", "pass1_fragment.glsl");
 		if (depth_shader_fs.empty()) {
 			m_shadows_enabled = false;
-			errorstream << "Error shadow mapping fs shader not found." << std::endl;
+			errorstream << "Error shadow mapping fs shader not found."
+				    << std::endl;
 			return;
 		}
 		m_shadow_depth_cb = new ShadowDepthShaderCB();
@@ -439,7 +452,8 @@ void ShadowRenderer::createShaders()
 			// upsi, something went wrong loading shader.
 			delete m_shadow_depth_cb;
 			m_shadows_enabled = false;
-			errorstream << "Error compiling shadow mapping shader." << std::endl;
+			errorstream << "Error compiling shadow mapping shader."
+				    << std::endl;
 			return;
 		}
 
@@ -450,17 +464,21 @@ void ShadowRenderer::createShaders()
 	}
 
 	if (mixcsm_shader == -1) {
-		std::string depth_shader_vs = getShaderPath("shadow_shaders", "pass2_vertex.glsl");
+		std::string depth_shader_vs =
+				getShaderPath("shadow_shaders", "pass2_vertex.glsl");
 		if (depth_shader_vs.empty()) {
 			m_shadows_enabled = false;
-			errorstream << "Error cascade shadow mapping fs shader not found." << std::endl;
+			errorstream << "Error cascade shadow mapping fs shader not found."
+				    << std::endl;
 			return;
 		}
 
-		std::string depth_shader_fs = getShaderPath("shadow_shaders", "pass2_fragment.glsl");
+		std::string depth_shader_fs =
+				getShaderPath("shadow_shaders", "pass2_fragment.glsl");
 		if (depth_shader_fs.empty()) {
 			m_shadows_enabled = false;
-			errorstream << "Error cascade shadow mapping fs shader not found." << std::endl;
+			errorstream << "Error cascade shadow mapping fs shader not found."
+				    << std::endl;
 			return;
 		}
 		m_shadow_mix_cb = new shadowScreenQuadCB();
@@ -479,7 +497,8 @@ void ShadowRenderer::createShaders()
 			delete m_shadow_mix_cb;
 			delete m_screen_quad;
 			m_shadows_enabled = false;
-			errorstream << "Error compiling cascade shadow mapping shader." << std::endl;
+			errorstream << "Error compiling cascade shadow mapping shader."
+				    << std::endl;
 			return;
 		}
 
@@ -490,16 +509,20 @@ void ShadowRenderer::createShaders()
 	}
 
 	if (m_shadow_map_colored && depth_shader_trans == -1) {
-		std::string depth_shader_vs = getShaderPath("shadow_shaders", "pass1_trans_vertex.glsl");
+		std::string depth_shader_vs = getShaderPath(
+				"shadow_shaders", "pass1_trans_vertex.glsl");
 		if (depth_shader_vs.empty()) {
 			m_shadows_enabled = false;
-			errorstream << "Error shadow mapping vs shader not found." << std::endl;
+			errorstream << "Error shadow mapping vs shader not found."
+				    << std::endl;
 			return;
 		}
-		std::string depth_shader_fs = getShaderPath("shadow_shaders", "pass1_trans_fragment.glsl");
+		std::string depth_shader_fs = getShaderPath(
+				"shadow_shaders", "pass1_trans_fragment.glsl");
 		if (depth_shader_fs.empty()) {
 			m_shadows_enabled = false;
-			errorstream << "Error shadow mapping fs shader not found." << std::endl;
+			errorstream << "Error shadow mapping fs shader not found."
+				    << std::endl;
 			return;
 		}
 		m_shadow_depth_trans_cb = new ShadowDepthShaderCB();
@@ -515,7 +538,8 @@ void ShadowRenderer::createShaders()
 			delete m_shadow_depth_trans_cb;
 			m_shadow_map_colored = false;
 			m_shadows_enabled = false;
-			errorstream << "Error compiling colored shadow mapping shader." << std::endl;
+			errorstream << "Error compiling colored shadow mapping shader."
+				    << std::endl;
 			return;
 		}
 

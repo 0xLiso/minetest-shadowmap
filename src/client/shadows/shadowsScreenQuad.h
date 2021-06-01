@@ -40,6 +40,6 @@ class shadowScreenQuadCB : public video::IShaderConstantSetCallBack
 public:
 	shadowScreenQuadCB(){};
 
-	virtual void OnSetConstants(video::IMaterialRendererServices *services,
-			s32 userData);
+	virtual void OnSetConstants(
+			video::IMaterialRendererServices *services, s32 userData);
 };

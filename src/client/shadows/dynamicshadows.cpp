@@ -66,7 +66,8 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 
 	m4f mLookAt, mLookAtInv;
 
-	mLookAt.buildCameraLookAtMatrixLH(v3f(0.0f, 0.0f, 0.0f), -direction, v3f(0.0f, 1.0f, 0.0f));
+	mLookAt.buildCameraLookAtMatrixLH(
+			v3f(0.0f, 0.0f, 0.0f), -direction, v3f(0.0f, 1.0f, 0.0f));
 
 	mLookAt *= mTexelScaling;
 	mLookAtInv = mLookAt;
@@ -86,18 +87,19 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 	v3f eye = frustumCenter - eye_displacement;
 	shadow_frustum.position = world_center - eye_displacement;
 	shadow_frustum.length = vvolume;
-	shadow_frustum.ViewMat.buildCameraLookAtMatrixLH(eye, frustumCenter, v3f(0.0f, 1.0f, 0.0f));
+	shadow_frustum.ViewMat.buildCameraLookAtMatrixLH(
+			eye, frustumCenter, v3f(0.0f, 1.0f, 0.0f));
 	shadow_frustum.ProjOrthMat.buildProjectionMatrixOrthoLH(shadow_frustum.length,
 			shadow_frustum.length, -shadow_frustum.length,
-			shadow_frustum.length,false);
+			shadow_frustum.length, false);
 }
 
-DirectionalLight::DirectionalLight(const u32 shadowMapResolution,
-		const v3f &position, video::SColorf lightColor,
-		f32 farValue) :
+DirectionalLight::DirectionalLight(const u32 shadowMapResolution, const v3f &position,
+		video::SColorf lightColor, f32 farValue) :
 		diffuseColor(lightColor),
 		farPlane(farValue), mapRes(shadowMapResolution), pos(position)
-{}
+{
+}
 
 void DirectionalLight::update_frustum(const Camera *cam, Client *client)
 {
@@ -124,8 +126,6 @@ void DirectionalLight::setDirection(v3f dir)
 	direction.normalize();
 }
 
-
-
 v3f DirectionalLight::getPosition() const
 {
 	return shadow_frustum.position;
@@ -145,7 +145,3 @@ m4f DirectionalLight::getViewProjMatrix()
 {
 	return shadow_frustum.ProjOrthMat * shadow_frustum.ViewMat;
 }
-
-
-
-
