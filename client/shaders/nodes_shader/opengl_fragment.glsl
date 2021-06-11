@@ -489,7 +489,7 @@ void main(void)
 		shadow_int = getShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
 #endif
 		shadow_int *= distance_rate;
-		shadow_int *= 1.0 - nightRatio;
+		shadow_int *= max(1.0 - 2.0*nightRatio,0.0);
 
 
 	}
