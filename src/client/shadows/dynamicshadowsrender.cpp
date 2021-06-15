@@ -324,7 +324,7 @@ void ShadowRenderer::renderShadowMap(video::ITexture *target,
 
 		material.BackfaceCulling = false;
 		material.FrontfaceCulling = true;
-		material.PolygonOffsetFactor = 2048.0f;
+		material.PolygonOffsetFactor = 0.50f;
 		material.PolygonOffsetDirection = video::EPO_BACK;
 		material.PolygonOffsetDepthBias = 10.0f;
 		material.PolygonOffsetSlopeScale = -1.f;
