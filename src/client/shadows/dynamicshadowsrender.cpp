@@ -119,15 +119,22 @@ size_t ShadowRenderer::getDirectionalLightCount() const
 f32 ShadowRenderer::getMaxShadowFar() const
 {
 	if (!m_light_list.empty()) {
-		float wanted_range = m_client->getEnv().getClientMap().getWantedRange();
-
-		float zMax = m_light_list[0].getMaxFarValue() > wanted_range
-					     ? wanted_range
-					     : m_light_list[0].getMaxFarValue();
+		float zMax = m_light_list[0].getMaxFarValue();
 		return zMax * MAP_BLOCKSIZE;
 	}
 	return 0.0f;
 }
+
+
+f32 ShadowRenderer::getNearValue() const
+{
+	if (!m_light_list.empty()) {
+		float zMax = m_light_list[0].getNearValue();
+		return zMax ;
+	}
+	return 1.0f;
+}
+
 
 void ShadowRenderer::addNodeToShadowList(
 		scene::ISceneNode *node, E_SHADOW_MODE shadowMode)
@@ -317,10 +324,10 @@ void ShadowRenderer::renderShadowMap(video::ITexture *target,
 
 		material.BackfaceCulling = false;
 		material.FrontfaceCulling = true;
-		material.PolygonOffsetFactor = 4.0f;
+		material.PolygonOffsetFactor = 2048.0f;
 		material.PolygonOffsetDirection = video::EPO_BACK;
-		//material.PolygonOffsetDepthBias = 1.0f/4.0f;
-		//material.PolygonOffsetSlopeScale = -1.f;
+		material.PolygonOffsetDepthBias = 10.0f;
+		material.PolygonOffsetSlopeScale = -1.f;
 
 		if (m_shadow_map_colored && pass != scene::ESNRP_SOLID)
 			material.MaterialType = (video::E_MATERIAL_TYPE) depth_shader_trans;

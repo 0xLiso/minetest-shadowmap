@@ -15,6 +15,7 @@ uniform float animationTimer;
 	uniform float f_textureresolution;
 	uniform mat4 m_ShadowViewProj;
 	uniform float f_shadowfar;
+	uniform float f_shadownear;
 	varying float normalOffsetScale;
 	varying float adj_shadow_strength;
 	varying float cosLight;
@@ -63,7 +64,8 @@ vec4 getPerspectiveFactor(in vec4 shadowPosition)
 // assuming near is always 1.0
 float getLinearDepth()
 {
-	return 2.0 * f_shadowfar / (f_shadowfar + 1.0 - (2.0 * gl_FragCoord.z - 1.0) * (f_shadowfar - 1.0));
+
+	return 2.0 * f_shadownear*f_shadowfar / (f_shadowfar + f_shadownear - (2.0 * gl_FragCoord.z - 1.0) * (f_shadowfar - f_shadownear));
 }
 
 vec3 getLightSpacePosition()
@@ -477,7 +479,7 @@ void main(void)
 	vec3 posLightSpace = getLightSpacePosition();
 
 	float distance_rate = (1 - pow(clamp(2.0 * length(posLightSpace.xy - 0.5),0.0,1.0), 20.0));
-	float f_adj_shadow_strength = max(adj_shadow_strength-mtsmoothstep(0.9,1.1,  posLightSpace.z  ),0.0);
+	float f_adj_shadow_strength = max(adj_shadow_strength-mtsmoothstep(.95,1.,  posLightSpace.z  ),0.0);
 
 	if (distance_rate > 1e-7) {
 	

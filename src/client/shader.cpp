@@ -233,6 +233,7 @@ class MainShaderConstantSetter : public IShaderConstantSetter
 	CachedPixelShaderSetting<float> m_shadow_strength;
 	CachedPixelShaderSetting<float> m_time_of_day;
 	CachedPixelShaderSetting<float> m_shadowfar;
+	CachedPixelShaderSetting<float> m_shadownear;	
 	CachedPixelShaderSetting<s32> m_shadow_texture;
 
 #if ENABLE_GLES
@@ -259,6 +260,7 @@ public:
 		, m_shadow_strength("f_shadow_strength")
 		, m_time_of_day("f_timeofday")
 		, m_shadowfar("f_shadowfar")
+		, m_shadownear("f_shadownear")
 		, m_shadow_texture("ShadowMapSampler")
 	{}
 	~MainShaderConstantSetter() = default;
@@ -321,6 +323,11 @@ public:
 
 			float shadowFar = shadow->getMaxShadowFar();
 			m_shadowfar.set(&shadowFar, services);
+
+			float shadowNear = shadow->getNearValue();
+			m_shadownear.set(&shadowNear, services);
+
+			
 
 			// I dont like using this hardcoded value. maybe something like
 			// MAX_TEXTURE - 1 or somthing like that??

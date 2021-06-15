@@ -82,7 +82,7 @@ void main(void)
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 
-	cosLight = max(0.0, dot(vNormal, -v_LightDirection));
+	cosLight = max(0.0, dot(gl_NormalMatrix  * normalize(vNormal), -v_LightDirection));
 	float texelSize = 0.51;
 	float slopeScale = clamp(1.0 - cosLight, 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
