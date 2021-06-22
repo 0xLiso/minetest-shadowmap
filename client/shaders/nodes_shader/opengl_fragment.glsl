@@ -14,8 +14,11 @@ uniform float animationTimer;
 	uniform vec3 v_LightDirection;
 	uniform float f_textureresolution;
 	uniform mat4 m_ShadowViewProj;
+	uniform mat4 m_InvProj;
+	uniform mat4 m_InvView;
 	uniform float f_shadowfar;
 	uniform float f_shadownear;
+	uniform vec2 v_screen_size;
 	varying float normalOffsetScale;
 	varying float adj_shadow_strength;
 	varying float cosLight;
@@ -47,16 +50,36 @@ const float fogShadingParameter = 1.0 / ( 1.0 - fogStart);
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 const float bias0 = 0.9;
-const float zPersFactor = 0.5;
+const float zPersFactor = 1.0/4.0;
 const float bias1 = 1.0 - bias0 + 1e-6;
+
+
+
+
+vec4 getWorldSpacePosition() {
+
+     // Convert screen coordinates to normalized device coordinates (NDC)
+    vec4 ndc = vec4(
+        (gl_FragCoord.x / v_screen_size.x - 0.5) * 2.0,
+        (gl_FragCoord.y / v_screen_size.y - 0.5) * 2.0,
+        (gl_FragCoord.z - 0.5) * 2.0,
+        1.0);
+
+    // Convert NDC throuch inverse clip coordinates to view coordinates
+    vec4 clip = m_InvView * m_InvProj *  ndc;
+    vec4 vertex = vec4((clip / clip.w).xyz,1.0);
+  	return vertex;
+}
 
 vec4 getPerspectiveFactor(in vec4 shadowPosition)
 {
+	return shadowPosition;
+	float lnz = sqrt(shadowPosition.x*shadowPosition.x+shadowPosition.y*shadowPosition.y);
 
-	float pDistance = length(shadowPosition.xy);
-	float pFactor = pDistance * bias0 + bias1;
-
-	shadowPosition.xyz *= vec3(vec2(1.0 / pFactor), zPersFactor);
+	float pf=mix(1.0, lnz * 1.165, bias0);
+	
+	float pFactor =1.0/pf;
+	shadowPosition.xyz *= vec3(vec2(pFactor), zPersFactor);
 
 	return shadowPosition;
 }
@@ -65,18 +88,19 @@ vec4 getPerspectiveFactor(in vec4 shadowPosition)
 float getLinearDepth()
 {
 
-	return 2.0 * f_shadownear*f_shadowfar / (f_shadowfar + f_shadownear - (2.0 * gl_FragCoord.z - 1.0) * (f_shadowfar - f_shadownear));
+	return 2.0 * gl_DepthRange.near*gl_DepthRange.far / (gl_DepthRange.far + gl_DepthRange.near - (2.0 * gl_FragCoord.z - 1.0) * (gl_DepthRange.far - gl_DepthRange.near));
 }
 
 vec3 getLightSpacePosition()
 {
 	vec4 pLightSpace;
+	vec4 worldpos = getWorldSpacePosition();
 	// some drawtypes have zero normals, so we need to handle it :(
 	#if DRAW_TYPE == NDT_PLANTLIKE
-	pLightSpace = m_ShadowViewProj * vec4(worldPosition, 1.0);
+	pLightSpace = m_ShadowViewProj * worldpos;
 	#else
-	float offsetScale = (0.0057 * getLinearDepth() + normalOffsetScale);
-	pLightSpace = m_ShadowViewProj * vec4(worldPosition + offsetScale * normalize(vNormal), 1.0);
+	vec3 adjustedBias = (  normalOffsetScale)  *normalize(vNormal) ;
+	pLightSpace = m_ShadowViewProj * vec4(worldpos.xyz +  adjustedBias, 1.0);
 	#endif
 	pLightSpace = getPerspectiveFactor(pLightSpace);
 	return pLightSpace.xyz * 0.5 + 0.5;
@@ -301,7 +325,7 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	float baseLength = getBaseLength(smTexCoord);
 	float perspectiveFactor;
 
-	float texture_size = 1.0 / (f_textureresolution * 0.5);
+	float texture_size = 2.0 / f_textureresolution  ;
 	int samples = int(clamp(PCFSAMPLES * (1 - baseLength) * (1 - baseLength), 1, PCFSAMPLES));
 	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0-samples)));
 	int end_offset = int(samples) + init_offset;
@@ -479,7 +503,8 @@ void main(void)
 	vec3 posLightSpace = getLightSpacePosition();
 
 	float distance_rate = (1 - pow(clamp(2.0 * length(posLightSpace.xy - 0.5),0.0,1.0), 20.0));
-	float f_adj_shadow_strength = max(adj_shadow_strength-mtsmoothstep(.95,1.,  posLightSpace.z  ),0.0);
+	//float f_adj_shadow_strength = max(adj_shadow_strength-mtsmoothstep(.95,1.,  posLightSpace.z  ),0.0);
+	float f_adj_shadow_strength = max(adj_shadow_strength,0.0);
 
 	if (distance_rate > 1e-7) {
 	
@@ -488,7 +513,7 @@ void main(void)
 		shadow_int = visibility.r;
 		shadow_color = visibility.gba;
 #else
-		shadow_int = getShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
+		shadow_int = getHardShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z-0.0000025);
 #endif
 		shadow_int *= distance_rate;
 		shadow_int *= 1.0 - nightRatio;
@@ -496,9 +521,9 @@ void main(void)
 
 	}
 
-	if (f_normal_length != 0 && cosLight < 0.0) {
+	/*if (f_normal_length != 0 && cosLight < 0.0) {
 		shadow_int = clamp(1.0-nightRatio, 0.0, 1.0);
-	}
+	}*/
 
 	shadow_int = 1.0 - (shadow_int * f_adj_shadow_strength);
 	
@@ -523,6 +548,9 @@ void main(void)
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
 	col = mix(skyBgColor, col, clarity);
 	col = vec4(col.rgb, base.a);
-	
+	if(posLightSpace.x<=1.0 && posLightSpace.x>= 0.0 &&
+		posLightSpace.y<=1.0 && posLightSpace.y>= 0.0 ){
+		col.r+=.50;
+	}
 	gl_FragColor = col;
 }

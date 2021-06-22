@@ -263,7 +263,7 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 		m_smgr->drawAll();
 
 		/* this code just shows shadows textures in screen and in ONLY for debugging*/
-		#if 0
+		#if 1
 		// this is debug, ignore for now.
 		m_driver->draw2DImage(shadowMapTextureFinal,
 				core::rect<s32>(0, 50, 128, 128 + 50),
@@ -322,12 +322,12 @@ void ShadowRenderer::renderShadowMap(video::ITexture *target,
 			material = map_node->getMaterial(0);
 		}
 
-		material.BackfaceCulling = false;
-		material.FrontfaceCulling = true;
-		material.PolygonOffsetFactor = 0.50f;
+		material.BackfaceCulling = true;
+		material.FrontfaceCulling = false;
+		/*material.PolygonOffsetFactor = 0.50f;
 		material.PolygonOffsetDirection = video::EPO_BACK;
 		material.PolygonOffsetDepthBias = 10.0f;
-		material.PolygonOffsetSlopeScale = -1.f;
+		material.PolygonOffsetSlopeScale = -1.f;*/
 
 		if (m_shadow_map_colored && pass != scene::ESNRP_SOLID)
 			material.MaterialType = (video::E_MATERIAL_TYPE) depth_shader_trans;

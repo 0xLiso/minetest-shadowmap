@@ -9,6 +9,6 @@ void main()
 		discard;
 
 	float depth = 0.5 + tPos.z * 0.5;
-	depth-=1e-5;
+	depth-=5e-6;
 	gl_FragColor = vec4(depth, 0.0, 0.0, 1.0);
 }
