@@ -38,6 +38,7 @@ const float fogShadingParameter = 1.0 / (1.0 - fogStart);
 	varying float adj_shadow_strength;
 	varying float cosLight;
 	varying float f_normal_length;
+	varying vec4 v_LightSpace;
 #endif
 
 #if ENABLE_TONE_MAPPING
@@ -140,8 +141,8 @@ vec4 getHardShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 
 float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 {
-	float texDepth = texture2D(shadowsampler, smTexCoord.xy).r;
-	float visibility = step(0.0, (realDistance-2e-5) - texDepth);
+	float texDepth = texture2DLod(shadowsampler, smTexCoord.xy,1.0).r;
+	float visibility = step(0.0,  realDistance - texDepth);
 
 	return visibility;
 }
@@ -348,20 +349,17 @@ void main(void)
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	float shadow_int = 0.0;
 	vec3 shadow_color = vec3(0.0, 0.0, 0.0);
-	vec3 posLightSpace = getLightSpacePosition();
+	vec3 posLightSpace = v_LightSpace.xyz ;//getLightSpacePosition();
 
 #ifdef COLORED_SHADOWS
 	vec4 visibility = getShadowColor(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
 	shadow_int = visibility.r;
 	shadow_color = visibility.gba;
 #else
-	shadow_int = getShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
+	shadow_int = getHardShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z);
 #endif
 
-	if (f_normal_length != 0 && cosLight <= 0.001) {
-		shadow_int = clamp(shadow_int + 0.5 * abs(cosLight), 0.0, 1.0);
-	}
-
+	
 	shadow_int = 1.0 - (shadow_int * adj_shadow_strength);
 
 	col.rgb = mix(shadow_color, col.rgb, shadow_int) * shadow_int;
@@ -385,6 +383,6 @@ void main(void)
 	float clarity = clamp(fogShadingParameter
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
 	col = mix(skyBgColor, col, clarity);
-
+	//col.rgb=vec3( cosLight );
 	gl_FragColor = vec4(col.rgb, base.a);
 }

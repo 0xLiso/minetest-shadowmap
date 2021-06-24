@@ -257,13 +257,13 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 			m_driver->setRenderTarget(0, false, false);
 
 		} // end for lights
-
+		shadowMapTextureFinal->regenerateMipMapLevels();
 		// now render the actual MT render pass
 		m_driver->setRenderTarget(outputTarget, true, true, m_clear_color);
 		m_smgr->drawAll();
 
 		/* this code just shows shadows textures in screen and in ONLY for debugging*/
-		#if 1
+		#if 0
 		// this is debug, ignore for now.
 		m_driver->draw2DImage(shadowMapTextureFinal,
 				core::rect<s32>(0, 50, 128, 128 + 50),
@@ -294,6 +294,7 @@ video::ITexture *ShadowRenderer::getSMTexture(const std::string &shadow_map_name
 		video::ECOLOR_FORMAT texture_format, bool force_creation)
 {
 	if (force_creation) {
+		
 		return m_driver->addRenderTargetTexture(
 				core::dimension2du(m_shadow_map_texture_size,
 						m_shadow_map_texture_size),
@@ -322,12 +323,12 @@ void ShadowRenderer::renderShadowMap(video::ITexture *target,
 			material = map_node->getMaterial(0);
 		}
 
-		material.BackfaceCulling = true;
+		material.BackfaceCulling = false;
 		material.FrontfaceCulling = false;
-		/*material.PolygonOffsetFactor = 0.50f;
+		/*material.PolygonOffsetFactor = 0.50f;*/
 		material.PolygonOffsetDirection = video::EPO_BACK;
-		material.PolygonOffsetDepthBias = 10.0f;
-		material.PolygonOffsetSlopeScale = -1.f;*/
+		material.PolygonOffsetDepthBias = 4.4f;
+		material.PolygonOffsetSlopeScale = -1.1f;
 
 		if (m_shadow_map_colored && pass != scene::ESNRP_SOLID)
 			material.MaterialType = (video::E_MATERIAL_TYPE) depth_shader_trans;
@@ -375,16 +376,15 @@ void ShadowRenderer::renderShadowObjects(
 					(video::E_MATERIAL_TYPE)depth_shader;
 
 			current_mat.setTexture(3, shadowMapTextureFinal);
-
+			
 			BufferMaterialCullingList.emplace_back(
 				(bool)current_mat.BackfaceCulling, (bool)current_mat.FrontfaceCulling);
 
 			current_mat.BackfaceCulling = true;
 			current_mat.FrontfaceCulling = false;
-			current_mat.PolygonOffsetFactor = 1.0f/2048.0f;
 			current_mat.PolygonOffsetDirection = video::EPO_BACK;
-			//current_mat.PolygonOffsetDepthBias = 1.0 * 2.8e-6;
-			//current_mat.PolygonOffsetSlopeScale = -1.f;
+			current_mat.PolygonOffsetDepthBias = 4.4f;
+			current_mat.PolygonOffsetSlopeScale = 1.1f;
 		}
 
 		m_driver->setTransform(video::ETS_WORLD,

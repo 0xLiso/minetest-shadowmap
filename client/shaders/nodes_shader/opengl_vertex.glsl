@@ -116,7 +116,7 @@ const float bias0 = 0.9;
 const float zPersFactor = 1.0/4.0;
 
 vec4 getPerspectiveFactor(in vec4 shadowPosition)
-{
+{   
 	float lnz = sqrt(shadowPosition.x*shadowPosition.x+shadowPosition.y*shadowPosition.y);
 
 	float pf=mix(1.0, lnz * 1.165, bias0);
@@ -212,9 +212,9 @@ void main(void)
 	varColor = clamp(color, 0.0, 1.0);
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-	vec3 nNormal = normalize(  vNormal);
+	vec3 nNormal = normalize( mWorld* vec4(vNormal,0.0)).xyz;
 	cosLight = max(0.0,dot( -v_LightDirection,nNormal));
-	float texelSize = f_shadowfar / f_textureresolution;
+	float texelSize = f_textureresolution/f_shadowfar;
 	float slopeScale = clamp(1.0 - cosLight, 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
 	
@@ -232,9 +232,10 @@ void main(void)
 	f_normal_length = length(vNormal);
 	vNormal = nNormal;
 #endif
-	vec3 adjustedBias = 5e-5 * (gl_Position.z*0.5+0.5) + normalOffsetScale  *nNormal ;
+	vec3 adjustedBias = 5e-7 * getLinearDepth((worldPosition.z- cameraOffset.z )*0.5+0.5) 
+	+ normalOffsetScale *nNormal ;
 	v_LightSpace = m_ShadowViewProj * vec4(worldPosition.xyz +adjustedBias , 1.0);
  	v_LightSpace = getPerspectiveFactor(v_LightSpace);
  	v_LightSpace.xyz = v_LightSpace.xyz* 0.5 + 0.5;
- 	vNormal = gl_Normal;
+ 	 
 }

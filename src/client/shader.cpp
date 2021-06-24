@@ -328,6 +328,7 @@ public:
 
 			core::matrix4 shadowViewProj = light.getProjectionMatrix();
 			shadowViewProj *= light.getViewMatrix();
+			//shadowViewProj[12] *= -1.0f;
 			m_shadow_view_proj.set(shadowViewProj.pointer(), services);
 
 			float v_LightDirection[3];

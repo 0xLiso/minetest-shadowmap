@@ -6,7 +6,7 @@ const float zPersFactor = 1.0/4.0;
 const float bias1 = 1.0 - bias0 + 1e-6;
 
 vec4 getPerspectiveFactor(in vec4 shadowPosition)
-{return shadowPosition;
+{   
 	float lnz = sqrt(shadowPosition.x*shadowPosition.x+shadowPosition.y*shadowPosition.y);
 
 	float pf=mix(1.0, lnz * 1.165, bias0);
@@ -16,7 +16,6 @@ vec4 getPerspectiveFactor(in vec4 shadowPosition)
 
 	return shadowPosition;
 }
-
 
 void main()
 {
