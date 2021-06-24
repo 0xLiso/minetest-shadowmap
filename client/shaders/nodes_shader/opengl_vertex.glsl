@@ -38,6 +38,7 @@ centroid varying vec2 varTexCoord;
 	varying float adj_shadow_strength;
 	varying float f_normal_length;
 	varying vec4 v_LightSpace;
+
 #endif
 
 
@@ -127,12 +128,7 @@ vec4 getPerspectiveFactor(in vec4 shadowPosition)
 	return shadowPosition;
 }
 
-// assuming near is always 1.0
-float getLinearDepth(float depth)
-{
-
-	return 2.0 * gl_DepthRange.near*gl_DepthRange.far / (gl_DepthRange.far + gl_DepthRange.near - ( depth  ) * (gl_DepthRange.far - gl_DepthRange.near));
-}
+ 
 void main(void)
 {
 	varTexCoord = inTexCoord0.st;
@@ -214,7 +210,7 @@ void main(void)
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	vec3 nNormal = normalize( mWorld* vec4(vNormal,0.0)).xyz;
 	cosLight = max(0.0,dot( -v_LightDirection,nNormal));
-	float texelSize = f_textureresolution/f_shadowfar;
+	float texelSize = f_shadowfar/f_textureresolution;
 	float slopeScale = clamp(1.0 - cosLight, 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
 	
@@ -231,11 +227,13 @@ void main(void)
 	}
 	f_normal_length = length(vNormal);
 	vNormal = nNormal;
-#endif
-	vec3 adjustedBias = 5e-7 * getLinearDepth((worldPosition.z- cameraOffset.z )*0.5+0.5) 
-	+ normalOffsetScale *nNormal ;
+
+	vec3 adjustedBias =  (30.0 * max(0.0,(length(eyeVec) / f_shadowfar )  )
+	+ normalOffsetScale )*nNormal ;
 	v_LightSpace = m_ShadowViewProj * vec4(worldPosition.xyz +adjustedBias , 1.0);
  	v_LightSpace = getPerspectiveFactor(v_LightSpace);
  	v_LightSpace.xyz = v_LightSpace.xyz* 0.5 + 0.5;
+ #endif	
+
  	 
 }

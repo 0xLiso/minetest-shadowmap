@@ -18,10 +18,10 @@ const vec3 black = vec3(0.0);
 
 void main()
 {
-	if(tPos.x<0.0 && tPos.x>1.0 &&
-		tPos.y<0.0 && tPos.y>1.0)
-			discard;
-	vec4 col = texture2DLod(ColorMapSampler, gl_TexCoord[0].st,1.0);
+	if(tPos.x<0.0 || tPos.x>1.0 || 
+	tPos.y<0.0 ||  tPos.y>1.0)
+		discard;
+	vec4 col = texture2D(ColorMapSampler, gl_TexCoord[0].st,1.0);
 #ifndef COLORED_SHADOWS
 	if (col.a < 0.5)
 		discard;

@@ -141,7 +141,7 @@ vec4 getHardShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 
 float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 {
-	float texDepth = texture2DLod(shadowsampler, smTexCoord.xy,1.0).r;
+	float texDepth = texture2D(shadowsampler, smTexCoord.xy,1.0).r;
 	float visibility = step(0.0,  realDistance - texDepth);
 
 	return visibility;

@@ -3,8 +3,8 @@ varying vec4 tPos;
 
 void main()
 {
-	if(tPos.x<0.0 && tPos.x>1.0 &&
-		tPos.y<0.0 && tPos.y>1.0)
+	if(tPos.x<-1.0 || tPos.x>1.0 || 
+		tPos.y<-1.0 ||  tPos.y>1.0)
 			discard;
 			
 	vec4 col = texture2D(ColorMapSampler, gl_TexCoord[0].st);

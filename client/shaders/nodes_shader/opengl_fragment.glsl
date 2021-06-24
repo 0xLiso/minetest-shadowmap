@@ -63,7 +63,7 @@ vec4 getWorldSpacePosition() {
     vec4 ndc = vec4(
         (gl_FragCoord.x / v_screen_size.x - 0.5) * 2.0,
         (gl_FragCoord.y / v_screen_size.y - 0.5) * 2.0,
-        (gl_FragCoord.z - 0.5) * 2.0,
+        (gl_FragCoord.z *2.0) -1.0,
         1.0);
 
     // Convert NDC throuch inverse clip coordinates to view coordinates
@@ -87,7 +87,7 @@ vec4 getPerspectiveFactor(in vec4 shadowPosition)
 
 // assuming near is always 1.0
 float getLinearDepth(vec4 fragposition)
-{	return  2.0 * f_shadownear*f_shadowfar / (f_shadowfar + f_shadownear - ( fragposition.z-cameraOffset.z ) * (f_shadowfar - f_shadownear));
+{	 
  	return  2.0 * gl_DepthRange.near*gl_DepthRange.far / (gl_DepthRange.far + gl_DepthRange.near - (0.5 * gl_FragCoord.z +0.5) * (gl_DepthRange.far - gl_DepthRange.near));
 }
 
@@ -125,20 +125,20 @@ float mtsmoothstep(in float edge0, in float edge1, in float x)
 
 float getHardShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 {
-	float texDepth = texture2DLod(shadowsampler, smTexCoord.xy,2.0).r;
+	float texDepth = texture2D(shadowsampler, smTexCoord.xy,2.0).r;
 	float visibility = step(0.0, realDistance - texDepth);
 	return visibility;
 }
 
-const float PCFSAMPLES=64.0;
-const float PCFBOUND=3.5;
+const float PCFSAMPLES=16.0;
+const float PCFBOUND=1.5;
 float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 {
 	vec2 clampedpos;
 	float visibility = 0.0;
 	float sradius=0.0;
 		
-	float texture_size = 2.0/f_textureresolution;
+	float texture_size = 1.0/f_textureresolution;
 	float y, x;
 	// basic PCF filter
 	for (y = -PCFBOUND; y <= PCFBOUND; y += 1.0)
@@ -147,9 +147,7 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 		visibility += getHardShadow(shadowsampler, clampedpos.xy, realDistance);
 	}
 
-	if(visibility<PCFSAMPLES*.25){
-		return 0.0;
-	}
+	 
 
 	return visibility / PCFSAMPLES;
 }
@@ -213,13 +211,13 @@ void main(void)
 	vec3 posLightSpace = getLightSpacePosition();
 	posLightSpace = v_LightSpace.xyz;
 	float distance_rate = (1 - pow(clamp(2.0 * length(posLightSpace.xy - 0.5),0.0,1.0), 20.0));
-	float f_adj_shadow_strength = max(adj_shadow_strength-mtsmoothstep(.95,1.,  posLightSpace.z  ),0.0);
+	float f_adj_shadow_strength = max(adj_shadow_strength-mtsmoothstep(.75,1.,  length(eyeVec) / f_shadowfar  ),0.0);
 	//float f_adj_shadow_strength = max(adj_shadow_strength,0.0);
 	
-	if (distance_rate > 1e-7 && posLightSpace.x>-1e-7) {
+	if (distance_rate > 1e-7 && posLightSpace.x>=0.0 && posLightSpace.x<=1.0 &&posLightSpace.y>=0.0 &&posLightSpace.y<=1.0) {
 	
  
-		shadow_int = getHardShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z );
+		shadow_int = getShadow(ShadowMapSampler, posLightSpace.xy, posLightSpace.z );
 		shadow_int *= distance_rate;
 		shadow_int *= 1.0 - nightRatio;
 
@@ -259,7 +257,9 @@ void main(void)
 		col.r+=.60;
 	}else{
 		col.g+=.6;
-	}*/
-
+	}
+	float pointZ = gl_ProjectionMatrix[3].z/(gl_FragCoord.z * -2.0 + 1.0 - gl_ProjectionMatrix[2].z);
+	col.rgb=vec3(length(eyeVec) / f_shadowfar);
+*/
 	gl_FragColor = col;
 }

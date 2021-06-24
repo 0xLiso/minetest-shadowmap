@@ -39,8 +39,8 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 	
 	v3f look = cam->getDirection();
 	look.normalize();
-	float angle = std::acosf(look.dotProduct(-direction));
-	angle *= Rad2Grad;
+	//float angle = std::acosf(look.dotProduct(-direction));
+	//angle *= Rad2Grad;
 	// because / (look.getLength() * direction.getLength()) look and directior are normalized, so 1*1=1
 	v3f camPos2 = cam->getPosition();
 
