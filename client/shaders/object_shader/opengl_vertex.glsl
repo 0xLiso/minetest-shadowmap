@@ -103,8 +103,8 @@ void main(void)
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	vec3 nNormal = normalize( mWorld* vec4(vNormal,0.0)).xyz;
-	cosLight = max(0.0,dot( -v_LightDirection,nNormal));
-	float texelSize = f_textureresolution/f_shadowfar;
+	cosLight =  dot( -v_LightDirection,nNormal) ;
+	float texelSize = f_shadowfar/f_textureresolution;
 	float slopeScale = clamp(1.0 - cosLight, 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
 
@@ -121,7 +121,7 @@ void main(void)
 	}
 	f_normal_length = length(vNormal);
 	vNormal = nNormal;
-	vec3 adjustedBias = normalOffsetScale *nNormal ;
+	vec3 adjustedBias = normalOffsetScale *nNormal  + vec3(0.015);
 	v_LightSpace = m_ShadowViewProj * vec4(worldPosition.xyz + adjustedBias , 1.0);
  	v_LightSpace = getPerspectiveFactor(v_LightSpace);
  	v_LightSpace.xyz = v_LightSpace.xyz* 0.5 + 0.5;

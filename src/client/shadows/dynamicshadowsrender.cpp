@@ -380,11 +380,11 @@ void ShadowRenderer::renderShadowObjects(
 			BufferMaterialCullingList.emplace_back(
 				(bool)current_mat.BackfaceCulling, (bool)current_mat.FrontfaceCulling);
 
-			current_mat.BackfaceCulling = true;
+			current_mat.BackfaceCulling = false;
 			current_mat.FrontfaceCulling = false;
 			current_mat.PolygonOffsetDirection = video::EPO_BACK;
 			current_mat.PolygonOffsetDepthBias = 4.4f;
-			current_mat.PolygonOffsetSlopeScale = 1.1f;
+			current_mat.PolygonOffsetSlopeScale = 1.0f;
 		}
 
 		m_driver->setTransform(video::ETS_WORLD,
