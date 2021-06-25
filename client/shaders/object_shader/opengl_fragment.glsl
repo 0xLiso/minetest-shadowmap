@@ -416,6 +416,6 @@ void main(void)
 	float clarity = clamp(fogShadingParameter
 		- fogShadingParameter * length(eyeVec) / fogDistance, 0.0, 1.0);
 	col = mix(skyBgColor, col, clarity);
-	//col.rgb = normalize(vNormal);	
+	//col.rgb = vec3(cosLight);	
 	gl_FragColor = vec4(col.rgb, base.a);
 }

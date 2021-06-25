@@ -110,7 +110,7 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 			eye, frustumCenter, v3f(0.0f, 1.0f, 0.0f));
 	shadow_frustum.ProjOrthMat.buildProjectionMatrixOrthoLH(shadow_frustum.length,
 			shadow_frustum.length, 0.0,
-			shadow_frustum.length  , true);
+			shadow_frustum.length , true);
 }
 
 DirectionalLight::DirectionalLight(const u32 shadowMapResolution, const v3f &position,
