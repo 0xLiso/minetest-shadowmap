@@ -228,11 +228,14 @@ void main(void)
 	f_normal_length = length(vNormal);
 	vNormal = nNormal;
 
-	vec3 adjustedBias =  (20.0 * max(0.0,(length(eyeVec) / f_shadowfar )  )
-	+ normalOffsetScale )*nNormal ;
-	v_LightSpace = m_ShadowViewProj * vec4(worldPosition.xyz +adjustedBias , 1.0);
- 	v_LightSpace = getPerspectiveFactor(v_LightSpace);
- 	v_LightSpace.xyz = v_LightSpace.xyz* 0.5 + 0.5;
+	vec3 adjustedBias = vec3(0.005);
+	if(f_normal_length>0.0){
+		vec3 adjustedBias =  (20.0 * max(0.0,(length(eyeVec) / f_shadowfar )  )
+		+ normalOffsetScale )*nNormal ;
+ 	}
+ 	v_LightSpace = m_ShadowViewProj * vec4(worldPosition.xyz +adjustedBias , 1.0);
+	 	v_LightSpace = getPerspectiveFactor(v_LightSpace);
+	 	v_LightSpace.xyz = v_LightSpace.xyz* 0.5 + 0.5;
  #endif	
 
  	 

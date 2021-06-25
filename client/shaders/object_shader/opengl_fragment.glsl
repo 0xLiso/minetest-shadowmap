@@ -156,10 +156,10 @@ vec4 getHardShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 {
 	vec4 texDepth = texture2D(shadowsampler, smTexCoord.xy).rgba;
 
-	float visibility = step(0.0, (realDistance-2e-5) - texDepth.r);
+	float visibility = step(0.0, (realDistance ) - texDepth.r);
 	vec4 result = vec4(visibility, vec3(0.0,0.0,0.0));//unpackColor(texDepth.g));
 	if (visibility < 0.1) {
-		visibility = step(0.0, (realDistance-2e-5) - texDepth.r);
+		visibility = step(0.0, (realDistance ) - texDepth.b);
 		result = vec4(visibility, unpackColor(texDepth.a));
 	}
 	return result;

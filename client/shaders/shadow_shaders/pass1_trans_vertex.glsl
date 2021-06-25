@@ -3,7 +3,6 @@ varying vec4 tPos;
 
 const float bias0 = 0.9;
 const float zPersFactor = 1.0/4.0;
-const float bias1 = 1.0 - bias0 + 1e-6;
 
 vec4 getPerspectiveFactor(in vec4 shadowPosition)
 {   

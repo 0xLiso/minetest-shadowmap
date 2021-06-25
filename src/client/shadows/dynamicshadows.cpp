@@ -137,7 +137,7 @@ void DirectionalLight::update_frustum(const Camera *cam, Client *client)
 	createSplitMatrices(cam);
 	// get the draw list for shadows
 	client->getEnv().getClientMap().updateDrawListShadow(
-			getPosition(), getDirection(), shadow_frustum.length);
+			getPosition(), getDirection(), shadow_frustum.length );
 	should_update_map_shadow = true;
 }
 
