@@ -102,13 +102,23 @@ void main(void)
 #endif
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-	vec3 nNormal = normalize( mWorld* vec4(vNormal,0.0)).xyz;
-	cosLight =  dot( -v_LightDirection,nNormal) ;
-	float texelSize = f_shadowfar/f_textureresolution;
+	vNormal = normalize( mWorld* vec4(normalize(inVertexNormal),0.0)).xyz;
+	cosLight =  dot( -v_LightDirection,vNormal) ;
+	float texelSize = (0.9*f_shadowfar)/f_textureresolution;
 	float slopeScale = clamp(1.0 - cosLight, 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
+	f_normal_length = length(vNormal);
+	
+	vec3 adjustedBias = vec3(0.005);
+	if(f_normal_length>0.0){
+		adjustedBias = (0.005+normalOffsetScale) * vNormal;
+	}
+ 	v_LightSpace = m_ShadowViewProj * vec4(worldPosition.xyz + adjustedBias, 1.0);
+	v_LightSpace = getPerspectiveFactor(v_LightSpace);
+	v_LightSpace.xyz = v_LightSpace.xyz* 0.5 + 0.5;
+ 	 
 
-	if (f_timeofday < 0.2) {
+ 	if (f_timeofday < 0.2) {
 		adj_shadow_strength = f_shadow_strength * 0.5 *
 			(1.0 - mtsmoothstep(0.18, 0.2, f_timeofday));
 	} else if (f_timeofday >= 0.8) {
@@ -119,12 +129,6 @@ void main(void)
 			mtsmoothstep(0.20, 0.25, f_timeofday) *
 			(1.0 - mtsmoothstep(0.7, 0.8, f_timeofday));
 	}
-	f_normal_length = length(vNormal);
-	vNormal = nNormal;
-	vec3 adjustedBias = normalOffsetScale *nNormal  + vec3(0.1,0.15,0.1);
-	v_LightSpace = m_ShadowViewProj * vec4(worldPosition.xyz + adjustedBias , 1.0);
- 	v_LightSpace = getPerspectiveFactor(v_LightSpace);
- 	v_LightSpace.xyz = v_LightSpace.xyz* 0.5 + 0.5;
- 	 
+
 #endif
 }

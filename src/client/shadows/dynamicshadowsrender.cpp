@@ -381,7 +381,7 @@ void ShadowRenderer::renderShadowObjects(
 				(bool)current_mat.BackfaceCulling, (bool)current_mat.FrontfaceCulling);
 
 			current_mat.BackfaceCulling = false;
-			current_mat.FrontfaceCulling = false;
+			current_mat.FrontfaceCulling = true;
 			current_mat.PolygonOffsetDirection = video::EPO_BACK;
 			current_mat.PolygonOffsetDepthBias = 4.4f;
 			current_mat.PolygonOffsetSlopeScale = 1.0f;
