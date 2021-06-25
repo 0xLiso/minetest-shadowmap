@@ -388,7 +388,7 @@ void main(void)
 #endif
  
 	if (f_normal_length != 0 && cosLight <  0.0 ) {
-		shadow_int = mix(shadow_int,1.0,mtsmoothstep(.01,.05,abs(cosLight))) ;
+		shadow_int = mix(shadow_int,1.0,mtsmoothstep(.01,.07,abs(cosLight))) ;
 	} 
  
 
