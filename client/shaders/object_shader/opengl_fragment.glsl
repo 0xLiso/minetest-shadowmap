@@ -373,7 +373,7 @@ void main(void)
 	vec4 col = vec4(color.rgb, base.a);
 	col.rgb *= varColor.rgb;
 	col.rgb *= emissiveColor.rgb * vIDiff;
-
+#if (DRAW_TYPE!=NDT_WIELD)
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	float shadow_int = 0.0;
 	vec3 shadow_color = vec3(0.0, 0.0, 0.0);
@@ -398,6 +398,7 @@ void main(void)
 	col.rgb = mix(shadow_color, col.rgb, shadow_int) * shadow_int;
 #endif
 
+#endif
 
 
 #if ENABLE_TONE_MAPPING

@@ -210,7 +210,7 @@ void main(void)
 #ifdef ENABLE_DYNAMIC_SHADOWS
 	vec3 nNormal = normalize( mWorld* vec4(vNormal,0.0)).xyz;
 	cosLight = max(0.0,dot( -v_LightDirection,nNormal));
-	float texelSize = .5*f_shadowfar/f_textureresolution;
+	float texelSize = .75*f_shadowfar/f_textureresolution;
 	float slopeScale = clamp(1.0 - cosLight, 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
 	
