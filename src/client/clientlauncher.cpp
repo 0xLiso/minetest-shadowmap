@@ -99,10 +99,6 @@ bool ClientLauncher::run(GameStartData &start_data, const Settings &cmd_args)
 
 	init_args(start_data, cmd_args);
 
-	// List video modes if requested
-	if (list_video_modes)
-		return m_rendering_engine->print_video_modes();
-
 #if USE_SOUND
 	if (g_settings->getBool("enable_sound"))
 		g_sound_manager_singleton = createSoundManagerSingleton();
@@ -336,8 +332,6 @@ void ClientLauncher::init_args(GameStartData &start_data, const Settings &cmd_ar
 	if (cmd_args.exists("name"))
 		start_data.name = cmd_args.get("name");
 
-	list_video_modes = cmd_args.getFlag("videomodes");
-
 	random_input = g_settings->getBool("random_input")
 			|| cmd_args.getFlag("random-input");
 }
@@ -518,8 +512,8 @@ bool ClientLauncher::launch_game(std::string &error_message,
 		// Load gamespec for required game
 		start_data.game_spec = findWorldSubgame(worldspec.path);
 		if (!start_data.game_spec.isValid()) {
-			error_message = gettext("Could not find or load game \"")
-					+ worldspec.gameid + "\"";
+			error_message = gettext("Could not find or load game: ")
+					+ worldspec.gameid;
 			errorstream << error_message << std::endl;
 			return false;
 		}
