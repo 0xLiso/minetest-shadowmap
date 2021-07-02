@@ -44,6 +44,9 @@ ShadowRenderer::ShadowRenderer(IrrlichtDevice *device, Client *client) :
 	m_shadow_map_colored = g_settings->getBool("shadow_map_color");
 	m_shadow_samples = g_settings->getS32("shadow_filters");
 	m_update_delta = g_settings->getFloat("shadow_update_time");
+
+	m_enable_csm = g_settings->getBool("csm_enabled");
+
 }
 
 ShadowRenderer::~ShadowRenderer()
@@ -64,8 +67,10 @@ ShadowRenderer::~ShadowRenderer()
 	if (shadowMapTextureColors)
 		m_driver->removeTexture(shadowMapTextureColors);
 
-	if (shadowMapClientMap)
-		m_driver->removeTexture(shadowMapClientMap);
+	for (auto shadowTexture:shadowMapClientMapSplits)
+		m_driver->removeTexture(shadowTexture);
+	shadowMapClientMapSplits.clear();
+	
 }
 
 void ShadowRenderer::initialize()
@@ -90,6 +95,8 @@ void ShadowRenderer::initialize()
 	m_texture_format_color = m_shadow_map_texture_32bit
 						 ? video::ECOLOR_FORMAT::ECF_G32R32F
 						 : video::ECOLOR_FORMAT::ECF_G16R16F;
+
+	m_nSplits = m_enable_csm ? 3 : 1;
 }
 
 
@@ -102,7 +109,7 @@ size_t ShadowRenderer::addDirectionalLight()
 {
 	m_light_list.emplace_back(m_shadow_map_texture_size,
 			v3f(0.f, 0.f, 0.f),
-			video::SColor(255, 255, 255, 255), m_shadow_map_max_distance);
+			video::SColor(255, 255, 255, 255), m_shadow_map_max_distance,m_nSplits);
 	return m_light_list.size() - 1;
 }
 
@@ -128,6 +135,17 @@ f32 ShadowRenderer::getMaxShadowFar() const
 	}
 	return 0.0f;
 }
+
+
+f32 ShadowRenderer::getNearValue() const
+{
+	if (!m_light_list.empty()) {
+		float zMax = m_light_list[0].getNearValue();
+		return zMax ;
+	}
+	return 1.0f;
+}
+
 
 void ShadowRenderer::addNodeToShadowList(
 		scene::ISceneNode *node, E_SHADOW_MODE shadowMode)
@@ -166,12 +184,14 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 			m_texture_format, true);
 	}
 
-	if (!shadowMapClientMap) {
-
-		shadowMapClientMap = getSMTexture(
-			std::string("shadow_clientmap_") + itos(m_shadow_map_texture_size),
-			m_shadow_map_colored ? m_texture_format_color : m_texture_format,
-			true);
+	if (shadowMapClientMapSplits.empty()) {
+		//can we use just 1 RGB texture here??
+		for (int i = 0; i < m_nSplits; i++) {
+			shadowMapClientMapSplits.push_back(getSMTexture(
+					std::string("shadow_clientmap_") +	itos(i) + itos(m_shadow_map_texture_size),
+				m_shadow_map_colored ? m_texture_format_color : m_texture_format,
+				true) );
+			}
 	}
 
 	if (m_shadow_map_colored && !shadowMapTextureColors) {
@@ -188,12 +208,12 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 			if (m_shadow_map_colored)
 				frt = video::ECOLOR_FORMAT::ECF_A32B32G32R32F;
 			else
-				frt = video::ECOLOR_FORMAT::ECF_R32F;
+				frt = video::ECOLOR_FORMAT::ECF_A32B32G32R32F;
 		} else {
 			if (m_shadow_map_colored)
 				frt = video::ECOLOR_FORMAT::ECF_A16B16G16R16F;
 			else
-				frt = video::ECOLOR_FORMAT::ECF_R16F;
+				frt = video::ECOLOR_FORMAT::ECF_A16B16G16R16F;
 		}
 		shadowMapTextureFinal = getSMTexture(
 			std::string("shadowmap_final_") + itos(m_shadow_map_texture_size),
@@ -215,34 +235,43 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 			if (light.should_update_map_shadow) {
 				light.should_update_map_shadow = false;
 
-				m_driver->setRenderTarget(shadowMapClientMap, true, true,
-						video::SColor(255, 255, 255, 255));
-				renderShadowMap(shadowMapClientMap, light);
+				for (int i = 0; i < m_nSplits; i++) {
 
-				if (m_shadow_map_colored) {
-					m_driver->setRenderTarget(shadowMapTextureColors,
-							true, false, video::SColor(255, 255, 255, 255));
+					m_client->getEnv().getClientMap().updateDrawListShadow(
+							light.getPosition(i),
+							light.getDirection(),
+							light.getMaxFarValue()*BS*4.0);
+
+
+					m_driver->setRenderTarget(shadowMapClientMapSplits[i], true, true,
+						video::SColor(255, 255, 255, 255));
+					renderShadowMap(light,i);
+
+					if (m_shadow_map_colored && i==0) {
+						m_driver->setRenderTarget(shadowMapTextureColors,
+								true, false, video::SColor(255, 255, 255, 255));
+					}
+					renderShadowMap(light, i, scene::ESNRP_TRANSPARENT);
+					m_driver->setRenderTarget(0, false, false);
 				}
-				renderShadowMap(shadowMapTextureColors, light,
-						scene::ESNRP_TRANSPARENT);
-				m_driver->setRenderTarget(0, false, false);
 			}
 
 			// render shadows for the n0n-map objects.
 			m_driver->setRenderTarget(shadowMapTextureDynamicObjects, true,
 					true, video::SColor(255, 255, 255, 255));
-			renderShadowObjects(shadowMapTextureDynamicObjects, light);
+			renderShadowObjects(light,0);
 			// clear the Render Target
 			m_driver->setRenderTarget(0, false, false);
 
 			// in order to avoid too many map shadow renders,
 			// we should make a second pass to mix clientmap shadows and
 			// entities shadows :(
-			m_screen_quad->getMaterial().setTexture(0, shadowMapClientMap);
+			for (int i = 0; i < m_nSplits; i++) 
+				m_screen_quad->getMaterial().setTexture(i, shadowMapClientMapSplits[i]);
 			// dynamic objs shadow texture.
+			m_screen_quad->getMaterial().setTexture(3, shadowMapTextureDynamicObjects);
 			if (m_shadow_map_colored)
-				m_screen_quad->getMaterial().setTexture(1, shadowMapTextureColors);
-			m_screen_quad->getMaterial().setTexture(2, shadowMapTextureDynamicObjects);
+				m_screen_quad->getMaterial().setTexture(4, shadowMapTextureColors);
 
 			m_driver->setRenderTarget(shadowMapTextureFinal, false, false,
 					video::SColor(255, 255, 255, 255));
@@ -262,7 +291,7 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 				core::rect<s32>(0, 50, 128, 128 + 50),
 				core::rect<s32>({0, 0}, shadowMapTextureFinal->getSize()));
 
-		m_driver->draw2DImage(shadowMapClientMap,
+		m_driver->draw2DImage(shadowMapClientMapSplits[0],
 				core::rect<s32>(0, 50 + 128, 128, 128 + 50 + 128),
 				core::rect<s32>({0, 0}, shadowMapTextureFinal->getSize()));
 		m_driver->draw2DImage(shadowMapTextureDynamicObjects,
@@ -270,12 +299,12 @@ void ShadowRenderer::update(video::ITexture *outputTarget)
 						128 + 50 + 128 + 128),
 				core::rect<s32>({0, 0}, shadowMapTextureDynamicObjects->getSize()));
 
-		if (m_shadow_map_colored) {
+		if (true) {
 
-			m_driver->draw2DImage(shadowMapTextureColors,
+			m_driver->draw2DImage(shadowMapClientMapSplits[1],
 					core::rect<s32>(128,128 + 50 + 128 + 128,
 							128 + 128, 128 + 50 + 128 + 128 + 128),
-					core::rect<s32>({0, 0}, shadowMapTextureColors->getSize()));
+					core::rect<s32>({0, 0}, shadowMapClientMapSplits[1]->getSize()));
 		}
 		#endif
 		m_driver->setRenderTarget(0, false, false);
@@ -296,11 +325,10 @@ video::ITexture *ShadowRenderer::getSMTexture(const std::string &shadow_map_name
 	return m_driver->getTexture(shadow_map_name.c_str());
 }
 
-void ShadowRenderer::renderShadowMap(video::ITexture *target,
-		DirectionalLight &light, scene::E_SCENE_NODE_RENDER_PASS pass)
+void ShadowRenderer::renderShadowMap(DirectionalLight &light, u8 split_id, scene::E_SCENE_NODE_RENDER_PASS pass)
 {
-	m_driver->setTransform(video::ETS_VIEW, light.getViewMatrix());
-	m_driver->setTransform(video::ETS_PROJECTION, light.getProjectionMatrix());
+	m_driver->setTransform(video::ETS_VIEW, light.getViewMatrix(split_id));
+	m_driver->setTransform(video::ETS_PROJECTION, light.getProjectionMatrix(split_id));
 
 	// Operate on the client map
 	for (const auto &shadow_node : m_shadow_node_array) {
@@ -316,11 +344,11 @@ void ShadowRenderer::renderShadowMap(video::ITexture *target,
 		}
 
 		material.BackfaceCulling = false;
-		material.FrontfaceCulling = true;
-		material.PolygonOffsetFactor = 4.0f;
+		material.FrontfaceCulling = false;
+		/*material.PolygonOffsetFactor = 0.50f;*/
 		material.PolygonOffsetDirection = video::EPO_BACK;
-		//material.PolygonOffsetDepthBias = 1.0f/4.0f;
-		//material.PolygonOffsetSlopeScale = -1.f;
+		material.PolygonOffsetDepthBias = 4.4f;
+		material.PolygonOffsetSlopeScale = -1.1f;
 
 		if (m_shadow_map_colored && pass != scene::ESNRP_SOLID)
 			material.MaterialType = (video::E_MATERIAL_TYPE) depth_shader_trans;
@@ -338,11 +366,10 @@ void ShadowRenderer::renderShadowMap(video::ITexture *target,
 	}
 }
 
-void ShadowRenderer::renderShadowObjects(
-		video::ITexture *target, DirectionalLight &light)
+void ShadowRenderer::renderShadowObjects(DirectionalLight &light, u8 split_id)
 {
-	m_driver->setTransform(video::ETS_VIEW, light.getViewMatrix());
-	m_driver->setTransform(video::ETS_PROJECTION, light.getProjectionMatrix());
+	m_driver->setTransform(video::ETS_VIEW, light.getViewMatrix(split_id));
+	m_driver->setTransform(video::ETS_PROJECTION, light.getProjectionMatrix(split_id));
 
 	for (const auto &shadow_node : m_shadow_node_array) {
 		// we only take care of the shadow casters
@@ -372,12 +399,11 @@ void ShadowRenderer::renderShadowObjects(
 			BufferMaterialCullingList.emplace_back(
 				(bool)current_mat.BackfaceCulling, (bool)current_mat.FrontfaceCulling);
 
-			current_mat.BackfaceCulling = true;
-			current_mat.FrontfaceCulling = false;
-			current_mat.PolygonOffsetFactor = 1.0f/2048.0f;
+			current_mat.BackfaceCulling = false;
+			current_mat.FrontfaceCulling = true;
 			current_mat.PolygonOffsetDirection = video::EPO_BACK;
-			//current_mat.PolygonOffsetDepthBias = 1.0 * 2.8e-6;
-			//current_mat.PolygonOffsetSlopeScale = -1.f;
+			current_mat.PolygonOffsetDepthBias = 4.4f;
+			current_mat.PolygonOffsetSlopeScale = 1.0f;
 		}
 
 		m_driver->setTransform(video::ETS_WORLD,

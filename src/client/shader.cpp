@@ -227,13 +227,19 @@ class MainShaderConstantSetter : public IShaderConstantSetter
 	CachedVertexShaderSetting<float, 16> m_world;
 
 	// Shadow-related
-	CachedPixelShaderSetting<float, 16> m_shadow_view_proj;
+	CachedPixelShaderSetting<float, 16> m_shadow_view_proj0;
+	CachedPixelShaderSetting<float, 16> m_shadow_view_proj1;
+	CachedPixelShaderSetting<float, 16> m_shadow_view_proj2;
+	CachedPixelShaderSetting<float, 3> m_shadow_splits;
 	CachedPixelShaderSetting<float, 3> m_light_direction;
 	CachedPixelShaderSetting<float> m_texture_res;
 	CachedPixelShaderSetting<float> m_shadow_strength;
 	CachedPixelShaderSetting<float> m_time_of_day;
 	CachedPixelShaderSetting<float> m_shadowfar;
+	CachedPixelShaderSetting<float> m_shadownear;	
 	CachedPixelShaderSetting<s32> m_shadow_texture;
+	CachedPixelShaderSetting<float,2> m_screen_size;
+	
 
 #if ENABLE_GLES
 	// Modelview matrix
@@ -253,13 +259,18 @@ public:
 		, m_texture("mTexture")
 		, m_normal("mNormal")
 #endif
-		, m_shadow_view_proj("m_ShadowViewProj")
+		, m_shadow_view_proj0("m_ShadowViewProj0")
+		, m_shadow_view_proj1("m_ShadowViewProj1")
+		, m_shadow_view_proj2("m_ShadowViewProj2")
+		, m_shadow_splits("v_shadow_splits")
 		, m_light_direction("v_LightDirection")
 		, m_texture_res("f_textureresolution")
 		, m_shadow_strength("f_shadow_strength")
 		, m_time_of_day("f_timeofday")
 		, m_shadowfar("f_shadowfar")
+		, m_shadownear("f_shadownear")
 		, m_shadow_texture("ShadowMapSampler")
+		, m_screen_size("v_screen_size")
 	{}
 	~MainShaderConstantSetter() = default;
 
@@ -301,10 +312,19 @@ public:
 		// Set uniforms for Shadow shader
 		if (ShadowRenderer *shadow = RenderingEngine::get_shadow_renderer()) {
 			const auto &light = shadow->getDirectionalLight();
+			core::matrix4 shadowViewProj;
+			
+			shadowViewProj =light.getProjectionMatrix(0);
+			shadowViewProj *= light.getViewMatrix(0);
+			m_shadow_view_proj0.set(shadowViewProj.pointer(), services);
 
-			core::matrix4 shadowViewProj = light.getProjectionMatrix();
-			shadowViewProj *= light.getViewMatrix();
-			m_shadow_view_proj.set(shadowViewProj.pointer(), services);
+			shadowViewProj = light.getProjectionMatrix(1);
+			shadowViewProj *= light.getViewMatrix(1);
+			m_shadow_view_proj1.set(shadowViewProj.pointer(), services);
+
+			shadowViewProj = light.getProjectionMatrix(2);
+			shadowViewProj *= light.getViewMatrix(2);
+			m_shadow_view_proj2.set(shadowViewProj.pointer(), services);
 
 			float v_LightDirection[3];
 			light.getDirection().getAs3Values(v_LightDirection);
@@ -322,6 +342,12 @@ public:
 			float shadowFar = shadow->getMaxShadowFar();
 			m_shadowfar.set(&shadowFar, services);
 
+			float split_distances[3];
+			shadow->getDirectionalLight().getSplitDistances(split_distances);
+			m_shadow_splits.set(split_distances, services);
+			float shadowNear = shadow->getNearValue();
+			m_shadownear.set(&shadowNear, services);
+			
 			// I dont like using this hardcoded value. maybe something like
 			// MAX_TEXTURE - 1 or somthing like that??
 			s32 TextureLayerID = 3;

@@ -275,6 +275,8 @@ void set_default_settings()
 	settings->setDefault("shadow_update_time", "0.2");
 	settings->setDefault("shadow_soft_radius", "1.0");
 	settings->setDefault("shadow_sky_body_orbit_tilt", "0.0");
+	settings->setDefault("csm_enabled", "true");
+	
 
 	// Input
 	settings->setDefault("invert_mouse", "false");

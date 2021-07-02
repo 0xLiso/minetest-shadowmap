@@ -17,6 +17,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include <string>
 #include "shadowsScreenQuad.h"
 
 shadowScreenQuad::shadowScreenQuad()
@@ -51,17 +52,30 @@ void shadowScreenQuadCB::OnSetConstants(
 		video::IMaterialRendererServices *services, s32 userData)
 {
 	s32 TextureId = 0;
-	services->setPixelShaderConstant(
-		services->getPixelShaderConstantID("ShadowMapClientMap"),
-		&TextureId, 1);
+	
+	services->setPixelShaderConstant(services->getPixelShaderConstantID( "ShadowMapClientMap0"),
+			&TextureId, 1);
+	if (true) {
+		TextureId = 1;
 
-	TextureId = 1;
-	services->setPixelShaderConstant(
-		services->getPixelShaderConstantID("ShadowMapClientMapTraslucent"),
-		&TextureId, 1);
+		services->setPixelShaderConstant(
+				services->getPixelShaderConstantID("ShadowMapClientMap1"),
+				&TextureId, 1);
 
-	TextureId = 2;
+		TextureId = 2;
+
+		services->setPixelShaderConstant(
+				services->getPixelShaderConstantID("ShadowMapClientMap2"),
+				&TextureId, 2);
+	}
+	
+	TextureId = 3;
 	services->setPixelShaderConstant(
 		services->getPixelShaderConstantID("ShadowMapSamplerdynamic"),
 		&TextureId, 1);
+
+	TextureId = 4;
+	services->setPixelShaderConstant(
+		services->getPixelShaderConstantID("ShadowMapClientMapTraslucent"),
+			&TextureId, 1);
 }

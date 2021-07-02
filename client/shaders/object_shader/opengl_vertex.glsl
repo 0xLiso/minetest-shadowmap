@@ -2,6 +2,7 @@ uniform mat4 mWorld;
 
 uniform vec3 eyePosition;
 uniform float animationTimer;
+uniform vec3 cameraOffset;
 
 varying vec3 vNormal;
 varying vec3 vPosition;
@@ -25,6 +26,7 @@ centroid varying vec2 varTexCoord;
 	varying float normalOffsetScale;
 	varying float adj_shadow_strength;
 	varying float f_normal_length;
+	varying vec4 v_LightSpace;
 #endif
 
 varying vec3 eyeVec;
@@ -81,11 +83,13 @@ void main(void)
 #endif
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-
-	cosLight = max(0.0, dot(vNormal, -v_LightDirection));
-	float texelSize = 0.51;
+	vNormal = normalize( mWorld* vec4(normalize(inVertexNormal),0.0)).xyz;
+	cosLight =  dot(-v_LightDirection,vNormal);
+	float texelSize = f_shadowfar/f_textureresolution*.5;
 	float slopeScale = clamp(1.0 - cosLight, 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
+	f_normal_length = length(vNormal);
+
 	if (f_timeofday < 0.2) {
 		adj_shadow_strength = f_shadow_strength * 0.5 *
 			(1.0 - mtsmoothstep(0.18, 0.2, f_timeofday));
@@ -97,7 +101,6 @@ void main(void)
 			mtsmoothstep(0.20, 0.25, f_timeofday) *
 			(1.0 - mtsmoothstep(0.7, 0.8, f_timeofday));
 	}
-	f_normal_length = length(vNormal);
 
 #endif
 }

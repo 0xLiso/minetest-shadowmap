@@ -18,13 +18,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #pragma once
-
+#include <vector>
 #include "irrlichttypes_bloated.h"
 #include <matrix4.h>
 #include "util/basic_macros.h"
 
 class Camera;
 class Client;
+
 
 struct shadowFrustum
 {
@@ -42,7 +43,7 @@ public:
 	DirectionalLight(const u32 shadowMapResolution,
 			const v3f &position,
 			video::SColorf lightColor = video::SColor(0xffffffff),
-			f32 farValue = 100.0f);
+			f32 farValue = 100.0f, irr::u8 nSplits=1);
 	~DirectionalLight() = default;
 
 	//DISABLE_CLASS_COPY(DirectionalLight)
@@ -54,17 +55,22 @@ public:
 	v3f getDirection() const{
 		return direction;
 	};
-	v3f getPosition() const;
+	v3f getPosition(u8 split_id=0) const;
 
 	/// Gets the light's matrices.
-	const core::matrix4 &getViewMatrix() const;
-	const core::matrix4 &getProjectionMatrix() const;
-	core::matrix4 getViewProjMatrix();
+	const core::matrix4 &getViewMatrix(u8 split_id=0) const;
+	const core::matrix4 &getProjectionMatrix(u8 split_id=0) const;
+	core::matrix4 getViewProjMatrix(u8 split_id=0);
 
 	/// Gets the light's far value.
 	f32 getMaxFarValue() const
 	{
 		return farPlane;
+	}
+
+	f32 getNearValue() const
+	{
+		return nearPlane;
 	}
 
 
@@ -85,18 +91,21 @@ public:
 	{
 		return mapRes;
 	}
-
+	s32 getNumberSplits();
+	void getSplitDistances(float splitArray[3]);
 	bool should_update_map_shadow{true};
 
 private:
-	void createSplitMatrices(const Camera *cam);
+	void createSplitMatrices(shadowFrustum &shadow_frustum, const Camera *cam);
 
 	video::SColorf diffuseColor;
 
 	f32 farPlane;
+	f32 nearPlane;
 	u32 mapRes;
 
 	v3f pos;
 	v3f direction{0};
-	shadowFrustum shadow_frustum;
+	u8 m_nSplits{1};	
+	std::vector<shadowFrustum> shadow_frustum;
 };

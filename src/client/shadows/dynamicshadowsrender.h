@@ -63,6 +63,7 @@ public:
 	DirectionalLight &getDirectionalLight(u32 index = 0);
 	size_t getDirectionalLightCount() const;
 	f32 getMaxShadowFar() const;
+	f32 getNearValue() const;
 
 	float getUpdateDelta() const;
 	/// Adds a shadow to the scene node.
@@ -96,10 +97,9 @@ private:
 			video::ECOLOR_FORMAT texture_format,
 			bool force_creation = false);
 
-	void renderShadowMap(video::ITexture *target, DirectionalLight &light,
-			scene::E_SCENE_NODE_RENDER_PASS pass =
-					scene::ESNRP_SOLID);
-	void renderShadowObjects(video::ITexture *target, DirectionalLight &light);
+	void renderShadowMap(DirectionalLight &light,u8 split_id,
+							scene::E_SCENE_NODE_RENDER_PASS pass =	scene::ESNRP_SOLID);
+	void renderShadowObjects(DirectionalLight &light, u8 split_id);
 	void mixShadowsQuad();
 
 	// a bunch of variables
@@ -107,7 +107,7 @@ private:
 	scene::ISceneManager *m_smgr{nullptr};
 	video::IVideoDriver *m_driver{nullptr};
 	Client *m_client{nullptr};
-	video::ITexture *shadowMapClientMap{nullptr};
+	std::vector<video::ITexture *>shadowMapClientMapSplits;
 	video::ITexture *shadowMapTextureFinal{nullptr};
 	video::ITexture *shadowMapTextureDynamicObjects{nullptr};
 	video::ITexture *shadowMapTextureColors{nullptr};
@@ -122,9 +122,11 @@ private:
 	float m_time_day{0.0f};
 	float m_update_delta;
 	int m_shadow_samples;
+	int m_nSplits{1};
 	bool m_shadow_map_texture_32bit;
 	bool m_shadows_enabled;
 	bool m_shadow_map_colored;
+	bool m_enable_csm;
 
 	video::ECOLOR_FORMAT m_texture_format{video::ECOLOR_FORMAT::ECF_R16F};
 	video::ECOLOR_FORMAT m_texture_format_color{video::ECOLOR_FORMAT::ECF_R16G16};

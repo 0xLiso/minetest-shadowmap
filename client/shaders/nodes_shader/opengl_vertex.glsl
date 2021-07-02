@@ -28,8 +28,8 @@ centroid varying vec2 varTexCoord;
 	// shadow uniforms
 	uniform vec3 v_LightDirection;
 	uniform float f_textureresolution;
-	uniform mat4 m_ShadowViewProj;
 	uniform float f_shadowfar;
+	uniform float f_shadownear;
 	uniform float f_shadow_strength;
 	uniform float f_timeofday;
 	varying float cosLight;
@@ -193,10 +193,10 @@ void main(void)
 	varColor = clamp(color, 0.0, 1.0);
 
 #ifdef ENABLE_DYNAMIC_SHADOWS
-	vec3 nNormal = normalize(vNormal);
-	cosLight = dot(nNormal, -v_LightDirection);
-	float texelSize = 767.0 / f_textureresolution;
-	float slopeScale = clamp(1.0 - abs(cosLight), 0.0, 1.0);
+	vNormal = normalize( mWorld* vec4(normalize(inVertexNormal),0.0)).xyz;
+	cosLight = max(0.0,dot( -v_LightDirection,vNormal));
+	float texelSize =  f_shadowfar/f_textureresolution;
+	float slopeScale = clamp(1.0 - cosLight, 0.0, 1.0);
 	normalOffsetScale = texelSize * slopeScale;
 	
 	if (f_timeofday < 0.2) {
@@ -210,7 +210,8 @@ void main(void)
 			mtsmoothstep(0.20, 0.25, f_timeofday) *
 			(1.0 - mtsmoothstep(0.7, 0.8, f_timeofday));
 	}
-	f_normal_length = length(vNormal);
+	f_normal_length = length(gl_Normal);
+	 
 #endif
 
 }
