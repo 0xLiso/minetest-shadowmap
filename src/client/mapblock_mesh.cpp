@@ -900,9 +900,8 @@ static void updateFastFaceRow(
 					next_face_dir_corrected, next_lights,
 					waving,
 					next_tile);
-
-			if (!force_not_tiling
-					&& next_makes_face == makes_face
+			//!force_not_tiling && 
+			if (next_makes_face == makes_face
 					&& next_p_corrected == p_corrected + translate_dir
 					&& next_face_dir_corrected == face_dir_corrected
 					&& memcmp(next_lights, lights, sizeof(lights)) == 0

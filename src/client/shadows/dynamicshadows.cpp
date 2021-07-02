@@ -79,14 +79,14 @@ void DirectionalLight::createSplitMatrices(shadowFrustum &shadow_subfrusta, cons
 	frustumCenter.Z = floorf(frustumCenter.Z);
 	mLookAtInv.transformVect(frustumCenter);
 	// probar radius multipliacdor en funcion del I, a menor I mas multiplicador
-	v3f eye_displacement = direction * vvolume;
+	v3f eye_displacement = direction * vvolume ;
 
 	// we must compute the viewmat with the position - the camera offset
 	// but the shadow_frustum position must be the actual world position
 	v3f eye = frustumCenter - eye_displacement;
 	shadow_subfrusta.position = world_center - eye_displacement;
 	shadow_subfrusta.length = vvolume;
-	float arbitrary_big_distance = 10000.0f;
+	float arbitrary_big_distance = 20000.0f;
 	shadow_subfrusta.ViewMat.buildCameraLookAtMatrixLH(
 			eye, frustumCenter, v3f(0.0f, 1.0f, 0.0f));
 	shadow_subfrusta.ProjOrthMat.buildProjectionMatrixOrthoLH(shadow_subfrusta.length,
