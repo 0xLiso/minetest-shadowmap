@@ -65,6 +65,8 @@ void set_default_settings()
 	settings->setDefault("max_out_chat_queue_size", "20");
 	settings->setDefault("pause_on_lost_focus", "false");
 	settings->setDefault("enable_register_confirmation", "true");
+	settings->setDefault("clickable_chat_weblinks", "false");
+	settings->setDefault("chat_weblink_color", "#8888FF");
 
 	// Keymap
 	settings->setDefault("remote_port", "30000");
@@ -177,7 +179,6 @@ void set_default_settings()
 	settings->setDefault("screen_h", "600");
 	settings->setDefault("autosave_screensize", "true");
 	settings->setDefault("fullscreen", "false");
-	settings->setDefault("fullscreen_bpp", "24");
 	settings->setDefault("vsync", "false");
 	settings->setDefault("fov", "72");
 	settings->setDefault("leaves_style", "fancy");
@@ -454,7 +455,6 @@ void set_default_settings()
 	settings->setDefault("server_name", "");
 	settings->setDefault("server_description", "");
 
-	settings->setDefault("high_precision_fpu", "true");
 	settings->setDefault("enable_console", "false");
 	settings->setDefault("screen_dpi", "72");
 

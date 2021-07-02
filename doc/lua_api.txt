@@ -2980,6 +2980,9 @@ Some tags can enclose text, they open with `<tagname>` and close with `</tagname
 Tags can have attributes, in that case, attributes are in the opening tag in
 form of a key/value separated with equal signs. Attribute values should not be quoted.
 
+If you want to insert a literal greater-than sign or a backslash into the text,
+you must escape it by preceding it with a backslash.
+
 These are the technically basic tags but see below for usual tags. Base tags are:
 
 `<style color=... font=... size=...>...</style>`
@@ -4484,6 +4487,8 @@ Utilities
           -- degrotate param2 rotates in units of 1.5° instead of 2°
           -- thus changing the range of values from 0-179 to 0-240 (5.5.0)
           degrotate_240_steps = true,
+          -- ABM supports min_y and max_y fields in definition (5.5.0)
+          abm_min_max_y = true,
       }
 
 * `minetest.has_feature(arg)`: returns `boolean, missing_features`
@@ -7187,6 +7192,11 @@ Used by `minetest.register_abm`.
         chance = 1,
         -- Chance of triggering `action` per-node per-interval is 1.0 / this
         -- value
+        
+        min_y = -32768,
+        max_y = 32767,
+        -- min and max height levels where ABM will be processed
+        -- can be used to reduce CPU usage
 
         catch_up = true,
         -- If true, catch-up behaviour is enabled: The `chance` value is
