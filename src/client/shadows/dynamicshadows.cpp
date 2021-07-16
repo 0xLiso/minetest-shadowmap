@@ -54,56 +54,69 @@ void DirectionalLight::createSplitMatrices(const Camera *cam)
 	newCenter = camPos + look * (sfNear + 0.05f * end);
 	v3f world_center = camPos2 + look * (sfNear + 0.05f * end);
 
-	// Create a vector to the frustum far corner
+
 	const v3f &viewUp = cam->getCameraNode()->getUpVector();
+	// viewUp.normalize();
+
 	v3f viewRight = look.crossProduct(viewUp);
+	// viewRight.normalize();
 
 	v3f farCorner = look + viewRight * tanFovX + viewUp * tanFovY;
 	// Compute the frustumBoundingSphere radius
 	v3f boundVec = (camPos + farCorner * sfFar) - newCenter;
-	radius = boundVec.getLength() * 2.0f;
+	radius = boundVec.getLength();
 	// boundVec.getLength();
-	float vvolume = radius * 2.0f;
-
-	float texelsPerUnit = getMapResolution() / vvolume;
+	float diam = radius * 2.0f;
+	v3f frustumCenter = newCenter;
+	
+	#if 0
+	// this clamp to texel seems not useful now. Thank you @lhofhansl
+	float texelsPerUnit = getMapResolution() / diam;
 	m4f mTexelScaling;
 	mTexelScaling.setScale(texelsPerUnit);
 
+	// this clamp to texel seems not useful now. Thank you @lhofhansl
 	m4f mLookAt, mLookAtInv;
 
-	mLookAt.buildCameraLookAtMatrixLH(v3f(0.0f, 0.0f, 0.0f), -direction, v3f(0.0f, 1.0f, 0.0f));
+	mLookAt.buildCameraLookAtMatrixLH(
+			v3f(0.0f, 0.0f, 0.0f), -direction, v3f(0.0f, 1.0f, 0.0f));
 
 	mLookAt *= mTexelScaling;
+	
+
+	
 	mLookAtInv = mLookAt;
 	mLookAtInv.makeInverse();
-
-	v3f frustumCenter = newCenter;
 	mLookAt.transformVect(frustumCenter);
 	frustumCenter.X = floorf(frustumCenter.X); // clamp to texel increment
 	frustumCenter.Y = floorf(frustumCenter.Y); // clamp to texel increment
 	frustumCenter.Z = floorf(frustumCenter.Z);
 	mLookAtInv.transformVect(frustumCenter);
-	// probar radius multipliacdor en funcion del I, a menor I mas multiplicador
-	v3f eye_displacement = direction * vvolume;
+
+	#endif
+
+	v3f eye_displacement = direction * radius;
 
 	// we must compute the viewmat with the position - the camera offset
 	// but the future_frustum position must be the actual world position
 	v3f eye = frustumCenter - eye_displacement;
+	float arbitraryLongDistance=10000.0f;
 	future_frustum.position = world_center - eye_displacement;
-	future_frustum.length = vvolume;
-	future_frustum.ViewMat.buildCameraLookAtMatrixLH(eye, frustumCenter, v3f(0.0f, 1.0f, 0.0f));
+	future_frustum.length = diam;
+	future_frustum.ViewMat.buildCameraLookAtMatrixLH(
+			eye, frustumCenter, v3f(0.0f, 1.0f, 0.0f));
 	future_frustum.ProjOrthMat.buildProjectionMatrixOrthoLH(future_frustum.length,
-			future_frustum.length, -future_frustum.length,
-			future_frustum.length,false);
+			future_frustum.length,  0.0f, arbitraryLongDistance, true);
 	future_frustum.camera_offset = cam->getOffset();
 }
 
-DirectionalLight::DirectionalLight(const u32 shadowMapResolution,
-		const v3f &position, video::SColorf lightColor,
-		f32 farValue) :
+DirectionalLight::DirectionalLight(const u32 shadowMapResolution, const v3f &position,
+		video::SColorf lightColor, f32 farValue) :
 		diffuseColor(lightColor),
-		farPlane(farValue), mapRes(shadowMapResolution), pos(position)
-{}
+		farPlane(farValue), nearPlane(1.0), mapRes(shadowMapResolution),
+		pos(position)
+{
+}
 
 void DirectionalLight::update_frustum(const Camera *cam, Client *client, bool force)
 {
@@ -111,12 +124,13 @@ void DirectionalLight::update_frustum(const Camera *cam, Client *client, bool fo
 		return;
 
 	float zNear = cam->getCameraNode()->getNearValue();
+	nearPlane = zNear;
 	float zFar = getMaxFarValue();
 
 	///////////////////////////////////
 	// update splits near and fars
 	future_frustum.zNear = zNear;
-	future_frustum.zFar = zFar;
+	future_frustum.zFar = zFar * BS;
 
 	// update shadow frustum
 	createSplitMatrices(cam);
