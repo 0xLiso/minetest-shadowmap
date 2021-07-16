@@ -167,11 +167,12 @@ float getPenumbraRadius(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 	}
 
 	vec2 clampedpos;
-	float texture_size = 2.0 /  f_textureresolution ;
+	// this is fixed to make sure same penumbra radius with all texture sizes
+	float texture_size = 2.0 /  2048 /*f_textureresolution*/ ;
 	float y, x;
-	float depth = 0.0;
+	float depth = 0.0, min_depth = 10000.0, max_depth = -10000.0;
 	float pointDepth;
-	float maxRadius = SOFTSHADOWRADIUS * 5.0 * multiplier;
+	float maxRadius = SOFTSHADOWRADIUS * 15.0 * multiplier;
 
 	float bound = clamp(PCFBOUND * (1 - baseLength), 0.5, PCFBOUND);
 	int n = 0;
@@ -187,10 +188,17 @@ float getPenumbraRadius(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 			depth += pointDepth;
 			n += 1;
 		}
+		min_depth = min(min_depth, pointDepth);
+		max_depth = max(max_depth, pointDepth);
+	}
+
+	// avoid calling the filter if there's no depth change
+	if (max_depth - min_depth < 1.2e-3) {
+		return 0.0;
 	}
 
 	depth = depth / n;
-	depth = pow(clamp(depth, 0.0, 1000.0), 1.6) / 0.001;
+	depth = pow(clamp(depth, 0.0, 10.0), 1.6) * 1000.0 * 10.0;
 
 	perspectiveFactor = getDeltaPerspectiveFactor(baseLength);
 	return max(length(smTexCoord.xy) * 2 * 2048 / f_textureresolution / pow(perspectiveFactor, 3), depth * maxRadius);
