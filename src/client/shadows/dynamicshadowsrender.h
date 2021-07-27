@@ -65,7 +65,6 @@ public:
 	f32 getMaxShadowFar() const;
 	f32 getNearValue() const;
 
-	float getUpdateDelta() const;
 	/// Adds a shadow to the scene node.
 	/// The shadow mode can be ESM_BOTH, or ESM_RECEIVE.
 	/// ESM_BOTH casts and receives shadows
@@ -125,11 +124,12 @@ private:
 	float m_shadow_map_max_distance;
 	float m_shadow_map_texture_size;
 	float m_time_day{0.0f};
-	float m_update_delta;
 	int m_shadow_samples;
 	bool m_shadow_map_texture_32bit;
 	bool m_shadows_enabled;
 	bool m_shadow_map_colored;
+	u8 m_map_shadow_update_frames; /* Use this number of frames to update map shaodw */
+	u8 m_current_frame{0}; /* Current frame */
 
 	video::ECOLOR_FORMAT m_texture_format{video::ECOLOR_FORMAT::ECF_R16F};
 	video::ECOLOR_FORMAT m_texture_format_color{video::ECOLOR_FORMAT::ECF_R16G16};

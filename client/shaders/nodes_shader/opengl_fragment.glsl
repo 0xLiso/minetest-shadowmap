@@ -174,7 +174,7 @@ float getPenumbraRadius(sampler2D shadowsampler, vec2 smTexCoord, float realDist
 	float pointDepth;
 	float maxRadius = SOFTSHADOWRADIUS * 15.0 * multiplier;
 
-	float bound = clamp(PCFBOUND * (1 - baseLength), 0.5, PCFBOUND);
+	float bound = clamp(PCFBOUND * (1 - baseLength), 0.0, PCFBOUND);
 	int n = 0;
 
 	for (y = -bound; y <= bound; y += 1.0)
@@ -288,7 +288,7 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 	float perspectiveFactor;
 
 	float texture_size = 2.0 /  f_textureresolution ;
-	int samples = int(clamp(PCFSAMPLES * (1 - baseLength) * (1 - baseLength), 1, PCFSAMPLES));
+	int samples = int(clamp(PCFSAMPLES * (1 - baseLength) * (1 - baseLength), PCFSAMPLES / 4, PCFSAMPLES));
 	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0-samples)));
 	int end_offset = int(samples) + init_offset;
 
@@ -318,7 +318,7 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 	float perspectiveFactor;
 
 	float texture_size = 2.0 / f_textureresolution;
-	int samples = int(clamp(PCFSAMPLES * (1 - baseLength) * (1 - baseLength), 1, PCFSAMPLES));
+	int samples = int(clamp(PCFSAMPLES * (1 - baseLength) * (1 - baseLength), PCFSAMPLES / 4, PCFSAMPLES));
 	int init_offset = int(floor(mod(((smTexCoord.x * 34.0) + 1.0) * smTexCoord.y, 64.0-samples)));
 	int end_offset = int(samples) + init_offset;
 
@@ -355,7 +355,7 @@ vec4 getShadowColor(sampler2D shadowsampler, vec2 smTexCoord, float realDistance
 
 	float texture_size = 2.0 / f_textureresolution;
 	float y, x;
-	float bound = clamp(PCFBOUND * (1 - baseLength), 0.5, PCFBOUND);
+	float bound = clamp(PCFBOUND * (1 - baseLength), PCFBOUND / 2, PCFBOUND);
 	int n = 0;
 
 	// basic PCF filter
@@ -387,7 +387,7 @@ float getShadow(sampler2D shadowsampler, vec2 smTexCoord, float realDistance)
 
 	float texture_size = 2.0 / f_textureresolution;
 	float y, x;
-	float bound = clamp(PCFBOUND * (1 - baseLength), 0.5, PCFBOUND);
+	float bound = clamp(PCFBOUND * (1 - baseLength), PCFBOUND / 2, PCFBOUND);
 	int n = 0;
 
 	// basic PCF filter
@@ -490,9 +490,9 @@ void main(void)
 
 	}
 
-	if (f_normal_length != 0 && cosLight == 0.0) {
-		shadow_int = clamp(1.0-nightRatio, 0.0, 1.0);
-	} 
+	if (f_normal_length != 0 && cosLight < 0.035) {
+		shadow_int = max(shadow_int, min(clamp(1.0-nightRatio, 0.0, 1.0), 1 - clamp(cosLight, 0.0, 0.035)/0.035));
+	}
 
 	shadow_int = 1.0 - (shadow_int * f_adj_shadow_strength);
 	
