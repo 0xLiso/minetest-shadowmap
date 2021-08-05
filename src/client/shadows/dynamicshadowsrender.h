@@ -65,7 +65,6 @@ public:
 	f32 getMaxShadowFar() const;
 	f32 getNearValue() const;
 
-	float getUpdateDelta() const;
 	/// Adds a shadow to the scene node.
 	/// The shadow mode can be ESM_BOTH, or ESM_RECEIVE.
 	/// ESM_BOTH casts and receives shadows
@@ -93,6 +92,7 @@ public:
 	float getTimeOfDay() const { return m_time_day; }
 
 private:
+	static constexpr u16 TOTAL_SECTIONS{4}; /* Spread SM update over this number of frames */
 	video::ITexture *getSMTexture(const std::string &shadow_map_name,
 			video::ECOLOR_FORMAT texture_format,
 			bool force_creation = false);
@@ -102,6 +102,7 @@ private:
 					scene::ESNRP_SOLID);
 	void renderShadowObjects(video::ITexture *target, DirectionalLight &light);
 	void mixShadowsQuad();
+	void updateSMTextures();
 
 	// a bunch of variables
 	IrrlichtDevice *m_device{nullptr};
@@ -109,10 +110,12 @@ private:
 	video::IVideoDriver *m_driver{nullptr};
 	Client *m_client{nullptr};
 	video::ITexture *shadowMapClientMap{nullptr};
+	video::ITexture *shadowMapClientMapFuture{nullptr};
 	video::ITexture *shadowMapTextureFinal{nullptr};
 	video::ITexture *shadowMapTextureDynamicObjects{nullptr};
 	video::ITexture *shadowMapTextureColors{nullptr};
 	video::SColor m_clear_color{0x0};
+	u16 m_current_section{TOTAL_SECTIONS + 1};
 
 	std::vector<DirectionalLight> m_light_list;
 	std::vector<NodeToApply> m_shadow_node_array;
@@ -121,11 +124,12 @@ private:
 	float m_shadow_map_max_distance;
 	float m_shadow_map_texture_size;
 	float m_time_day{0.0f};
-	float m_update_delta;
 	int m_shadow_samples;
 	bool m_shadow_map_texture_32bit;
 	bool m_shadows_enabled;
 	bool m_shadow_map_colored;
+	u8 m_map_shadow_update_frames; /* Use this number of frames to update map shaodw */
+	u8 m_current_frame{0}; /* Current frame */
 
 	video::ECOLOR_FORMAT m_texture_format{video::ECOLOR_FORMAT::ECF_R16F};
 	video::ECOLOR_FORMAT m_texture_format_color{video::ECOLOR_FORMAT::ECF_R16G16};
@@ -136,6 +140,7 @@ private:
 	std::string readShaderFile(const std::string &path);
 
 	s32 depth_shader{-1};
+	s32 depth_shader_entities{-1};
 	s32 depth_shader_trans{-1};
 	s32 mixcsm_shader{-1};
 
